@@ -15,3 +15,105 @@ body {
 h1 {
     color: #333;
 }
+
+.landing-page {
+    overflow-x: hidden;
+    background-color: #f8f9fa;
+}
+
+.hero {
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.hero-text {
+    padding: 2rem 0;
+}
+
+.floating-cards {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.problem-preview-card {
+    position: absolute;
+    width: 200px;
+    transition: all 0.3s ease;
+}
+
+.problem-preview-card .card {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.card-1 {
+    top: 20%;
+    left: 10%;
+    animation: float 6s ease-in-out infinite;
+}
+
+.card-2 {
+    top: 40%;
+    left: 40%;
+    animation: float 8s ease-in-out infinite;
+    animation-delay: 1s;
+}
+
+.card-3 {
+    top: 60%;
+    left: 20%;
+    animation: float 7s ease-in-out infinite;
+    animation-delay: 2s;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.feature-card {
+    transition: transform 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    color: #007bff;
+    margin-bottom: 1rem;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+.btn-outline-primary {
+    border-color: #007bff;
+    color: #007bff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+.btn-primary:hover, .btn-outline-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
