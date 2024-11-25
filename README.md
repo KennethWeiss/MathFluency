@@ -36,3 +36,39 @@ Routes
     /register
     /welcome
     /logout
+
+Reset password was added but not on page yet.
+
+go over create test user
+
+Adding teachers, students and classes
+update user.py to add models
+creates test user now creates teacher, student
+reset_db.py to handle data migrations
+
+est Teacher Created:
+------------------------
+Username: testteacher
+Email: teacher@example.com
+Password: teacher123
+Class: Math 101
+
+Test Student Created:
+------------------------
+Username: teststudent
+Email: student@example.com
+Password: student123
+Enrolled in: Math 101
+
+update app.py 
+/dashboard has teacher and student route
+dashboard.html
+
+create_class.html
+
+class.html
+for viewing class
+
+practice.html
+basic practice page for student
+
