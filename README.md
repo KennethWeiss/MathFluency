@@ -21,3 +21,18 @@ flask run
 ```
 
 The application will be available at http://localhost:5000
+
+Go over requirements.txt
+user.py user model added
+//should be in models
+forms.py for authentication forms.
+login.html
+register.html
+welcome.html
+app.py updated
+has password hashing for security
+Routes
+    /login
+    /register
+    /welcome
+    /logout
