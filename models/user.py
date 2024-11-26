@@ -18,9 +18,9 @@ class User(UserMixin, db.Model):
     
     # Teacher-specific relationships
     students = db.relationship('User', 
-                             backref=db.backref('teacher', remote_side=[id]),
-                             foreign_keys=[teacher_id],
-                             lazy='dynamic')
+                            backref=db.backref('teacher', remote_side=[id]),
+                            foreign_keys=[teacher_id],
+                            lazy='dynamic')
     classes = db.relationship('Class', 
                             backref='teacher',
                             foreign_keys=[Class.teacher_id],
@@ -28,8 +28,8 @@ class User(UserMixin, db.Model):
     
     # Student's class relationship
     enrolled_class = db.relationship('Class',
-                                   foreign_keys=[class_id],
-                                   backref=db.backref('students', lazy='dynamic'))
+                                foreign_keys=[class_id],
+                                backref=db.backref('students', lazy='dynamic'))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

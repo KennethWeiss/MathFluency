@@ -69,14 +69,14 @@ def welcome():
             classes = current_user.classes.all()
             students = current_user.students.all()
             return render_template('welcome.html', 
-                                 classes=classes, 
-                                 students=students, 
-                                 is_teacher=True)
+                                classes=classes, 
+                                students=students, 
+                                is_teacher=True)
         else:
             # For students, show their class and teacher
             return render_template('welcome.html', 
-                                 enrolled_class=current_user.enrolled_class,
-                                 is_teacher=False)
+                                enrolled_class=current_user.enrolled_class,
+                                is_teacher=False)
     except Exception as e:
         print(f"Error in welcome route: {str(e)}")  # This will print to console
         flash(f"An error occurred: {str(e)}", 'danger')  # This will show to user
