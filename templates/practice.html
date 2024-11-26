@@ -127,10 +127,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentOperation = 'addition';
+        let problemStartTime = null;
 
         // Problem generation functions
         function generateAdditionProblem(level) {
             level = parseInt(level);
+            problemStartTime = Date.now();  // Record start time
             if (level === 1) {  // Adding 1 to single digit
                 const num = Math.floor(Math.random() * 10);
                 return { problem: `${num} + 1`, answer: num + 1 };
@@ -153,6 +155,7 @@
 
         function generateMultiplicationProblem(level) {
             level = parseInt(level);
+            problemStartTime = Date.now();  // Record start time
             if (level >= 0 && level <= 12) {
                 const num = Math.floor(Math.random() * 13);
                 return { problem: `${num} × ${level}`, answer: num * level };
@@ -199,14 +202,33 @@
         document.getElementById('check-answer').addEventListener('click', function() {
             const userAnswer = document.getElementById('answer-input').value;
             const correctAnswer = document.getElementById('correct-answer').value;
+            const timeTaken = (Date.now() - problemStartTime) / 1000;  // Convert to seconds
             
             // Check answer on frontend
             const isCorrect = parseInt(userAnswer) === parseInt(correctAnswer);
             const feedback = document.getElementById('feedback');
             
+            // Record the attempt
+            fetch('/record_attempt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation: currentOperation,
+                    level: currentOperation === 'addition' 
+                        ? document.getElementById('addition-select').value 
+                        : document.getElementById('multiplication-select').value,
+                    problem: document.getElementById('problem-text').textContent,
+                    userAnswer: parseInt(userAnswer),
+                    correctAnswer: parseInt(correctAnswer),
+                    isCorrect: isCorrect,
+                    timeTaken: timeTaken
+                })
+            });
+            
             if (isCorrect) {
                 feedback.innerHTML = '<div class="alert alert-success">Correct! Great job!</div>';
-                // Get new problem immediately and clear the success message after a delay
                 getNewProblem();
                 setTimeout(() => feedback.innerHTML = '', 1000);
             } else {

@@ -1,21 +1,29 @@
-from flask import Flask, render_template, url_for, flash, redirect, request, jsonify
+from flask import Flask, render_template, url_for, redirect, flash, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
 from utils.problem_generator import get_problem
+from sqlalchemy import func
 import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['DEBUG'] = True  # Enable debug mode
+
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Import models after initializing db
+# Import models after db initialization
 from models.user import User
 from models.class_ import Class
+from models.practice_attempt import PracticeAttempt
+
+# Debug print to see which models are loaded
+print("Models loaded:", [User.__name__, Class.__name__, PracticeAttempt.__name__])
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -91,8 +99,26 @@ def logout():
 @app.route('/practice')
 @login_required
 def practice():
-    print("In practice route")  # Python print for debugging
+    print("In practice route")
     return render_template('practice.html')
+
+@app.route('/record_attempt', methods=['POST'])
+@login_required
+def record_attempt():
+    data = request.json
+    attempt = PracticeAttempt(
+        user_id=current_user.id,
+        operation=data['operation'],
+        level=data['level'],
+        problem=data['problem'],
+        user_answer=data['userAnswer'],
+        correct_answer=data['correctAnswer'],
+        is_correct=data['isCorrect'],
+        time_taken=data.get('timeTaken')
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    return jsonify({'success': True})
 
 @app.route('/get_problem', methods=['POST'])
 @login_required
@@ -131,9 +157,78 @@ def check_answer():
             'error': 'Invalid answer format'
         }), 400
 
-# Create the database tables
-with app.app_context():
-    db.create_all()
+@app.route('/progress')
+@login_required
+def progress():
+    try:
+        # Get total attempts for this user
+        total_attempts = PracticeAttempt.query.filter_by(user_id=current_user.id).count()
+        print(f"Total attempts: {total_attempts}")  # Debug print
+        
+        # Get correct attempts and calculate accuracy
+        correct_attempts = PracticeAttempt.query.filter_by(
+            user_id=current_user.id, 
+            is_correct=True
+        ).count()
+        print(f"Correct attempts: {correct_attempts}")  # Debug print
+        
+        accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
+        
+        # Get average time taken
+        avg_time = db.session.query(func.avg(PracticeAttempt.time_taken))\
+            .filter(PracticeAttempt.user_id == current_user.id).scalar() or 0
+        print(f"Average time: {avg_time}")  # Debug print
+        
+        # Get fastest correct attempt
+        fastest_correct = PracticeAttempt.query\
+            .filter_by(user_id=current_user.id, is_correct=True)\
+            .order_by(PracticeAttempt.time_taken.asc()).first()
+        
+        # Get current streak
+        attempts = PracticeAttempt.query\
+            .filter_by(user_id=current_user.id)\
+            .order_by(PracticeAttempt.created_at.desc()).all()
+        current_streak = 0
+        for attempt in attempts:
+            if attempt.is_correct:
+                current_streak += 1
+            else:
+                break
+        
+        # Get operation-specific stats
+        operation_stats = {}
+        operations = db.session.query(PracticeAttempt.operation)\
+            .filter_by(user_id=current_user.id).distinct().all()
+        
+        for (operation,) in operations:
+            op_attempts = PracticeAttempt.query.filter_by(
+                user_id=current_user.id,
+                operation=operation
+            )
+            total_op = op_attempts.count()
+            correct_op = op_attempts.filter_by(is_correct=True).count()
+            avg_time_op = db.session.query(func.avg(PracticeAttempt.time_taken))\
+                .filter(PracticeAttempt.user_id == current_user.id)\
+                .filter(PracticeAttempt.operation == operation).scalar() or 0
+            
+            operation_stats[operation] = {
+                'total': total_op,
+                'accuracy': (correct_op/total_op*100) if total_op > 0 else 0,
+                'avg_time': avg_time_op
+            }
+        
+        return render_template('progress.html',
+            total_attempts=total_attempts,
+            correct_attempts=correct_attempts,
+            accuracy=accuracy,
+            avg_time=avg_time,
+            fastest_correct=fastest_correct,
+            current_streak=current_streak,
+            operation_stats=operation_stats
+        )
+    except Exception as e:
+        print(f"Error in progress route: {str(e)}")  # Debug print
+        return f"An error occurred: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
