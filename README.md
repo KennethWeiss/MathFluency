@@ -93,3 +93,45 @@ for viewing class
 practice.html
 basic practice page for student
 
+
+WHERE TO START
+1.Problem Model Structure:
+    Basic problem attributes:
+        Problem text/description
+        Difficulty level
+        Category (e.g., addition, subtraction, word problems)
+        Correct answer
+        Points/score value
+    Optional features:
+        Multiple choice options
+        Hints
+        Step-by-step solutions
+2.Assignment System:
+    Teachers can:
+        Create assignments with selected problems
+        Set due dates
+        Assign to entire class or specific students
+        Set minimum score requirements
+    Students can:
+        See assigned problems
+        Track completion status
+        View their scores and progress
+3.Practice Mode:
+    Students can:
+    Choose problem categories
+    Select difficulty levels
+    Practice without time pressure
+    Track personal improvement
+4.Progress Tracking:
+    Track attempts and success rates
+    Show improvement over time
+    Generate reports for teachers
+    Identify areas needing more practice
+    Would you like me to start implementing any of these components? We could begin with:
+
+Creating the Problem model
+Setting up the assignment system
+Building the practice mode interface
+Implementing progress tracking
+What aspect would you like to tackle first?
+

@@ -1,0 +1,162 @@
+{
+    "Kindergarten": {
+        "Counting and Cardinality": [
+            "Count to 100 by ones and tens.",
+            "Understand the relationship between numbers and quantities.",
+            "Compare numbers (greater than, less than, equal to)."
+        ],
+        "Operations and Algebraic Thinking": [
+            "Understand addition as putting together and subtraction as taking apart.",
+            "Solve addition and subtraction word problems with small numbers."
+        ],
+        "Number and Operations in Base Ten": [
+            "Work with numbers 11\u201319 to understand place value (10 ones and some more)."
+        ],
+        "Geometry": [
+            "Identify and describe shapes (squares, circles, triangles, etc.).",
+            "Analyze and compare shapes."
+        ],
+        "Measurement and Data": [
+            "Compare objects by measurable attributes like length or weight.",
+            "Classify objects into categories."
+        ]
+    },
+    "Grade 1": {
+        "Operations and Algebraic Thinking": [
+            "Solve addition and subtraction problems within 20.",
+            "Understand the properties of operations (commutative, associative)."
+        ],
+        "Number and Operations in Base Ten": [
+            "Understand place value (tens and ones).",
+            "Use place value understanding to add and subtract."
+        ],
+        "Geometry": [
+            "Reason about shapes and their attributes."
+        ],
+        "Measurement and Data": [
+            "Measure lengths and organize data.",
+            "Tell and write time to the hour and half-hour."
+        ]
+    },
+    "Grade 2": {
+        "Operations and Algebraic Thinking": [
+            "Solve problems involving addition and subtraction within 100.",
+            "Understand equal groups as foundations for multiplication."
+        ],
+        "Number and Operations in Base Ten": [
+            "Understand place value up to 1,000.",
+            "Add and subtract within 1,000."
+        ],
+        "Measurement and Data": [
+            "Measure and estimate lengths in standard units.",
+            "Work with time and money."
+        ],
+        "Geometry": [
+            "Partition shapes into equal shares (fractions)."
+        ]
+    },
+    "Grade 3": {
+        "Operations and Algebraic Thinking": [
+            "Develop fluency in multiplication and division within 100.",
+            "Solve problems involving the four operations."
+        ],
+        "Number and Operations\u2014Fractions": [
+            "Understand fractions as numbers.",
+            "Represent fractions on a number line."
+        ],
+        "Number and Operations in Base Ten": [
+            "Use place value to round whole numbers.",
+            "Perform multi-digit arithmetic."
+        ],
+        "Geometry": [
+            "Reason with shapes and their attributes.",
+            "Understand area as an attribute of plane figures."
+        ],
+        "Measurement and Data": [
+            "Solve problems involving time, measurement, and data interpretation."
+        ]
+    },
+    "Grade 4": {
+        "Operations and Algebraic Thinking": [
+            "Solve multi-step word problems with whole numbers.",
+            "Understand factors and multiples."
+        ],
+        "Number and Operations in Base Ten": [
+            "Generalize place value understanding for multi-digit numbers.",
+            "Use place value strategies to perform multi-digit arithmetic."
+        ],
+        "Number and Operations\u2014Fractions": [
+            "Add and subtract fractions with like denominators.",
+            "Multiply fractions by whole numbers."
+        ],
+        "Measurement and Data": [
+            "Solve problems involving measurement and conversions within a system.",
+            "Represent and interpret data."
+        ],
+        "Geometry": [
+            "Draw and identify lines and angles.",
+            "Classify shapes by properties of their lines and angles."
+        ]
+    },
+    "Grade 5": {
+        "Operations and Algebraic Thinking": [
+            "Write and interpret numerical expressions.",
+            "Analyze patterns and relationships."
+        ],
+        "Number and Operations in Base Ten": [
+            "Perform operations with multi-digit whole numbers and decimals."
+        ],
+        "Number and Operations\u2014Fractions": [
+            "Add and subtract fractions with unlike denominators.",
+            "Multiply and divide fractions and decimals."
+        ],
+        "Measurement and Data": [
+            "Convert like measurement units within a system.",
+            "Understand concepts of volume and relate volume to multiplication and addition."
+        ],
+        "Geometry": [
+            "Graph points on the coordinate plane.",
+            "Classify two-dimensional figures based on their properties."
+        ]
+    },
+    "Grade 6": {
+        "Ratios and Proportional Relationships": [
+            "Understand ratio concepts and use ratio reasoning to solve problems."
+        ],
+        "The Number System": [
+            "Apply operations with fractions to divide fractions by fractions.",
+            "Extend number line understanding to include negative numbers."
+        ],
+        "Expressions and Equations": [
+            "Write and evaluate numerical expressions with exponents.",
+            "Solve one-variable equations and inequalities."
+        ],
+        "Geometry": [
+            "Solve real-world problems involving area, surface area, and volume."
+        ],
+        "Statistics and Probability": [
+            "Develop an understanding of statistical variability.",
+            "Summarize and interpret data distributions."
+        ]
+    },
+    "Grade 7": {
+        "Ratios and Proportional Relationships": [
+            "Analyze proportional relationships and use them to solve real-world problems."
+        ],
+        "The Number System": [
+            "Apply operations with rational numbers (including negatives)."
+        ],
+        "Expressions and Equations": [
+            "Solve problems using numerical and algebraic expressions and equations.",
+            "Work with two-step equations and inequalities."
+        ],
+        "Geometry": [
+            "Solve problems involving scale drawings and informal geometric constructions.",
+            "Understand and apply the properties of angles, triangles, and circles."
+        ],
+        "Statistics and Probability": [
+            "Investigate chance processes and evaluate probabilities.",
+            "Compare two populations using measures of center and variability."
+        ]
+    }
+}
