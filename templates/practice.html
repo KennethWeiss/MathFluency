@@ -211,6 +211,7 @@
                 setTimeout(() => feedback.innerHTML = '', 1000);
             } else {
                 feedback.innerHTML = '<div class="alert alert-danger">Not quite. Try again!</div>';
+                document.getElementById('answer-input').value = '';
                 document.getElementById('answer-input').focus();
             }
         });
