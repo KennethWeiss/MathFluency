@@ -20,8 +20,6 @@ pip install -r requirements.txt
 flask run
 ```
 
-The application will be available at http://localhost:5000
-
 Go over requirements.txt
         Flask==2.3.3
         python-dotenv==1.0.0
@@ -47,7 +45,6 @@ app.py updated
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('welcome'))
    
-
 has password hashing for security
 Routes
     /login
@@ -55,15 +52,7 @@ Routes
     /welcome
     /logout
 
-Reset password was added but not on page yet.
-    removed
-
 go over create test user
-
-Adding teachers, students and classes
-update user.py to add models
-creates test user now creates teacher, student
-reset_db.py to handle data migrations
 
 Test Teacher Created:
 ------------------------
@@ -82,8 +71,6 @@ Enrolled in: Math 101
 also
 student2
 student123
-
-
 
 create_class.html
 
@@ -135,3 +122,13 @@ Building the practice mode interface
 Implementing progress tracking
 What aspect would you like to tackle first?
 
+Go up for more info
+I started with creating the Problem model and setting up the assignment system.
+Next, I would like to build the practice mode interface and implement progress tracking.
+
+
+app.py
+/get_problem - Generates a new problem:
+Takes operation and level from the form data
+Uses our get_problem() function to generate a problem and answer
+Returns JSON with the problem text and correct answer

@@ -1,7 +1,8 @@
-from flask import Flask, render_template, url_for, flash, redirect, request
+from flask import Flask, render_template, url_for, flash, redirect, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from forms import LoginForm, RegistrationForm
+from utils.problem_generator import get_problem
 import os
 
 app = Flask(__name__)
@@ -86,6 +87,49 @@ def welcome():
 def logout():
     logout_user()
     return redirect(url_for('home'))
+
+@app.route('/practice')
+@login_required
+def practice():
+    print("In practice route")  # Python print for debugging
+    return render_template('practice.html')
+
+@app.route('/get_problem', methods=['POST'])
+@login_required
+def get_problem_route():
+    operation = request.form.get('operation', 'addition')
+    level = int(request.form.get('level', 1))
+    
+    try:
+        problem, answer = get_problem(operation, level)
+        return jsonify({
+            'success': True,
+            'problem': problem,
+            'answer': answer
+        })
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+@app.route('/check_answer', methods=['POST'])
+@login_required
+def check_answer():
+    user_answer = request.form.get('answer')
+    correct_answer = request.form.get('correct_answer')
+    
+    try:
+        is_correct = int(user_answer) == int(correct_answer)
+        return jsonify({
+            'success': True,
+            'is_correct': is_correct
+        })
+    except (ValueError, TypeError):
+        return jsonify({
+            'success': False,
+            'error': 'Invalid answer format'
+        }), 400
 
 # Create the database tables
 with app.app_context():
