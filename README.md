@@ -171,3 +171,8 @@ What aspect would you like to tackle first?
 Go up for more info
 I started with creating the Problem model and setting up the assignment system.
 Next, I would like to build the practice mode interface and implement progress tracking.
+
+
+I'm trying to think of a better way to have students practice problems they are struggling with. 
+I am think of creating a table that tracks problem areas this becomes a review diagnostic tool.
+
