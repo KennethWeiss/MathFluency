@@ -17,6 +17,13 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Add this after app initialization but before routes
+@app.template_filter('unique')
+def unique_filter(l):
+    """Return unique items from a list while preserving order"""
+    seen = set()
+    return [x for x in l if not (x in seen or seen.add(x))]
+
 # Import models after db initialization
 from models.user import User
 from models.class_ import Class
@@ -123,21 +130,28 @@ def record_attempt():
 @app.route('/get_problem', methods=['POST'])
 @login_required
 def get_problem_route():
-    operation = request.form.get('operation', 'addition')
-    level = int(request.form.get('level', 1))
-    
     try:
-        problem, answer = get_problem(operation, level)
+        data = request.get_json()
+        operation = data.get('operation')
+        level = int(data.get('level', 1))
+        
+        if operation not in ['addition', 'multiplication']:
+            return jsonify({'error': 'Invalid operation'}), 400
+        
+        # Calculate appropriate difficulty level
+        adapted_level = calculate_difficulty_level(current_user.id, operation, level)
+        
+        # Get problem with user history consideration
+        problem = get_problem(operation, adapted_level, current_user.id, db)
+        
         return jsonify({
-            'success': True,
-            'problem': problem,
-            'answer': answer
+            'problem': problem['problem'],
+            'level': adapted_level,
+            'operation': operation
         })
-    except ValueError as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
+    except Exception as e:
+        print(f"Error in get_problem route: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/check_answer', methods=['POST'])
 @login_required
@@ -156,6 +170,83 @@ def check_answer():
             'success': False,
             'error': 'Invalid answer format'
         }), 400
+
+def get_problem_history(user_id, operation=None, limit=10):
+    """Get recent problem history for a user, optionally filtered by operation."""
+    query = PracticeAttempt.query.filter_by(user_id=user_id)
+    if operation:
+        query = query.filter_by(operation=operation)
+    return query.order_by(PracticeAttempt.created_at.desc()).limit(limit).all()
+
+def analyze_missed_problems(user_id, operation=None):
+    """Analyze commonly missed problems for a user."""
+    # Get all attempts for the user
+    query = PracticeAttempt.query.filter_by(user_id=user_id, is_correct=False)
+    if operation:
+        query = query.filter_by(operation=operation)
+    
+    missed_attempts = query.all()
+    problem_stats = {}
+    
+    for attempt in missed_attempts:
+        if attempt.problem not in problem_stats:
+            problem_stats[attempt.problem] = {
+                'total_attempts': 0,
+                'incorrect_attempts': 0,
+                'last_seen': attempt.created_at,
+                'operation': attempt.operation,
+                'level': attempt.level
+            }
+        
+        problem_stats[attempt.problem]['total_attempts'] += 1
+        problem_stats[attempt.problem]['incorrect_attempts'] += 1
+        
+        # Update last seen if this attempt is more recent
+        if attempt.created_at > problem_stats[attempt.problem]['last_seen']:
+            problem_stats[attempt.problem]['last_seen'] = attempt.created_at
+    
+    # Convert to list and sort by incorrect attempts
+    problem_list = [
+        {
+            'problem': problem,
+            'total_attempts': stats['total_attempts'],
+            'incorrect_attempts': stats['incorrect_attempts'],
+            'last_seen': stats['last_seen'],
+            'operation': stats['operation'],
+            'level': stats['level']
+        }
+        for problem, stats in problem_stats.items()
+    ]
+    
+    return sorted(problem_list, key=lambda x: x['incorrect_attempts'], reverse=True)
+
+def calculate_difficulty_level(user_id, operation, current_level):
+    """Calculate the appropriate difficulty level based on user performance."""
+    # Get recent attempts (last 10) for the current level
+    recent_attempts = PracticeAttempt.query.filter_by(
+        user_id=user_id,
+        operation=operation,
+        level=current_level
+    ).order_by(PracticeAttempt.created_at.desc()).limit(10).all()
+    
+    if not recent_attempts:
+        return current_level
+    
+    # Calculate success rate
+    correct_count = sum(1 for attempt in recent_attempts if attempt.is_correct)
+    success_rate = correct_count / len(recent_attempts)
+    
+    # Get average time for correct attempts
+    correct_times = [a.time_taken for a in recent_attempts if a.is_correct and a.time_taken]
+    avg_time = sum(correct_times) / len(correct_times) if correct_times else float('inf')
+    
+    # Decision logic for level adjustment
+    if success_rate >= 0.9 and avg_time < 5.0:  # 90% accuracy and under 5 seconds
+        return min(current_level + 1, 5 if operation == 'addition' else 12)
+    elif success_rate < 0.7:  # Less than 70% accuracy
+        return max(current_level - 1, 1)
+    
+    return current_level
 
 @app.route('/progress')
 @login_required
@@ -266,6 +357,10 @@ def progress():
         }
         print(f"Final operation_stats: {operation_stats}")  # Debug print
         
+        # Add missed problems analysis
+        addition_missed = analyze_missed_problems(current_user.id, 'addition')
+        multiplication_missed = analyze_missed_problems(current_user.id, 'multiplication')
+        
         return render_template('progress.html',
             total_attempts=total_attempts,
             correct_attempts=correct_attempts,
@@ -273,10 +368,67 @@ def progress():
             avg_time=avg_time,
             fastest_correct=fastest_correct,
             current_streak=current_streak,
-            operation_stats=operation_stats
+            operation_stats=operation_stats,
+            addition_missed=addition_missed[:5],  # Show top 5 missed problems
+            multiplication_missed=multiplication_missed[:5]
         )
     except Exception as e:
         print(f"Error in progress route: {str(e)}")  # Debug print
+        return f"An error occurred: {str(e)}", 500
+
+@app.route('/analyze_level/<operation>/<int:level>')
+@login_required
+def analyze_level(operation, level):
+    try:
+        # Get all attempts for this level
+        attempts = PracticeAttempt.query.filter(
+            PracticeAttempt.user_id == current_user.id,
+            PracticeAttempt.operation == operation,
+            PracticeAttempt.level == level
+        ).order_by(PracticeAttempt.created_at.desc()).all()
+        
+        # Analyze the attempts
+        total_attempts = len(attempts)
+        incorrect_attempts = [a for a in attempts if not a.is_correct]
+        
+        # Group incorrect attempts by problem
+        problem_stats = {}
+        for attempt in incorrect_attempts:
+            if attempt.problem not in problem_stats:
+                problem_stats[attempt.problem] = {
+                    'incorrect_count': 0,
+                    'user_answers': [],
+                    'correct_answer': attempt.correct_answer
+                }
+            problem_stats[attempt.problem]['incorrect_count'] += 1
+            problem_stats[attempt.problem]['user_answers'].append(attempt.user_answer)
+        
+        # Convert to list and sort by incorrect count
+        problems_list = [
+            {
+                'problem': problem,
+                'incorrect_count': stats['incorrect_count'],
+                'user_answers': stats['user_answers'],
+                'correct_answer': stats['correct_answer']
+            }
+            for problem, stats in problem_stats.items()
+        ]
+        problems_list.sort(key=lambda x: x['incorrect_count'], reverse=True)
+        
+        # Calculate overall statistics
+        accuracy = ((total_attempts - len(incorrect_attempts)) / total_attempts * 100) if total_attempts > 0 else 0
+        
+        return render_template('analyze_level.html',
+            operation=operation,
+            level=level,
+            total_attempts=total_attempts,
+            incorrect_count=len(incorrect_attempts),
+            accuracy=accuracy,
+            problems=problems_list
+        )
+        
+    except Exception as e:
+        print(f"Error in analyze_level route: {str(e)}")
         return f"An error occurred: {str(e)}", 500
 
 if __name__ == '__main__':

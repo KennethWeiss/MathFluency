@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Level Analysis - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('progress') }}">Progress</a></li>
+                    <li class="breadcrumb-item active">Level {{ level }} {{ operation|title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Overall Stats Card -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Level {{ level }} {{ operation|title }} Statistics</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Total Attempts</h4>
+                    <div class="display-4">{{ total_attempts }}</div>
+                </div>
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Incorrect Attempts</h4>
+                    <div class="display-4">{{ incorrect_count }}</div>
+                </div>
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Accuracy</h4>
+                    <div class="display-4">{{ "%.1f"|format(accuracy) }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incorrect Problems Analysis -->
+    {% if problems %}
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">Problems Needing Practice</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Correct Answer</th>
+                            <th>Times Missed</th>
+                            <th>Common Wrong Answers</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in problems %}
+                        <tr>
+                            <td>{{ problem['problem'] }}</td>
+                            <td>{{ problem['correct_answer'] }}</td>
+                            <td>{{ problem['incorrect_count'] }}</td>
+                            <td>
+                                {% for answer in problem['user_answers']|unique|sort %}
+                                <span class="badge bg-secondary me-1">{{ answer }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Great job!</h4>
+        <p>You haven't made any mistakes at this level yet. Keep up the good work!</p>
+    </div>
+    {% endif %}
+
+    <!-- Return Buttons -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('progress') }}" class="btn btn-secondary me-2">
+            Back to Progress
+        </a>
+        <a href="{{ url_for('practice') }}" class="btn btn-primary">
+            Practice This Level
+        </a>
+    </div>
+</div>
+{% endblock %}

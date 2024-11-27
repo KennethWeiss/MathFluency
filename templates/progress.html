@@ -79,7 +79,11 @@
                             <td>{{ level }}</td>
                             <td>{{ stats['description'] }}</td>
                             <td>{{ stats['total'] }}</td>
-                            <td>{{ "%.1f"|format(stats['accuracy']) }}%</td>
+                            <td>
+                                <a href="{{ url_for('analyze_level', operation='addition', level=level) }}" class="text-decoration-none">
+                                    {{ "%.1f"|format(stats['accuracy']) }}%
+                                </a>
+                            </td>
                             <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
                         </tr>
                         {% endfor %}
@@ -114,7 +118,11 @@
                             <td>{{ level }}</td>
                             <td>{{ stats['description'] }}</td>
                             <td>{{ stats['total'] }}</td>
-                            <td>{{ "%.1f"|format(stats['accuracy']) }}%</td>
+                            <td>
+                                <a href="{{ url_for('analyze_level', operation='multiplication', level=level) }}" class="text-decoration-none">
+                                    {{ "%.1f"|format(stats['accuracy']) }}%
+                                </a>
+                            </td>
                             <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
                         </tr>
                         {% endfor %}
