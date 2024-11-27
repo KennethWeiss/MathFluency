@@ -44,8 +44,8 @@
                     <h4>Fastest Correct Solution</h4>
                     {% if fastest_correct %}
                     <div class="lead">
-                        Problem: {{ fastest_correct.problem }}<br>
-                        Time: {{ "%.1f"|format(fastest_correct.time_taken) }}s
+                        Problem: {{ fastest_correct['problem'] }}<br>
+                        Time: {{ "%.1f"|format(fastest_correct['time_taken']) }}s
                     </div>
                     {% else %}
                     <div class="lead">No correct solutions yet</div>
@@ -55,38 +55,75 @@
         </div>
     </div>
 
-    <!-- Operation-specific Stats -->
+    <!-- Addition Levels Stats -->
+    {% if operation_stats and operation_stats['addition'] %}
     <div class="card mb-4 shadow">
         <div class="card-header bg-info text-white">
-            <h3 class="mb-0">Operation Statistics</h3>
+            <h3 class="mb-0">Addition Level Statistics</h3>
         </div>
         <div class="card-body">
-            <div class="row">
-                {% for operation, stats in operation_stats.items() %}
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h4 class="mb-0">{{ operation|title }}</h4>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <strong>Total Attempts:</strong> {{ stats.total }}
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Accuracy:</strong> {{ "%.1f"|format(stats.accuracy) }}%
-                                </li>
-                                <li class="mb-2">
-                                    <strong>Average Time:</strong> {{ "%.1f"|format(stats.avg_time) }}s
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Description</th>
+                            <th>Total Attempts</th>
+                            <th>Accuracy</th>
+                            <th>Average Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for level, stats in operation_stats['addition'].items()|sort %}
+                        <tr>
+                            <td>{{ level }}</td>
+                            <td>{{ stats['description'] }}</td>
+                            <td>{{ stats['total'] }}</td>
+                            <td>{{ "%.1f"|format(stats['accuracy']) }}%</td>
+                            <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+    {% endif %}
+
+    <!-- Multiplication Tables Stats -->
+    {% if operation_stats and operation_stats['multiplication'] %}
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-warning text-dark">
+            <h3 class="mb-0">Multiplication Table Statistics</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Table</th>
+                            <th>Description</th>
+                            <th>Total Attempts</th>
+                            <th>Accuracy</th>
+                            <th>Average Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for level, stats in operation_stats['multiplication'].items()|sort %}
+                        <tr>
+                            <td>{{ level }}</td>
+                            <td>{{ stats['description'] }}</td>
+                            <td>{{ stats['total'] }}</td>
+                            <td>{{ "%.1f"|format(stats['accuracy']) }}%</td>
+                            <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Return to Practice Button -->
     <div class="text-center mb-4">

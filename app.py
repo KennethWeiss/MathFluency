@@ -195,27 +195,76 @@ def progress():
             else:
                 break
         
-        # Get operation-specific stats
+        # Get operation-specific stats with level details
         operation_stats = {}
-        operations = db.session.query(PracticeAttempt.operation)\
-            .filter_by(user_id=current_user.id).distinct().all()
         
-        for (operation,) in operations:
-            op_attempts = PracticeAttempt.query.filter_by(
-                user_id=current_user.id,
-                operation=operation
-            )
-            total_op = op_attempts.count()
-            correct_op = op_attempts.filter_by(is_correct=True).count()
-            avg_time_op = db.session.query(func.avg(PracticeAttempt.time_taken))\
-                .filter(PracticeAttempt.user_id == current_user.id)\
-                .filter(PracticeAttempt.operation == operation).scalar() or 0
-            
-            operation_stats[operation] = {
-                'total': total_op,
-                'accuracy': (correct_op/total_op*100) if total_op > 0 else 0,
-                'avg_time': avg_time_op
-            }
+        # Addition levels
+        addition_levels = {
+            1: "Adding 1 to single digit",
+            2: "Adding 2 to single digit",
+            3: "Make 10",
+            4: "Add single digit to double digit",
+            5: "Add double digit to double digit"
+        }
+        
+        # Multiplication levels (tables)
+        multiplication_levels = {i: f"× {i} Table" for i in range(13)}  # 0-12 tables
+        
+        # Get stats for addition levels
+        addition_stats = {}
+        addition_attempts = PracticeAttempt.query.filter_by(
+            user_id=current_user.id,
+            operation='addition'
+        ).all()
+        print(f"Addition attempts found: {len(addition_attempts)}")  # Debug print
+        
+        if addition_attempts:
+            for level, description in addition_levels.items():
+                level_attempts = [a for a in addition_attempts if a.level == level]
+                total = len(level_attempts)
+                print(f"Level {level} attempts: {total}")  # Debug print
+                if total > 0:
+                    correct = len([a for a in level_attempts if a.is_correct])
+                    times = [a.time_taken for a in level_attempts if a.time_taken is not None]
+                    avg_time = sum(times) / len(times) if times else 0
+                    
+                    addition_stats[str(level)] = {  # Convert level to string for template
+                        'description': description,
+                        'total': total,
+                        'accuracy': (correct/total*100),
+                        'avg_time': avg_time
+                    }
+        
+        # Get stats for multiplication levels
+        multiplication_stats = {}
+        multiplication_attempts = PracticeAttempt.query.filter_by(
+            user_id=current_user.id,
+            operation='multiplication'
+        ).all()
+        print(f"Multiplication attempts found: {len(multiplication_attempts)}")  # Debug print
+        
+        if multiplication_attempts:
+            for level, description in multiplication_levels.items():
+                level_attempts = [a for a in multiplication_attempts if a.level == level]
+                total = len(level_attempts)
+                print(f"Table {level} attempts: {total}")  # Debug print
+                if total > 0:
+                    correct = len([a for a in level_attempts if a.is_correct])
+                    times = [a.time_taken for a in level_attempts if a.time_taken is not None]
+                    avg_time = sum(times) / len(times) if times else 0
+                    
+                    multiplication_stats[str(level)] = {  # Convert level to string for template
+                        'description': description,
+                        'total': total,
+                        'accuracy': (correct/total*100),
+                        'avg_time': avg_time
+                    }
+        
+        operation_stats = {
+            'addition': addition_stats,
+            'multiplication': multiplication_stats
+        }
+        print(f"Final operation_stats: {operation_stats}")  # Debug print
         
         return render_template('progress.html',
             total_attempts=total_attempts,
