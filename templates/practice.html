@@ -70,13 +70,16 @@
                     <h4>Practice Problem</h4>
                 </div>
                 <div class="card-body text-center">
-                    <div id="problem-display" class="mb-4">
-                        <h3 id="problem-text" class="display-4">Click "New Problem" to start!</h3>
+                    <div id="problem-display" class="text-center mb-4">
+                        <h2 id="current-problem" class="display-4 mb-4"></h2>
+                        <div id="answer-hint" class="alert alert-info" style="display: none;">
+                            <strong>Hint:</strong> The answer is <span id="correct-answer"></span>
+                        </div>
                     </div>
                     
                     <div class="mb-4">
                         <input type="number" id="answer-input" class="form-control form-control-lg text-center" placeholder="Enter your answer">
-                        <input type="hidden" id="correct-answer">
+                        <input type="hidden" id="correct-answer-hidden">
                     </div>
                     
                     <div class="btn-group">
@@ -98,6 +101,8 @@
 <script>
     let currentOperation = 'addition';
     let problemStartTime = null;
+    let currentProblem = null;
+    let wrongAttempts = 0;
 
     // Problem generation functions
     function generateAdditionProblem(level) {
@@ -141,11 +146,23 @@
             ? generateAdditionProblem(level)
             : generateMultiplicationProblem(level);
 
-        document.getElementById('problem-text').textContent = problem.problem;
-        document.getElementById('correct-answer').value = problem.answer;
+        displayProblem({ problem: problem.problem, answer: problem.answer, show_answer: false });
+        document.getElementById('correct-answer-hidden').value = problem.answer;
         document.getElementById('answer-input').value = '';
         document.getElementById('feedback').innerHTML = '';
         document.getElementById('answer-input').focus();
+        wrongAttempts = 0;
+    }
+
+    function displayProblem(data) {
+        document.getElementById('current-problem').textContent = data.problem;
+        if (data.show_answer) {
+            document.getElementById('correct-answer').textContent = data.answer;
+            document.getElementById('answer-hint').style.display = 'block';
+        } else {
+            document.getElementById('answer-hint').style.display = 'none';
+        }
+        currentProblem = data;
     }
 
     // Operation selection
@@ -171,7 +188,7 @@
     // Check answer
     document.getElementById('check-answer').addEventListener('click', function() {
         const userAnswer = document.getElementById('answer-input').value;
-        const correctAnswer = document.getElementById('correct-answer').value;
+        const correctAnswer = document.getElementById('correct-answer-hidden').value;
         const timeTaken = (Date.now() - problemStartTime) / 1000;  // Convert to seconds
         
         // Check answer on frontend
@@ -189,7 +206,7 @@
                 level: currentOperation === 'addition' 
                     ? document.getElementById('addition-select').value 
                     : document.getElementById('multiplication-select').value,
-                problem: document.getElementById('problem-text').textContent,
+                problem: document.getElementById('current-problem').textContent,
                 userAnswer: parseInt(userAnswer),
                 correctAnswer: parseInt(correctAnswer),
                 isCorrect: isCorrect,
@@ -202,9 +219,14 @@
             getNewProblem();
             setTimeout(() => feedback.innerHTML = '', 1000);
         } else {
-            feedback.innerHTML = '<div class="alert alert-danger">Not quite. Try again!</div>';
-            document.getElementById('answer-input').value = '';
-            document.getElementById('answer-input').focus();
+            wrongAttempts++;
+            if (wrongAttempts >= 3) {
+                displayProblem({ problem: currentProblem.problem, answer: currentProblem.answer, show_answer: true });
+            } else {
+                feedback.innerHTML = '<div class="alert alert-danger">Not quite. Try again!</div>';
+                document.getElementById('answer-input').value = '';
+                document.getElementById('answer-input').focus();
+            }
         }
     });
 
