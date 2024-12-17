@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // New problem button
     document.getElementById('new-problem').addEventListener('click', getNewProblem);
 
+    // Add event listeners for selection menus
+    document.getElementById('addition-select').addEventListener('change', getNewProblem);
+    document.getElementById('multiplication-select').addEventListener('change', getNewProblem);
+
+
     // Check answer
     document.getElementById('check-answer').addEventListener('click', function() {
         const userAnswer = document.getElementById('answer-input').value;
