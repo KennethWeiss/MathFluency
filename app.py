@@ -431,5 +431,16 @@ def analyze_level(operation, level):
         print(f"Error in analyze_level route: {str(e)}")
         return f"An error occurred: {str(e)}", 500
 
+@app.route('/incorrect_problems')
+@login_required
+def incorrect_problems():
+    # Get incorrect attempts for the current user
+    incorrect_attempts = PracticeAttempt.query.filter_by(
+        user_id=current_user.id,
+        is_correct=False
+    ).order_by(PracticeAttempt.created_at.desc()).all()
+    
+    return render_template('incorrect_problems.html', attempts=incorrect_attempts)
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Incorrect Problems</h2>
+    
+    {% if attempts %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Operation</th>
+                    <th>Level</th>
+                    <th>Problem</th>
+                    <th>Your Answer</th>
+                    <th>Correct Answer</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attempt in attempts %}
+                <tr>
+                    <td>{{ attempt.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ attempt.operation }}</td>
+                    <td>{{ attempt.level }}</td>
+                    <td>{{ attempt.problem }}</td>
+                    <td>{{ attempt.user_answer }}</td>
+                    <td>{{ attempt.correct_answer }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No incorrect problems found. Keep up the good work!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

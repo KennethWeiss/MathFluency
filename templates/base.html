@@ -27,6 +27,9 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}" href="{{ url_for('progress') }}">Progress</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'incorrect_problems' %}active{% endif %}" href="{{ url_for('incorrect_problems') }}">Incorrect Problems</a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
