@@ -97,33 +97,56 @@ class ProblemGenerator:
         
         return sum(1 for attempt in recent_attempts if not attempt.is_correct)
 
-def get_problem(operation: str, level: int, user_id: Optional[int] = None, 
-                db = None) -> Problem:
-    """
-    Generate a math problem based on operation and level.
-    If user_id and db are provided, consider user's history for adaptive difficulty.
-    """
-    if user_id and db:
-        if random.random() < ProblemGenerator.PRACTICE_PROBABILITY:
-            attempts = ProblemGenerator.get_recent_attempts(db, user_id, operation, level)
+    @staticmethod
+    def get_problem(operation: str, level: int, user_id: Optional[int] = None, 
+                    db = None) -> Problem:
+        """
+        Generate a math problem based on operation and level.
+        If user_id and db are provided, consider user's history for adaptive difficulty.
+        """
+        print(f"\nGenerating problem with: operation={operation}, level={level}")  # Debug log
+        
+        if operation not in ['addition', 'multiplication']:
+            raise ValueError(f"Invalid operation: {operation}")
             
-            if attempts:
-                # Choose from top challenging problems
-                chosen = random.choice(attempts[:ProblemGenerator.TOP_PROBLEMS_TO_CONSIDER])
-                consecutive_wrong = ProblemGenerator.check_consecutive_wrong(
-                    db, user_id, chosen.problem
-                )
-                
-                return ProblemGenerator.create_problem(
-                    chosen.problem,
-                    chosen.correct_answer,
-                    consecutive_wrong >= ProblemGenerator.CONSECUTIVE_WRONG_THRESHOLD
-                )
-    
-    # Generate new problem if no history or didn't select practice problem
-    if operation == 'addition':
-        return ProblemGenerator.generate_addition_problem(level)
-    elif operation == 'multiplication':
-        return ProblemGenerator.generate_multiplication_problem(level)
-    else:
-        raise ValueError(f"Unsupported operation: {operation}")
+        try:
+            level = int(level)
+        except (TypeError, ValueError):
+            raise ValueError(f"Invalid level: {level}")
+            
+        if user_id and db:
+            try:
+                if random.random() < ProblemGenerator.PRACTICE_PROBABILITY:
+                    print("Attempting to get practice problem")  # Debug log
+                    attempts = ProblemGenerator.get_recent_attempts(db, user_id, operation, level)
+                    
+                    if attempts:
+                        print(f"Found {len(attempts)} recent attempts")  # Debug log
+                        # Choose from top challenging problems
+                        chosen = random.choice(attempts[:ProblemGenerator.TOP_PROBLEMS_TO_CONSIDER])
+                        consecutive_wrong = ProblemGenerator.check_consecutive_wrong(
+                            db, user_id, chosen.problem
+                        )
+                        
+                        print(f"Selected practice problem: {chosen.problem}")  # Debug log
+                        return ProblemGenerator.create_problem(
+                            chosen.problem,
+                            chosen.correct_answer,
+                            consecutive_wrong >= ProblemGenerator.CONSECUTIVE_WRONG_THRESHOLD
+                        )
+                    else:
+                        print("No recent attempts found, generating new problem")  # Debug log
+                        
+            except Exception as e:
+                print(f"Error in practice problem selection: {e}")  # Debug log
+                import traceback
+                print(traceback.format_exc())  # Print full stack trace
+        
+        # Generate new problem if no history or didn't select practice problem
+        print(f"Generating new {operation} problem for level {level}")  # Debug log
+        if operation == 'addition':
+            return ProblemGenerator.generate_addition_problem(level)
+        elif operation == 'multiplication':
+            return ProblemGenerator.generate_multiplication_problem(level)
+        else:
+            raise ValueError(f"Unsupported operation: {operation}")

@@ -3,65 +3,45 @@ let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
-// Problem generation functions
-function generateAdditionProblem(level) {
-    level = parseInt(level);
-    problemStartTime = Date.now();
-
-    let num1, num2;
-    if (level === 1) {  // Adding 1 to single digit
-        num1 = Math.floor(Math.random() * 9) + 1;
-        num2 = 1;
-    } else if (level === 2) {  // Adding 2 to single digit
-        num1 = Math.floor(Math.random() * 9) + 1;
-        num2 = 2;
-    } else if (level === 3) {  // Making 10
-        num1 = Math.floor(Math.random() * 9) + 1;
-        num2 = 10 - num1;
-    } else if (level === 4) {  // Add single digit to double digit
-        num1 = Math.floor(Math.random() * 90) + 10;
-        num2 = Math.floor(Math.random() * 9) + 1;
-    } else if (level === 5) {  // Add double digit to double digit
-        num1 = Math.floor(Math.random() * 90) + 10;
-        num2 = Math.floor(Math.random() * 90) + 10;
-    }
-
-    return {
-        problem: `${num1} + ${num2}`,
-        answer: num1 + num2,
-        show_answer: false
-    };
-}
-
-function generateMultiplicationProblem(level) {
-    level = parseInt(level);
-    problemStartTime = Date.now();
-
-    if (level >= 0 && level <= 12) {
-        const num = Math.floor(Math.random() * 13);
-        return {
-            problem: `${num} × ${level}`,
-            answer: num * level,
-            show_answer: false
-        };
-    }
-}
-
-function getNewProblem() {
+async function getNewProblem() {
     const level = currentOperation === 'addition' 
         ? document.getElementById('addition-select').value 
         : document.getElementById('multiplication-select').value;
     
-    const problemData = currentOperation === 'addition' 
-        ? generateAdditionProblem(level)
-        : generateMultiplicationProblem(level);
-
-    displayProblem(problemData);
-    document.getElementById('correct-answer-hidden').value = problemData.answer;
-    document.getElementById('answer-input').value = '';
-    document.getElementById('feedback').innerHTML = '';
-    document.getElementById('answer-input').focus();
-    wrongAttempts = 0;
+    try {
+        const response = await fetch('/get_problem', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                operation: currentOperation,
+                level: parseInt(level)
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const problemData = await response.json();
+        if (problemData.error) {
+            throw new Error(problemData.error);
+        }
+        
+        displayProblem(problemData);
+        document.getElementById('correct-answer-hidden').value = problemData.answer;
+        document.getElementById('answer-input').value = '';
+        document.getElementById('feedback').innerHTML = '';
+        document.getElementById('answer-input').focus();
+        wrongAttempts = 0;
+        problemStartTime = Date.now();
+        
+    } catch (error) {
+        console.error('Error getting new problem:', error);
+        document.getElementById('feedback').innerHTML = 
+            `<div class="alert alert-danger">Error getting new problem: ${error.message}</div>`;
+    }
 }
 
 function displayProblem(data) {

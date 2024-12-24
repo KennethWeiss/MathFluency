@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
-from utils.problem_generator import get_problem
+from utils.problem_generator import ProblemGenerator
 from sqlalchemy import func
 import os
 
@@ -131,28 +131,43 @@ def record_attempt():
 @app.route('/get_problem', methods=['POST'])
 @login_required
 def get_problem_route():
+    """Get a new problem based on user's history and mastery level."""
     try:
-        data = request.get_json()
+        data = request.json
+        print(f"\nReceived request data: {data}")  # Debug log
+        
         operation = data.get('operation')
-        level = int(data.get('level', 1))
+        level = data.get('level')
         
-        if operation not in ['addition', 'multiplication']:
-            return jsonify({'error': 'Invalid operation'}), 400
+        print(f"Operation: {operation}, Level: {level}")  # Debug log
         
-        # Calculate appropriate difficulty level
-        adapted_level = calculate_difficulty_level(current_user.id, operation, level)
+        if not operation or level is None:
+            print(f"Missing data: operation={operation}, level={level}")  # Debug log
+            return jsonify({'error': 'Missing operation or level'}), 400
         
-        # Get problem with user history consideration
-        problem = get_problem(operation, adapted_level, current_user.id, db)
+        try:
+            level = int(level)
+        except (TypeError, ValueError) as e:
+            print(f"Error converting level to int: {e}")  # Debug log
+            return jsonify({'error': 'Invalid level format'}), 400
+            
+        # Use ProblemGenerator.get_problem instead of get_problem
+        print(f"Calling ProblemGenerator.get_problem with: operation={operation}, level={level}")  # Debug log
+        problem = ProblemGenerator.get_problem(
+            operation=operation,
+            level=level,
+            user_id=current_user.id,
+            db=db
+        )
         
-        return jsonify({
-            'problem': problem['problem'],
-            'level': adapted_level,
-            'operation': operation
-        })
+        print(f"Generated problem: {problem}")  # Debug log
+        return jsonify(problem)
+        
     except Exception as e:
-        print(f"Error in get_problem route: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        print(f"Error generating problem: {str(e)}")  # Detailed error log
+        import traceback
+        print(traceback.format_exc())  # Print full stack trace
+        return jsonify({'error': 'Error generating problem'}), 500
 
 @app.route('/check_answer', methods=['POST'])
 @login_required
