@@ -18,6 +18,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Add this after app initialization but before routes
+#Remove duplicates used in analyze_level.html
 @app.template_filter('unique')
 def unique_filter(l):
     """Return unique items from a list while preserving order"""
@@ -375,6 +376,90 @@ def progress():
     except Exception as e:
         print(f"Error in progress route: {str(e)}")  # Debug print
         return f"An error occurred: {str(e)}", 500
+
+@app.route('/student_progress/<int:student_id>')
+@login_required
+def student_progress(student_id):
+    if not current_user.is_teacher:
+        flash('Access denied. Teachers only.', 'danger')
+        return redirect(url_for('home'))
+        
+    student = User.query.get_or_404(student_id)
+    if student not in current_user.students:
+        flash('Access denied. Not your student.', 'danger')
+        return redirect(url_for('welcome'))
+    
+    # Get all practice attempts for this student
+    attempts = PracticeAttempt.query.filter_by(user_id=student.id).all()
+    
+    # Calculate statistics for each operation
+    stats = {}
+    for operation in ['addition', 'multiplication']:
+        operation_attempts = [a for a in attempts if a.operation == operation]
+        if operation_attempts:
+            total_attempts = len(operation_attempts)
+            correct_attempts = len([a for a in operation_attempts if a.is_correct])
+            accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
+            
+            # Calculate current streak
+            current_streak = 0
+            for attempt in reversed(operation_attempts):
+                if attempt.is_correct:
+                    current_streak += 1
+                else:
+                    break
+            
+            # Calculate average time and fastest correct solution
+            times = [a.time_taken for a in operation_attempts if a.is_correct]
+            avg_time = sum(times) / len(times) if times else 0
+            fastest_time = min(times) if times else 0
+            
+            # Get level-specific stats
+            levels = {}
+            for attempt in operation_attempts:
+                level = attempt.level
+                if level not in levels:
+                    levels[level] = {
+                        'total': 0,
+                        'correct': 0,
+                        'times': []
+                    }
+                levels[level]['total'] += 1
+                if attempt.is_correct:
+                    levels[level]['correct'] += 1
+                    levels[level]['times'].append(attempt.time_taken)
+            
+            # Calculate level-specific metrics
+            level_stats = {}
+            for level, data in levels.items():
+                level_stats[level] = {
+                    'accuracy': (data['correct'] / data['total'] * 100) if data['total'] > 0 else 0,
+                    'avg_time': sum(data['times']) / len(data['times']) if data['times'] else 0,
+                    'attempts': data['total']
+                }
+            
+            stats[operation] = {
+                'total_attempts': total_attempts,
+                'accuracy': accuracy,
+                'current_streak': current_streak,
+                'average_time': avg_time,
+                'fastest_time': fastest_time,
+                'levels': level_stats
+            }
+        else:
+            stats[operation] = {
+                'total_attempts': 0,
+                'accuracy': 0,
+                'current_streak': 0,
+                'average_time': 0,
+                'fastest_time': 0,
+                'levels': {}
+            }
+    
+    return render_template('progress.html', 
+                         stats=stats, 
+                         student=student,
+                         viewing_as_teacher=True)
 
 @app.route('/analyze_level/<operation>/<int:level>')
 @login_required
