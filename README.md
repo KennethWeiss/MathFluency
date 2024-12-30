@@ -1,178 +1,176 @@
 # Math Fluency
 
-
-
-A web application to help students practice and improve their math skills through interactive exercises and progress tracking.
+A web application designed to help students practice and master basic math operations through interactive exercises and detailed progress tracking. Teachers can monitor their students' progress and identify areas needing additional focus.
 
 ## Features
 
-- **User Authentication**: Secure login and registration system
-- **Interactive Practice**: 
-  - Addition practice with multiple difficulty levels
-  - Multiplication practice with tables from 0 to 12
-  - Real-time feedback on answers
-- **Progress Tracking**: 
-  - Detailed statistics on practice attempts
-  - Performance metrics by operation type
-  - Time tracking for problem-solving speed
+### User System
+- **Role-Based Access**:
+  - Teachers can view student progress and manage classes
+  - Students can practice problems and track their own progress
+- **Secure Authentication**:
+  - User registration with email verification
+  - Password hashing and secure session management
 
-## Technical Stack
+### Practice System
+- **Addition Practice**:
+  - Level 1: Adding 1 to single digit
+  - Level 2: Adding 2 to single digit
+  - Level 3: Make 10
+  - Level 4: Add single digit to double digit
+  - Level 5: Add double digit to double digit
+- **Multiplication Practice**:
+  - Tables 0-12 with progressive difficulty
+  - Adaptive problem selection based on performance
+- **Real-time Feedback**:
+  - Immediate answer validation
+  - Streak tracking for motivation
+  - Time tracking per problem
 
-- **Backend**: Flask (Python)
-- **Database**: SQLAlchemy with SQLite
-- **Frontend**: HTML, JavaScript, Bootstrap 5
-- **Authentication**: Flask-Login
+### Progress Tracking
+- **Detailed Statistics**:
+  - Overall accuracy and attempt counts
+  - Current streak tracking
+  - Average completion time
+  - Level-specific performance metrics
+- **Teacher Dashboard**:
+  - View individual student progress
+  - Track class-wide performance
+  - Identify common problem areas
+
+## Technical Architecture
+
+### Backend Framework
+- **Flask** (Python web framework)
+  - Blueprints for modular route organization
+  - Jinja2 templating for dynamic HTML
+  - Flask-Login for authentication
+
+### Database
+- **SQLAlchemy ORM**
+  - User model (teachers and students)
+  - Class model for grouping students
+  - PracticeAttempt model for tracking progress
+- **SQLite** for data storage
+
+### Frontend
+- **Bootstrap 5** for responsive design
+- **JavaScript** for interactive features
+- **HTML5/CSS3** for structure and styling
 
 ## Project Structure
 
-### Models
-- `User`: Handles user authentication and profile data    
-    - `Teacher`: Represents teachers
-    - `Student`: Represents students  
+### Core Components
+```
+MathFluency/
+├── app.py                 # Application entry point
+├── routes/               # Route blueprints
+│   ├── auth_routes.py    # Authentication routes
+│   └── practice_routes.py # Practice functionality
+├── services/             # Business logic
+│   └── progress_service.py # Progress calculation
+├── models/               # Database models
+│   ├── user.py
+│   ├── class_.py
+│   └── practice_attempt.py
+├── templates/            # Jinja2 templates
+│   ├── base.html        # Base template
+│   ├── welcome.html     # Dashboard
+│   └── progress.html    # Progress view
+└── static/              # Static assets
+```
 
-    - `Class`: Associates users with classes
+### Key Routes
+- `/` - Home/landing page
+- `/auth/login` - User login
+- `/auth/register` - User registration
+- `/welcome` - User dashboard
+- `/practice` - Practice interface
+- `/progress` - Progress tracking
+- `/student_progress/<id>` - Individual student progress (teachers only)
 
-- `Assignment`: Associates problems with assignments
-- `Problem`: Stores math problems and their attributes
-- `PracticeAttempt`: Tracks individual practice attempts and performance
-
-### Routes
-- `/`: Welcome page and user dashboard
-    - uses a jinja2 template to display teacher and student
-- `/practice`: Interactive math practice interface
-- `/progress`: Performance statistics and tracking
-- `/record_attempt`: API endpoint for recording practice attempts
-
-## Template Structure
-
-The application uses Flask's template inheritance system for consistent layout and styling across pages:
-
-### Base Template (`templates/base.html`)
-- Provides the common HTML structure and navigation
-- Contains blocks for page-specific customization:
-  - `title`: Page title
-  - `content`: Main page content
-  - `extra_css`: Additional CSS files
-  - `extra_js`: Additional JavaScript
-
-### Page Templates
-- `welcome.html`: Landing page and user dashboard
-- `practice.html`: Math practice interface with problem generation
-- `progress.html`: User progress tracking and statistics
-
-All pages extend the base template and override specific blocks as needed, ensuring consistent styling and navigation while maintaining clean, modular code.
+### Templates
+- **Base Template**: Common layout and navigation
+- **Welcome**: Role-specific dashboard
+- **Progress**: Statistical display with charts
+- **Practice**: Interactive problem solving
 
 ## Setup and Installation
 
-1. Clone the repository
-2. Create a virtual environment:
+1. **Clone the Repository**
+   ```bash
+   git clone <repository-url>
+   cd MathFluency
+   ```
+
+2. **Create Virtual Environment**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
-3. Install dependencies:
+
+3. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
-4. Initialize the database:
+
+4. **Initialize Database**
    ```bash
    flask db upgrade
    ```
-5. Run the application:
+
+5. **Create Test Users**
+   ```bash
+   python create_test_users.py
+   ```
+
+6. **Run the Application**
    ```bash
    flask run
    ```
 
-## Development
+## Test Accounts
 
-The application is built with extensibility in mind. Key areas for future development include:
-- Additional operation types (subtraction, division)
-- Advanced analytics and progress visualization
-- Teacher/admin dashboard for monitoring student progress
-- Adaptive difficulty based on user performance
+### Teacher Account
+- Username: teacher1
+- Email: teacher@example.com
+- Password: teacher123
+- Class: Math 101
 
+### Student Accounts
+1. First Student
+   - Username: student1
+   - Password: student123
+   - Class: Math 101
 
-## Test User
-Test Teacher Created:
-------------------------
-Username: teacher1
-Email: teacher@example.com
-Password: teacher123
-Class: Math 101
+2. Second Student
+   - Username: student2
+   - Password: student123
+   - Class: Math 101
 
-Test Student Created:
-------------------------
-Username: student1
-Email: student@example.com
-Password: student123
-Enrolled in: Math 101
+## Development Roadmap
 
-student2
-student123
+### Current Features
+- [x] User authentication system
+- [x] Basic practice interface
+- [x] Progress tracking
+- [x] Teacher dashboard
 
+### Planned Features
+- [ ] Additional operation types (subtraction, division)
+- [ ] Advanced analytics dashboard
+- [ ] Problem area diagnostics
+- [ ] Adaptive difficulty system
+- [ ] Parent portal
+- [ ] Homework assignment system
 
-app.py
-    /get_problem - Generates a new problem:
-    Takes operation and level from the form data
-    Uses our get_problem() function to generate a problem and answer
-    Returns JSON with the problem text and correct answer
+## Contributing
 
-app.py updated
-            GET THE PAGE THE USER WANTED TO GO TO BEFORE LOGGING IN
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('welcome'))
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-create_class.html
+## License
 
-class.html
-for viewing class
-
-WHERE TO START
-1.Problem Model Structure:
-    Basic problem attributes:
-        Problem text/description
-        Difficulty level
-        Category (e.g., addition, subtraction, word problems)
-        Correct answer
-        Points/score value
-    Optional features:
-        Multiple choice options
-        Hints
-        Step-by-step solutions
-2.Assignment System:
-    Teachers can:
-        Create assignments with selected problems
-        Set due dates
-        Assign to entire class or specific students
-        Set minimum score requirements
-    Students can:
-        See assigned problems
-        Track completion status
-        View their scores and progress
-3.Practice Mode:
-    Students can:
-    Choose problem categories
-    Select difficulty levels
-    Practice without time pressure
-    Track personal improvement
-4.Progress Tracking:
-    Track attempts and success rates
-    Show improvement over time
-    Generate reports for teachers
-    Identify areas needing more practice
-    Would you like me to start implementing any of these components? We could begin with:
-
-Creating the Problem model
-Setting up the assignment system
-Building the practice mode interface
-Implementing progress tracking
-What aspect would you like to tackle first?
-
-Go up for more info
-I started with creating the Problem model and setting up the assignment system.
-Next, I would like to build the practice mode interface and implement progress tracking.
-
-
-I'm trying to think of a better way to have students practice problems they are struggling with. 
-I am think of creating a table that tracks problem areas this becomes a review diagnostic tool.
-
+This project is licensed under the MIT License - see the LICENSE file for details.
