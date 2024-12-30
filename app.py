@@ -51,15 +51,15 @@ def welcome():
         students = current_user.students
         classes = current_user.classes
         return render_template('welcome.html', 
-                             is_teacher=True,
-                             students=students,
-                             classes=classes)
+                            is_teacher=True,
+                            students=students,
+                            classes=classes)
     else:
         # Get the student's enrolled class
         enrolled_class = current_user.enrolled_class
         return render_template('welcome.html',
-                             is_teacher=False,
-                             enrolled_class=enrolled_class)
+                            is_teacher=False,
+                            enrolled_class=enrolled_class)
 
 @app.route('/logout')
 @login_required
@@ -435,9 +435,9 @@ def student_progress(student_id):
             }
     
     return render_template('progress.html', 
-                         stats=stats, 
-                         student=student,
-                         viewing_as_teacher=True)
+                        stats=stats, 
+                        student=student,
+                        viewing_as_teacher=True)
 
 @app.route('/analyze_level/<operation>/<int:level>')
 @login_required
