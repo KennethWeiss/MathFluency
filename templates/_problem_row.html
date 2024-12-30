@@ -18,12 +18,13 @@
     </td>
     <td>
         <div class="progress" style="height: 20px;">
-            <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                    role="progressbar" 
-                    style="width: {{ problem['accuracy'] }}%"
-                    aria-valuenow="{{ problem['accuracy'] }}" 
-                    aria-valuemin="0" 
-                    aria-valuemax="100">
+            <div 
+                class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                role="progressbar" 
+                {% with width = problem['accuracy'] %}style="width: {{ width }}%"{% endwith %}
+                aria-valuenow="{{ problem['accuracy'] }}"
+                aria-valuemin="0" 
+                aria-valuemax="100">
                 {{ "%.1f"|format(problem['accuracy']) }}%
             </div>
         </div>
