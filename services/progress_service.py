@@ -35,7 +35,7 @@ class ProgressService:
                 break
         
         # Calculate timing stats
-        correct_times = [a.time_taken for a in attempts if a.is_correct]
+        correct_times = [a.time_taken for a in attempts if a.is_correct and a.time_taken is not None]
         avg_time = sum(correct_times) / len(correct_times) if correct_times else 0
         fastest_time = min(correct_times) if correct_times else 0
         
@@ -47,20 +47,34 @@ class ProgressService:
                 levels[level] = {
                     'total': 0,
                     'correct': 0,
-                    'times': []
+                    'times': [],
+                    'description': f"Level {level}"
                 }
             levels[level]['total'] += 1
             if attempt.is_correct:
                 levels[level]['correct'] += 1
-                levels[level]['times'].append(attempt.time_taken)
+                if attempt.time_taken is not None:
+                    levels[level]['times'].append(attempt.time_taken)
         
         # Format level stats
         level_stats = {}
         for level, data in levels.items():
+            accuracy = (data['correct'] / data['total'] * 100)
+            
+            # Determine mastery status using PracticeAttempt criteria
+            mastery_status = 'needs_practice'
+            if data['total'] >= PracticeAttempt.MIN_ATTEMPTS:
+                if (data['correct'] / data['total']) >= PracticeAttempt.MASTERY_THRESHOLD:
+                    mastery_status = 'mastered'
+                elif (data['correct'] / data['total']) >= PracticeAttempt.LEARNING_THRESHOLD:
+                    mastery_status = 'learning'
+            
             level_stats[level] = {
-                'accuracy': (data['correct'] / data['total'] * 100),
+                'accuracy': accuracy,
                 'avg_time': sum(data['times']) / len(data['times']) if data['times'] else 0,
-                'attempts': data['total']
+                'attempts': data['total'],
+                'description': data['description'],
+                'mastery_status': mastery_status
             }
         
         return {

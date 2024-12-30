@@ -28,7 +28,7 @@
                         <th>Description</th>
                         <th>Attempts</th>
                         <th>Accuracy</th>
-                        <th>Avg Time</th>
+                        <th>Mastery</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,11 +38,19 @@
                         <td>{{ data['description'] }}</td>
                         <td>{{ data['attempts'] }}</td>
                         <td>
-                            <a href="{{ url_for('progress.analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
+                            <a href="{{ url_for('analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
                                 {{ "%.1f"|format(data['accuracy']) }}%
                             </a>
                         </td>
-                        <td>{{ "%.1f"|format(data['avg_time']) }}s</td>
+                        <td>
+                            {% if data['mastery_status'] == 'mastered' %}
+                                <span class="badge bg-success">Mastered</span>
+                            {% elif data['mastery_status'] == 'learning' %}
+                                <span class="badge bg-warning">Learning</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Practice Needed</span>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

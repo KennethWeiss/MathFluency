@@ -302,12 +302,22 @@ def progress():
                     correct = len([a for a in level_attempts if a.is_correct])
                     times = [a.time_taken for a in level_attempts if a.time_taken is not None]
                     avg_time = sum(times) / len(times) if times else 0
+                    accuracy = (correct / total * 100) if total > 0 else 0
+                    
+                    # Determine mastery status
+                    mastery_status = 'needs_practice'
+                    if total >= PracticeAttempt.MIN_ATTEMPTS:
+                        if (correct / total) >= PracticeAttempt.MASTERY_THRESHOLD:
+                            mastery_status = 'mastered'
+                        elif (correct / total) >= PracticeAttempt.LEARNING_THRESHOLD:
+                            mastery_status = 'learning'
                     
                     addition_stats[str(level)] = {
                         'description': description,
                         'attempts': total,
-                        'accuracy': (correct / total * 100) if total > 0 else 0,
-                        'avg_time': avg_time
+                        'accuracy': accuracy,
+                        'avg_time': avg_time,
+                        'mastery_status': mastery_status
                     }
             
             operation_stats['addition'] = {
@@ -339,12 +349,22 @@ def progress():
                     correct = len([a for a in level_attempts if a.is_correct])
                     times = [a.time_taken for a in level_attempts if a.time_taken is not None]
                     avg_time = sum(times) / len(times) if times else 0
+                    accuracy = (correct / total * 100) if total > 0 else 0
+                    
+                    # Determine mastery status
+                    mastery_status = 'needs_practice'
+                    if total >= PracticeAttempt.MIN_ATTEMPTS:
+                        if (correct / total) >= PracticeAttempt.MASTERY_THRESHOLD:
+                            mastery_status = 'mastered'
+                        elif (correct / total) >= PracticeAttempt.LEARNING_THRESHOLD:
+                            mastery_status = 'learning'
                     
                     multiplication_stats[str(level)] = {
                         'description': description,
                         'attempts': total,
-                        'accuracy': (correct / total * 100) if total > 0 else 0,
-                        'avg_time': avg_time
+                        'accuracy': accuracy,
+                        'avg_time': avg_time,
+                        'mastery_status': mastery_status
                     }
             
             operation_stats['multiplication'] = {
@@ -368,86 +388,153 @@ def progress():
 @app.route('/student_progress/<int:student_id>')
 @login_required
 def student_progress(student_id):
-    if not current_user.is_teacher:
-        flash('Access denied. Teachers only.', 'danger')
-        return redirect(url_for('home'))
+    """View progress for a specific student (teacher only)"""
+    try:
+        # Verify current user is a teacher
+        if not current_user.is_teacher:
+            flash('Access denied. Teachers only.', 'danger')
+            return redirect(url_for('welcome'))
         
-    student = User.query.get_or_404(student_id)
-    if student not in current_user.students:
-        flash('Access denied. Not your student.', 'danger')
-        return redirect(url_for('welcome'))
-    
-    # Get all practice attempts for this student
-    attempts = PracticeAttempt.query.filter_by(user_id=student.id).all()
-    
-    # Calculate statistics for each operation
-    stats = {}
-    for operation in ['addition', 'multiplication']:
-        operation_attempts = [a for a in attempts if a.operation == operation]
-        if operation_attempts:
-            total_attempts = len(operation_attempts)
-            correct_attempts = len([a for a in operation_attempts if a.is_correct])
-            accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
+        # Get the student
+        student = User.query.get_or_404(student_id)
+        
+        # Verify student belongs to this teacher
+        if student.teacher_id != current_user.id:
+            flash('Access denied. Not your student.', 'danger')
+            return redirect(url_for('welcome'))
+        
+        # Get operation-specific stats
+        operation_stats = {}
+        
+        # Addition levels
+        addition_levels = {
+            1: "Adding 1 to single digit",
+            2: "Adding 2 to single digit",
+            3: "Make 10",
+            4: "Add single digit to double digit",
+            5: "Add double digit to double digit"
+        }
+        
+        # Multiplication levels (tables)
+        multiplication_levels = {i: f"× {i} Table" for i in range(13)}  # 0-12 tables
+        
+        # Get addition stats
+        addition_attempts = PracticeAttempt.query.filter_by(
+            user_id=student_id,
+            operation='addition'
+        ).all()
+        
+        if addition_attempts:
+            total = len(addition_attempts)
+            correct = len([a for a in addition_attempts if a.is_correct])
+            accuracy = (correct / total * 100) if total > 0 else 0
             
             # Calculate current streak
             current_streak = 0
-            for attempt in reversed(operation_attempts):
+            for attempt in sorted(addition_attempts, key=lambda x: x.created_at, reverse=True):
                 if attempt.is_correct:
                     current_streak += 1
                 else:
                     break
             
-            # Calculate average time and fastest correct solution
-            times = [a.time_taken for a in operation_attempts if a.is_correct]
-            avg_time = sum(times) / len(times) if times else 0
-            fastest_time = min(times) if times else 0
-            
             # Get level-specific stats
-            levels = {}
-            for attempt in operation_attempts:
-                level = attempt.level
-                if level not in levels:
-                    levels[level] = {
-                        'total': 0,
-                        'correct': 0,
-                        'times': []
+            addition_stats = {}
+            for level, description in addition_levels.items():
+                level_attempts = [a for a in addition_attempts if a.level == level]
+                if level_attempts:
+                    total = len(level_attempts)
+                    correct = len([a for a in level_attempts if a.is_correct])
+                    times = [a.time_taken for a in level_attempts if a.time_taken is not None]
+                    avg_time = sum(times) / len(times) if times else 0
+                    accuracy = (correct / total * 100) if total > 0 else 0
+                    
+                    # Determine mastery status
+                    mastery_status = 'needs_practice'
+                    if total >= PracticeAttempt.MIN_ATTEMPTS:
+                        if (correct / total) >= PracticeAttempt.MASTERY_THRESHOLD:
+                            mastery_status = 'mastered'
+                        elif (correct / total) >= PracticeAttempt.LEARNING_THRESHOLD:
+                            mastery_status = 'learning'
+                    
+                    addition_stats[str(level)] = {
+                        'description': description,
+                        'attempts': total,
+                        'accuracy': accuracy,
+                        'avg_time': avg_time,
+                        'mastery_status': mastery_status
                     }
-                levels[level]['total'] += 1
-                if attempt.is_correct:
-                    levels[level]['correct'] += 1
-                    levels[level]['times'].append(attempt.time_taken)
             
-            # Calculate level-specific metrics
-            level_stats = {}
-            for level, data in levels.items():
-                level_stats[level] = {
-                    'accuracy': (data['correct'] / data['total'] * 100) if data['total'] > 0 else 0,
-                    'avg_time': sum(data['times']) / len(data['times']) if data['times'] else 0,
-                    'attempts': data['total']
-                }
-            
-            stats[operation] = {
-                'total_attempts': total_attempts,
+            operation_stats['addition'] = {
+                'total_attempts': total,
                 'accuracy': accuracy,
                 'current_streak': current_streak,
-                'average_time': avg_time,
-                'fastest_time': fastest_time,
-                'levels': level_stats
+                'levels': addition_stats
             }
-        else:
-            stats[operation] = {
-                'total_attempts': 0,
-                'accuracy': 0,
-                'current_streak': 0,
-                'average_time': 0,
-                'fastest_time': 0,
-                'levels': {}
+        
+        # Get multiplication stats
+        multiplication_attempts = PracticeAttempt.query.filter_by(
+            user_id=student_id,
+            operation='multiplication'
+        ).all()
+        
+        if multiplication_attempts:
+            total = len(multiplication_attempts)
+            correct = len([a for a in multiplication_attempts if a.is_correct])
+            accuracy = (correct / total * 100) if total > 0 else 0
+            
+            # Calculate current streak
+            current_streak = 0
+            for attempt in sorted(multiplication_attempts, key=lambda x: x.created_at, reverse=True):
+                if attempt.is_correct:
+                    current_streak += 1
+                else:
+                    break
+            
+            # Get level-specific stats
+            multiplication_stats = {}
+            for level, description in multiplication_levels.items():
+                level_attempts = [a for a in multiplication_attempts if a.level == level]
+                if level_attempts:
+                    total = len(level_attempts)
+                    correct = len([a for a in level_attempts if a.is_correct])
+                    times = [a.time_taken for a in level_attempts if a.time_taken is not None]
+                    avg_time = sum(times) / len(times) if times else 0
+                    accuracy = (correct / total * 100) if total > 0 else 0
+                    
+                    # Determine mastery status
+                    mastery_status = 'needs_practice'
+                    if total >= PracticeAttempt.MIN_ATTEMPTS:
+                        if (correct / total) >= PracticeAttempt.MASTERY_THRESHOLD:
+                            mastery_status = 'mastered'
+                        elif (correct / total) >= PracticeAttempt.LEARNING_THRESHOLD:
+                            mastery_status = 'learning'
+                    
+                    multiplication_stats[str(level)] = {
+                        'description': description,
+                        'attempts': total,
+                        'accuracy': accuracy,
+                        'avg_time': avg_time,
+                        'mastery_status': mastery_status
+                    }
+            
+            operation_stats['multiplication'] = {
+                'total_attempts': total,
+                'accuracy': accuracy,
+                'current_streak': current_streak,
+                'levels': multiplication_stats
             }
-    
-    return render_template('progress.html', 
-                        stats=stats, 
-                        student=student,
-                        viewing_as_teacher=True)
+        
+        return render_template('progress.html',
+                            stats=operation_stats,
+                            student=student,
+                            viewing_as_teacher=True)
+                            
+    except Exception as e:
+        print(f"Error in student_progress route: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        flash('An error occurred while loading student progress data.', 'danger')
+        return redirect(url_for('welcome'))
 
 @app.route('/analyze_level/<operation>/<int:level>')
 @login_required
