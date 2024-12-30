@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Math Quests - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Hero Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2>Math Adventure Quest</h2>
+                            <p class="mb-0">Complete quests to become a Math Hero!</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-gem text-warning"></i>
+                                    <span>150 gems</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <span>Level 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Quests -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Daily Quests</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="quest-card active">
+                                <div class="quest-header">
+                                    <span class="badge bg-warning">10 gems</span>
+                                    <h5>Speed Champion</h5>
+                                </div>
+                                <p>Solve 20 addition problems in 5 minutes</p>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 60%"></div>
+                                </div>
+                                <button class="btn btn-primary btn-sm">Continue Quest</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="quest-card">
+                                <div class="quest-header">
+                                    <span class="badge bg-warning">15 gems</span>
+                                    <h5>Multiplication Master</h5>
+                                </div>
+                                <p>Complete 5 perfect rounds of ×3 tables</p>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 40%"></div>
+                                </div>
+                                <button class="btn btn-primary btn-sm">Start Quest</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="quest-card completed">
+                                <div class="quest-header">
+                                    <span class="badge bg-warning">5 gems</span>
+                                    <h5>Early Bird</h5>
+                                </div>
+                                <p>Complete your first practice session today</p>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                                <button class="btn btn-success btn-sm" disabled>Completed!</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Quest Lines -->
+    <div class="row">
+        <!-- Addition Quest Line -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus me-2"></i>Addition Adventures</h4>
+                </div>
+                <div class="card-body">
+                    <div class="quest-timeline">
+                        <!-- Quest 1 -->
+                        <div class="quest-item completed">
+                            <div class="quest-marker">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Number Friends</h5>
+                                <p>Master adding numbers 1-5</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>20 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>Beginner Badge</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quest 2 -->
+                        <div class="quest-item active">
+                            <div class="quest-marker">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Double Trouble</h5>
+                                <p>Practice adding doubles (1+1 to 10+10)</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>30 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>Doubles Master</span>
+                                </div>
+                                <button class="btn btn-primary btn-sm mt-2">Continue Quest</button>
+                            </div>
+                        </div>
+
+                        <!-- Quest 3 -->
+                        <div class="quest-item locked">
+                            <div class="quest-marker">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Making Ten</h5>
+                                <p>Find pairs of numbers that make 10</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>40 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>Ten Master</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multiplication Quest Line -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-times me-2"></i>Multiplication Missions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="quest-timeline">
+                        <!-- Quest 1 -->
+                        <div class="quest-item completed">
+                            <div class="quest-marker">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Times Two Hero</h5>
+                                <p>Master the 2 times table</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>25 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>×2 Master</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quest 2 -->
+                        <div class="quest-item active">
+                            <div class="quest-marker">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Triple Threat</h5>
+                                <p>Conquer the 3 times table</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>35 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>×3 Master</span>
+                                </div>
+                                <button class="btn btn-primary btn-sm mt-2">Continue Quest</button>
+                            </div>
+                        </div>
+
+                        <!-- Quest 3 -->
+                        <div class="quest-item locked">
+                            <div class="quest-marker">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="quest-content">
+                                <h5>Four Forces</h5>
+                                <p>Master the 4 times table</p>
+                                <div class="quest-rewards">
+                                    <span class="badge bg-warning"><i class="fas fa-gem me-1"></i>45 gems</span>
+                                    <span class="badge bg-info"><i class="fas fa-award me-1"></i>×4 Master</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.quest-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.quest-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.quest-card.active {
+    border-color: #007bff;
+}
+
+.quest-card.completed {
+    border-color: #28a745;
+}
+
+.quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.quest-timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.quest-timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.quest-item {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.quest-marker {
+    width: 2rem;
+    height: 2rem;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.quest-item.completed .quest-marker {
+    color: #28a745;
+}
+
+.quest-item.active .quest-marker {
+    color: #007bff;
+}
+
+.quest-item.locked .quest-marker {
+    color: #6c757d;
+}
+
+.quest-content {
+    flex-grow: 1;
+}
+
+.quest-rewards {
+    margin-top: 0.5rem;
+}
+
+.quest-rewards .badge {
+    margin-right: 0.5rem;
+}
+</style>
+{% endblock %}

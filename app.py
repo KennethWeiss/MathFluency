@@ -663,5 +663,50 @@ def incorrect_problems():
     
     return render_template('incorrect_problems.html', attempts=incorrect_attempts)
 
+@app.route('/layout/deltamath')
+@login_required
+def deltamath_layout():
+    return render_template('layouts/deltamath_style.html')
+
+@app.route('/layout/99math')
+@login_required
+def ninetynine_math_layout():
+    return render_template('layouts/99math_style.html')
+
+@app.route('/layout/learning-path')
+@login_required
+def learning_path_layout():
+    return render_template('layouts/learning_path.html')
+
+@app.route('/layout/dashboard')
+@login_required
+def dashboard_layout():
+    return render_template('layouts/dashboard_style.html')
+
+@app.route('/layout/mastery-grid')
+@login_required
+def mastery_grid_layout():
+    return render_template('layouts/mastery_grid.html')
+
+@app.route('/layout/skill-tree')
+@login_required
+def skill_tree_layout():
+    return render_template('layouts/skill_tree.html')
+
+@app.route('/layout/timeline')
+@login_required
+def timeline_layout():
+    return render_template('layouts/timeline.html')
+
+@app.route('/layout/challenge')
+@login_required
+def challenge_layout():
+    return render_template('layouts/challenge_mode.html')
+
+@app.route('/layout/quest')
+@login_required
+def quest_layout():
+    return render_template('layouts/quest_style.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

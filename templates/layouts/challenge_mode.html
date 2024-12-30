@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Challenge Mode - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2>Math Challenge Arena</h2>
+                            <p class="mb-0">Test your skills against time and compete with others!</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center gap-4">
+                                <div>
+                                    <i class="fas fa-trophy text-warning"></i>
+                                    <span>Rank: #42</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-medal text-warning"></i>
+                                    <span>15 medals</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenge Categories -->
+    <div class="row mb-4">
+        <!-- Speed Challenge -->
+        <div class="col-md-4">
+            <div class="card challenge-card">
+                <div class="card-body">
+                    <div class="challenge-icon bg-danger text-white">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h4>Speed Challenge</h4>
+                    <p>Solve as many problems as you can in 60 seconds!</p>
+                    <div class="challenge-stats">
+                        <div class="stat-item">
+                            <small>Best Score</small>
+                            <h5>24 problems</h5>
+                        </div>
+                        <div class="stat-item">
+                            <small>Global Rank</small>
+                            <h5>#56</h5>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger w-100">Start Challenge</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accuracy Challenge -->
+        <div class="col-md-4">
+            <div class="card challenge-card">
+                <div class="card-body">
+                    <div class="challenge-icon bg-success text-white">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h4>Accuracy Challenge</h4>
+                    <p>Get the highest streak of correct answers!</p>
+                    <div class="challenge-stats">
+                        <div class="stat-item">
+                            <small>Best Streak</small>
+                            <h5>15 correct</h5>
+                        </div>
+                        <div class="stat-item">
+                            <small>Global Rank</small>
+                            <h5>#32</h5>
+                        </div>
+                    </div>
+                    <button class="btn btn-success w-100">Start Challenge</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boss Challenge -->
+        <div class="col-md-4">
+            <div class="card challenge-card">
+                <div class="card-body">
+                    <div class="challenge-icon bg-primary text-white">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h4>Boss Challenge</h4>
+                    <p>Defeat the math boss with complex problems!</p>
+                    <div class="challenge-stats">
+                        <div class="stat-item">
+                            <small>Bosses Defeated</small>
+                            <h5>3</h5>
+                        </div>
+                        <div class="stat-item">
+                            <small>Global Rank</small>
+                            <h5>#78</h5>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100">Start Challenge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboards -->
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Weekly Champions -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h4 class="mb-0 text-dark">Weekly Champions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="leaderboard">
+                        <div class="leaderboard-item">
+                            <div class="rank">#1</div>
+                            <div class="player-info">
+                                <img src="https://ui-avatars.com/api/?name=Math+Hero&background=random" class="avatar">
+                                <div>
+                                    <h6>Math Hero</h6>
+                                    <small>125 problems solved</small>
+                                </div>
+                            </div>
+                            <div class="score">
+                                <i class="fas fa-trophy text-warning"></i>
+                                980 pts
+                            </div>
+                        </div>
+                        <div class="leaderboard-item">
+                            <div class="rank">#2</div>
+                            <div class="player-info">
+                                <img src="https://ui-avatars.com/api/?name=Number+Ninja&background=random" class="avatar">
+                                <div>
+                                    <h6>Number Ninja</h6>
+                                    <small>118 problems solved</small>
+                                </div>
+                            </div>
+                            <div class="score">
+                                <i class="fas fa-trophy text-secondary"></i>
+                                850 pts
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Your Achievements -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Your Achievements</h4>
+                </div>
+                <div class="card-body">
+                    <div class="achievements">
+                        <div class="achievement-item">
+                            <div class="achievement-icon bg-success">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="achievement-info">
+                                <h6>Speed Demon</h6>
+                                <p>Solved 20 problems in under 60 seconds</p>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <div class="achievement-icon bg-primary">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="achievement-info">
+                                <h6>Perfect Streak</h6>
+                                <p>Get 10 correct answers in a row</p>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar bg-primary" style="width: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.challenge-card {
+    height: 100%;
+    transition: transform 0.3s ease;
+}
+
+.challenge-card:hover {
+    transform: translateY(-5px);
+}
+
+.challenge-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.challenge-stats {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-item small {
+    color: #6c757d;
+}
+
+.stat-item h5 {
+    margin: 0;
+}
+
+.leaderboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.rank {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #6c757d;
+    width: 40px;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.score {
+    font-weight: bold;
+}
+
+.achievements {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.achievement-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.achievement-info {
+    flex-grow: 1;
+}
+
+.achievement-info h6 {
+    margin-bottom: 0.25rem;
+}
+
+.achievement-info p {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}

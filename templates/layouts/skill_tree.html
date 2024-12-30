@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Tree - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2>Math Skills Tree</h2>
+                            <p class="mb-0">Unlock new skills and become a Math Master!</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center gap-4">
+                                <div>
+                                    <i class="fas fa-brain text-info"></i>
+                                    <span>Skill Points: 3</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <span>Level 5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Tree -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="skill-tree">
+                        <!-- Basic Operations Branch -->
+                        <div class="skill-branch">
+                            <div class="skill-node root active">
+                                <div class="skill-icon">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                                <h5>Basic Math</h5>
+                                <span class="skill-level">Level 3</span>
+                            </div>
+                            
+                            <!-- Addition Path -->
+                            <div class="skill-path addition-path">
+                                <div class="skill-node completed">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <h6>Adding 1</h6>
+                                    <span class="skill-status">Mastered</span>
+                                </div>
+                                
+                                <div class="skill-node active">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <h6>Adding 2</h6>
+                                    <span class="skill-status">In Progress</span>
+                                </div>
+                                
+                                <div class="skill-node locked">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <h6>Making 10</h6>
+                                    <span class="skill-status">Locked</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Multiplication Path -->
+                            <div class="skill-path multiplication-path">
+                                <div class="skill-node completed">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                    <h6>×2 Tables</h6>
+                                    <span class="skill-status">Mastered</span>
+                                </div>
+                                
+                                <div class="skill-node active">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                    <h6>×3 Tables</h6>
+                                    <span class="skill-status">In Progress</span>
+                                </div>
+                                
+                                <div class="skill-node locked">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                    <h6>×4 Tables</h6>
+                                    <span class="skill-status">Locked</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Operations Branch -->
+                        <div class="skill-branch">
+                            <div class="skill-node advanced locked">
+                                <div class="skill-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <h5>Advanced Math</h5>
+                                <span class="skill-level">Locked</span>
+                            </div>
+                            
+                            <!-- Future paths will be unlocked here -->
+                            <div class="skill-path locked-path">
+                                <div class="skill-node locked">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <h6>Decimals</h6>
+                                    <span class="skill-status">Locked</span>
+                                </div>
+                                
+                                <div class="skill-node locked">
+                                    <div class="skill-icon">
+                                        <i class="fas fa-superscript"></i>
+                                    </div>
+                                    <h6>Powers</h6>
+                                    <span class="skill-status">Locked</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Details (shows when a skill is selected) -->
+    <div class="row mt-4" id="skill-details" style="display: none;">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0" id="skill-title">Skill Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h2 id="current-problem" class="display-4"></h2>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="mb-4">
+                            <input type="number" id="answer-input" class="form-control form-control-lg text-center" placeholder="Enter your answer">
+                            <input type="hidden" id="correct-answer-hidden">
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button id="check-answer" class="btn btn-success btn-lg">Check Answer</button>
+                            <button id="new-problem" class="btn btn-primary btn-lg">New Problem</button>
+                        </div>
+                        
+                        <div id="feedback" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.skill-tree {
+    padding: 2rem;
+    position: relative;
+}
+
+.skill-branch {
+    margin-bottom: 4rem;
+    position: relative;
+}
+
+.skill-node {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 150px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.skill-node:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.skill-node.root {
+    border-color: #007bff;
+    background: #f8f9fa;
+    margin: 0 auto 2rem;
+}
+
+.skill-node.completed {
+    border-color: #28a745;
+}
+
+.skill-node.active {
+    border-color: #007bff;
+    box-shadow: 0 0 15px rgba(0,123,255,0.3);
+}
+
+.skill-node.locked {
+    border-color: #6c757d;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.skill-icon {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.2rem;
+}
+
+.skill-level {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.skill-status {
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+.skill-path {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    position: relative;
+    margin-top: 2rem;
+}
+
+.skill-path::before {
+    content: '';
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    width: 2px;
+    height: 2rem;
+    background: #dee2e6;
+}
+
+.addition-path, .multiplication-path {
+    position: relative;
+}
+
+.addition-path::after, .multiplication-path::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #dee2e6;
+    z-index: -1;
+}
+
+.locked-path .skill-node {
+    opacity: 0.5;
+}
+</style>
+{% endblock %}

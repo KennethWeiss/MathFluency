@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Style - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <!-- User Progress Card -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <img src="https://ui-avatars.com/api/?name=Math+Student&background=random" class="rounded-circle mb-3" style="width: 80px;">
+                    <h5 class="mb-0">Math Student</h5>
+                    <p class="text-muted">Level 5 Mathematician</p>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                    </div>
+                    <div class="d-flex justify-content-around">
+                        <div>
+                            <i class="fas fa-star text-warning"></i>
+                            <small>650 pts</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-trophy text-primary"></i>
+                            <small>12 badges</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Today's Progress</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Problems Solved</span>
+                        <span class="badge bg-primary">24</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Accuracy</span>
+                        <span class="badge bg-success">85%</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Time Spent</span>
+                        <span class="badge bg-info">45m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="text-primary">Continue Learning</h6>
+                            <p class="text-muted">Multiplication Tables ×5</p>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-success" style="width: 60%"></div>
+                            </div>
+                            <button class="btn btn-primary btn-sm">Resume</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="text-warning">Daily Challenge</h6>
+                            <p class="text-muted">Solve 20 problems</p>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-warning" style="width: 40%"></div>
+                            </div>
+                            <button class="btn btn-warning btn-sm">Start</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="text-success">Weekly Goal</h6>
+                            <p class="text-muted">Practice 30 minutes daily</p>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-success" style="width: 80%"></div>
+                            </div>
+                            <button class="btn btn-success btn-sm">View Progress</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Grid -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Math Topics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Addition -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">Addition</h6>
+                                        <span class="badge bg-success">80% Complete</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: 80%"></div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary btn-sm" data-operation="addition-1">
+                                            Adding 1
+                                            <i class="fas fa-check-circle text-success ms-2"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" data-operation="addition-2">
+                                            Adding 2
+                                            <i class="fas fa-spinner text-warning ms-2"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Multiplication -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">Multiplication</h6>
+                                        <span class="badge bg-warning">45% Complete</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: 45%"></div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary btn-sm" data-operation="mult-2">
+                                            ×2 Tables
+                                            <i class="fas fa-check-circle text-success ms-2"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" data-operation="mult-3">
+                                            ×3 Tables
+                                            <i class="fas fa-spinner text-warning ms-2"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

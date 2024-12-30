@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}99math Style - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Topic Selection -->
+    <div class="row g-4 mb-4">
+        <!-- Basic Operations Card -->
+        <div class="col-md-4">
+            <div class="card h-100 topic-card" data-topic="basic">
+                <div class="card-body text-center">
+                    <i class="fas fa-calculator fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Basic Operations</h5>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" data-operation="addition">
+                            <i class="fas fa-plus me-2"></i>Addition
+                            <span class="badge bg-success ms-2">80%</span>
+                        </button>
+                        <button class="btn btn-outline-primary" data-operation="multiplication">
+                            <i class="fas fa-times me-2"></i>Multiplication
+                            <span class="badge bg-warning ms-2">65%</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fractions Card -->
+        <div class="col-md-4">
+            <div class="card h-100 topic-card" data-topic="fractions">
+                <div class="card-body text-center">
+                    <i class="fas fa-divide fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Fractions</h5>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-warning" style="width: 45%"></div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" data-operation="fraction-addition">
+                            Adding Fractions
+                            <span class="badge bg-warning ms-2">45%</span>
+                        </button>
+                        <button class="btn btn-outline-primary" data-operation="mixed-numbers">
+                            Mixed Numbers
+                            <span class="badge bg-secondary ms-2">New!</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Topics Card -->
+        <div class="col-md-4">
+            <div class="card h-100 topic-card" data-topic="advanced">
+                <div class="card-body text-center">
+                    <i class="fas fa-brain fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Advanced Topics</h5>
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" data-operation="decimals">
+                            Decimals
+                            <span class="badge bg-secondary ms-2">Locked</span>
+                        </button>
+                        <button class="btn btn-outline-primary" data-operation="exponents">
+                            Exponents
+                            <span class="badge bg-secondary ms-2">Locked</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Problem Area -->
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Practice Area</h4>
+            <select id="level-select" class="form-select form-select-sm" style="width: auto;">
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+            </select>
+        </div>
+        <div class="card-body">
+            <div id="problem-display" class="text-center mb-4">
+                <h2 id="current-problem" class="display-4 mb-4"></h2>
+            </div>
+            
+            <div id="answer-section" class="text-center">
+                <div class="mb-4">
+                    <input type="number" id="answer-input" class="form-control form-control-lg text-center" placeholder="Enter your answer">
+                    <input type="hidden" id="correct-answer-hidden">
+                </div>
+                
+                <div class="btn-group">
+                    <button id="check-answer" class="btn btn-success btn-lg">Check Answer</button>
+                    <button id="new-problem" class="btn btn-primary btn-lg">New Problem</button>
+                </div>
+                
+                <div id="feedback" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

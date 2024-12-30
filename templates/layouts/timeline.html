@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Timeline - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h2>Your Math Journey</h2>
+                            <p class="mb-0">Track your progress through time!</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center gap-4">
+                                <div>
+                                    <i class="fas fa-clock text-warning"></i>
+                                    <span>Time Spent: 5h 30m</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-trophy text-warning"></i>
+                                    <span>Achievements: 8</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="timeline-nav">
+                        <div class="timeline-point completed">
+                            <div class="timeline-marker">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="timeline-label">Basics</div>
+                        </div>
+                        <div class="timeline-point active">
+                            <div class="timeline-marker">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="timeline-label">Addition</div>
+                        </div>
+                        <div class="timeline-point">
+                            <div class="timeline-marker">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="timeline-label">Multiplication</div>
+                        </div>
+                        <div class="timeline-point locked">
+                            <div class="timeline-marker">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="timeline-label">Advanced</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Stage Content -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Learning Path -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Addition Mastery Path</h4>
+                </div>
+                <div class="card-body">
+                    <div class="vertical-timeline">
+                        <!-- Step 1 -->
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h5>Adding Single Digits</h5>
+                                <p>Master adding numbers 1-9</p>
+                                <div class="timeline-stats">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-star me-1"></i>100%
+                                    </span>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clock me-1"></i>1h 20m
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="timeline-item active">
+                            <div class="timeline-badge">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h5>Making Ten</h5>
+                                <p>Find pairs of numbers that add to 10</p>
+                                <div class="timeline-stats">
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-star me-1"></i>60%
+                                    </span>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clock me-1"></i>45m
+                                    </span>
+                                </div>
+                                <button class="btn btn-primary btn-sm mt-2">Continue Practice</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="timeline-item locked">
+                            <div class="timeline-badge">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h5>Double Digit Addition</h5>
+                                <p>Master adding numbers up to 100</p>
+                                <div class="timeline-stats">
+                                    <span class="badge bg-secondary">Locked</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Progress Stats -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Your Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-stat">
+                        <label>Overall Completion</label>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-stat">
+                        <label>Accuracy</label>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar bg-info" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="progress-stat">
+                        <label>Speed</label>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar bg-warning" style="width: 70%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Recent Achievements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="achievement-list">
+                        <div class="achievement-item">
+                            <i class="fas fa-medal text-warning"></i>
+                            <div>
+                                <h6>Speed Demon</h6>
+                                <small>Solved 10 problems in under 2 minutes</small>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <i class="fas fa-star text-primary"></i>
+                            <div>
+                                <h6>Perfect Score</h6>
+                                <small>100% accuracy in a practice session</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-nav {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline-nav::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #dee2e6;
+    z-index: 0;
+}
+
+.timeline-point {
+    text-align: center;
+    z-index: 1;
+    position: relative;
+}
+
+.timeline-marker {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+}
+
+.timeline-point.completed .timeline-marker {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.timeline-point.active .timeline-marker {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.timeline-point.locked .timeline-marker {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.timeline-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.vertical-timeline {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.vertical-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 3rem;
+}
+
+.timeline-badge {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.timeline-item.completed .timeline-badge {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.timeline-item.active .timeline-badge {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.timeline-item.locked .timeline-badge {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.timeline-content {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.timeline-stats {
+    margin-top: 1rem;
+}
+
+.timeline-stats .badge {
+    margin-right: 0.5rem;
+}
+
+.progress-stat {
+    margin-bottom: 1.5rem;
+}
+
+.progress-stat label {
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+}
+
+.achievement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+}
+
+.achievement-item i {
+    font-size: 1.5rem;
+}
+</style>
+{% endblock %}
