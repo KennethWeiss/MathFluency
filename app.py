@@ -231,6 +231,11 @@ def calculate_difficulty_level(user_id, operation, current_level):
 @login_required
 def progress():
     try:
+        # If viewing as teacher with student_id parameter, redirect to student_progress
+        student_id = request.args.get('student_id')
+        if current_user.is_teacher and student_id:
+            return redirect(url_for('student_progress', student_id=student_id))
+            
         # Get total attempts for this user
         total_attempts = PracticeAttempt.query.filter_by(user_id=current_user.id).count()
         print(f"Total attempts: {total_attempts}")  # Debug print
@@ -240,14 +245,9 @@ def progress():
             user_id=current_user.id, 
             is_correct=True
         ).count()
-        print(f"Correct attempts: {correct_attempts}")  # Debug print
         
         accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
-        
-        # Get average time taken
-        avg_time = db.session.query(func.avg(PracticeAttempt.time_taken))\
-            .filter(PracticeAttempt.user_id == current_user.id).scalar() or 0
-        print(f"Average time: {avg_time}")  # Debug print
+        print(f"Accuracy: {accuracy}%")  # Debug print
         
         # Get fastest correct attempt
         fastest_correct = PracticeAttempt.query\
@@ -286,24 +286,36 @@ def progress():
             user_id=current_user.id,
             operation='addition'
         ).all()
-        print(f"Addition attempts found: {len(addition_attempts)}")  # Debug print
         
         if addition_attempts:
+            addition_total = len(addition_attempts)
+            addition_correct = len([a for a in addition_attempts if a.is_correct])
+            addition_accuracy = (addition_correct / addition_total * 100) if addition_total > 0 else 0
+            addition_times = [a.time_taken for a in addition_attempts if a.time_taken is not None]
+            addition_avg_time = sum(addition_times) / len(addition_times) if addition_times else 0
+            
+            # Get level-specific stats
             for level, description in addition_levels.items():
                 level_attempts = [a for a in addition_attempts if a.level == level]
-                total = len(level_attempts)
-                print(f"Level {level} attempts: {total}")  # Debug print
-                if total > 0:
+                if level_attempts:
+                    total = len(level_attempts)
                     correct = len([a for a in level_attempts if a.is_correct])
                     times = [a.time_taken for a in level_attempts if a.time_taken is not None]
                     avg_time = sum(times) / len(times) if times else 0
                     
-                    addition_stats[str(level)] = {  # Convert level to string for template
+                    addition_stats[str(level)] = {
                         'description': description,
-                        'total': total,
-                        'accuracy': (correct/total*100),
+                        'attempts': total,
+                        'accuracy': (correct / total * 100) if total > 0 else 0,
                         'avg_time': avg_time
                     }
+            
+            operation_stats['addition'] = {
+                'total_attempts': addition_total,
+                'accuracy': addition_accuracy,
+                'current_streak': current_streak,
+                'levels': addition_stats
+            }
         
         # Get stats for multiplication levels
         multiplication_stats = {}
@@ -311,49 +323,47 @@ def progress():
             user_id=current_user.id,
             operation='multiplication'
         ).all()
-        print(f"Multiplication attempts found: {len(multiplication_attempts)}")  # Debug print
         
         if multiplication_attempts:
+            mult_total = len(multiplication_attempts)
+            mult_correct = len([a for a in multiplication_attempts if a.is_correct])
+            mult_accuracy = (mult_correct / mult_total * 100) if mult_total > 0 else 0
+            mult_times = [a.time_taken for a in multiplication_attempts if a.time_taken is not None]
+            mult_avg_time = sum(mult_times) / len(mult_times) if mult_times else 0
+            
+            # Get level-specific stats
             for level, description in multiplication_levels.items():
                 level_attempts = [a for a in multiplication_attempts if a.level == level]
-                total = len(level_attempts)
-                print(f"Table {level} attempts: {total}")  # Debug print
-                if total > 0:
+                if level_attempts:
+                    total = len(level_attempts)
                     correct = len([a for a in level_attempts if a.is_correct])
                     times = [a.time_taken for a in level_attempts if a.time_taken is not None]
                     avg_time = sum(times) / len(times) if times else 0
                     
-                    multiplication_stats[str(level)] = {  # Convert level to string for template
+                    multiplication_stats[str(level)] = {
                         'description': description,
-                        'total': total,
-                        'accuracy': (correct/total*100),
+                        'attempts': total,
+                        'accuracy': (correct / total * 100) if total > 0 else 0,
                         'avg_time': avg_time
                     }
+            
+            operation_stats['multiplication'] = {
+                'total_attempts': mult_total,
+                'accuracy': mult_accuracy,
+                'current_streak': current_streak,
+                'levels': multiplication_stats
+            }
         
-        operation_stats = {
-            'addition': addition_stats,
-            'multiplication': multiplication_stats
-        }
-        print(f"Final operation_stats: {operation_stats}")  # Debug print
-        
-        # Add missed problems analysis
-        addition_missed = analyze_missed_problems(current_user.id, 'addition')
-        multiplication_missed = analyze_missed_problems(current_user.id, 'multiplication')
-        
-        return render_template('progress.html',
-            total_attempts=total_attempts,
-            correct_attempts=correct_attempts,
-            accuracy=accuracy,
-            avg_time=avg_time,
-            fastest_correct=fastest_correct,
-            current_streak=current_streak,
-            operation_stats=operation_stats,
-            addition_missed=addition_missed[:5],  # Show top 5 missed problems
-            multiplication_missed=multiplication_missed[:5]
-        )
+        return render_template('progress.html', 
+                            stats=operation_stats,
+                            viewing_as_teacher=False)
+                            
     except Exception as e:
-        print(f"Error in progress route: {str(e)}")  # Debug print
-        return f"An error occurred: {str(e)}", 500
+        print(f"Error in progress route: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        flash('An error occurred while loading progress data.', 'danger')
+        return redirect(url_for('welcome'))
 
 @app.route('/student_progress/<int:student_id>')
 @login_required
