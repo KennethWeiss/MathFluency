@@ -15,12 +15,12 @@
 
 <!-- Addition Stats -->
 {% if stats and stats['addition'] %}
-    {{ stats_card('addition', stats['addition'], 'bg-primary text-white') }}
+    {{ stats_card('addition', stats['addition'], 'bg-primary text-white', viewing_as_teacher, student) }}
 {% endif %}
 
 <!-- Multiplication Stats -->
 {% if stats and stats['multiplication'] %}
-    {{ stats_card('multiplication', stats['multiplication'], 'bg-warning text-dark') }}
+    {{ stats_card('multiplication', stats['multiplication'], 'bg-warning text-dark', viewing_as_teacher, student) }}
 {% endif %}
 </div>
 {% endblock %}

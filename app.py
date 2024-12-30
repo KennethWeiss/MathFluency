@@ -538,12 +538,31 @@ def student_progress(student_id):
         return redirect(url_for('welcome'))
 
 @app.route('/analyze_level/<operation>/<int:level>')
+@app.route('/analyze_level/<operation>/<int:level>/<int:student_id>')
 @login_required
-def analyze_level(operation, level):
+def analyze_level(operation, level, student_id=None):
     try:
+        # If student_id is provided and user is a teacher, show that student's progress
+        if student_id:
+            if not current_user.is_teacher:
+                flash('Access denied. Teachers only.', 'danger')
+                return redirect(url_for('welcome'))
+            
+            student = User.query.get_or_404(student_id)
+            if student.teacher_id != current_user.id:
+                flash('Access denied. Not your student.', 'danger')
+                return redirect(url_for('welcome'))
+            
+            user_id = student_id
+            viewing_as_teacher = True
+        else:
+            user_id = current_user.id
+            student = current_user
+            viewing_as_teacher = False
+
         # Get all attempts for this level
         attempts = PracticeAttempt.query.filter(
-            PracticeAttempt.user_id == current_user.id,
+            PracticeAttempt.user_id == user_id,
             PracticeAttempt.operation == operation,
             PracticeAttempt.level == level
         ).order_by(PracticeAttempt.created_at.desc()).all()
@@ -624,7 +643,9 @@ def analyze_level(operation, level):
             correct_count=correct_attempts,
             incorrect_count=total_attempts - correct_attempts,
             accuracy=accuracy,
-            problems=problems_list
+            problems=problems_list,
+            student=student,
+            viewing_as_teacher=viewing_as_teacher
         )
         
     except Exception as e:

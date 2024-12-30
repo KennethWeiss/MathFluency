@@ -1,4 +1,4 @@
-{% macro stats_card(operation, stats, header_class) %}
+{% macro stats_card(operation, stats, header_class, viewing_as_teacher=false, student=None) %}
 <div class="card mb-4 shadow">
     <div class="card-header {{ header_class }}">
         <h3 class="mb-0">{{ operation|title }} Statistics</h3>
@@ -38,7 +38,11 @@
                         <td>{{ data['description'] }}</td>
                         <td>{{ data['attempts'] }}</td>
                         <td>
-                            <a href="{{ url_for('analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
+                            {% if viewing_as_teacher %}
+                                <a href="{{ url_for('analyze_level', operation=operation, level=level, student_id=student.id) }}" class="text-decoration-none">
+                            {% else %}
+                                <a href="{{ url_for('analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
+                            {% endif %}
                                 {{ "%.1f"|format(data['accuracy']) }}%
                             </a>
                         </td>
