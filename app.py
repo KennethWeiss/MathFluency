@@ -15,10 +15,9 @@ app.config['DEBUG'] = True  # Enable debug mode
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'auth.login'  # Updated to use blueprint route
 
 # Add this after app initialization but before routes
-#Remove duplicates used in analyze_level.html
 @app.template_filter('unique')
 def unique_filter(l):
     """Return unique items from a list while preserving order"""
@@ -30,8 +29,9 @@ from models.user import User
 from models.class_ import Class
 from models.practice_attempt import PracticeAttempt
 
-# Debug print to see which models are loaded
-print("Models loaded:", [User.__name__, Class.__name__, PracticeAttempt.__name__])
+# Import and register blueprints
+from routes.auth_routes import auth_bp
+app.register_blueprint(auth_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -43,60 +43,23 @@ def home():
         return redirect(url_for('welcome'))
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('welcome'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user)
-            next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('welcome'))
-        else:
-            flash('Login unsuccessful. Please check username and password.', 'danger')
-    return render_template('auth/login.html', form=form)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('welcome'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(
-            username=form.username.data,
-            email=form.email.data,
-            is_teacher=False  # By default, new registrations are students
-        )
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You can now log in.', 'success')
-        return redirect(url_for('login'))
-    return render_template('auth/register.html', form=form)
-
 @app.route('/welcome')
 @login_required
 def welcome():
-    try:
-        if current_user.is_teacher:
-            # For teachers, show their classes and students
-            classes = current_user.classes.all()
-            students = current_user.students.all()
-            return render_template('welcome.html', 
-                                classes=classes, 
-                                students=students, 
-                                is_teacher=True)
-        else:
-            # For students, show their class and teacher
-            return render_template('welcome.html', 
-                                enrolled_class=current_user.enrolled_class,
-                                is_teacher=False)
-    except Exception as e:
-        print(f"Error in welcome route: {str(e)}")  # This will print to console
-        flash(f"An error occurred: {str(e)}", 'danger')  # This will show to user
-        return redirect(url_for('home'))
+    if current_user.is_teacher:
+        # Get all students for this teacher
+        students = current_user.students
+        classes = current_user.classes
+        return render_template('welcome.html', 
+                             is_teacher=True,
+                             students=students,
+                             classes=classes)
+    else:
+        # Get the student's enrolled class
+        enrolled_class = current_user.enrolled_class
+        return render_template('welcome.html',
+                             is_teacher=False,
+                             enrolled_class=enrolled_class)
 
 @app.route('/logout')
 @login_required
