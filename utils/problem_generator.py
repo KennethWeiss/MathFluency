@@ -100,12 +100,44 @@ class ProblemGenerator:
         return sum(1 for attempt in recent_attempts if not attempt.is_correct)
 
     @staticmethod
+    def get_all_possible_problems(operation: str, level: int) -> set:
+        """Get all possible problems for a given operation and level."""
+        problems = set()
+        if operation == 'addition':
+            if level == 1:  # Adding 1 to single digit
+                for num in range(1, 10):
+                    problems.add(f"{num} + 1")
+            elif level == 2:  # Adding 2 to single digit
+                for num in range(1, 10):
+                    problems.add(f"{num} + 2")
+            elif level == 3:  # Making 10
+                for num in range(1, 10):
+                    problems.add(f"{num} + {10 - num}")
+            elif level == 4:  # Add single digit to double digit
+                for num1 in range(10, 100):
+                    for num2 in range(1, 10):
+                        problems.add(f"{num1} + {num2}")
+            elif level == 5:  # Add double digit to double digit
+                # Just return a sample of problems for level 5 as there are too many
+                for num1 in range(10, 100, 10):  # Step by 10 to reduce the set
+                    for num2 in range(10, 100, 10):
+                        problems.add(f"{num1} + {num2}")
+        elif operation == 'multiplication':
+            if 0 <= level <= 12:
+                for num in range(0, 13):
+                    problems.add(f"{num} × {level}")
+        return problems
+
+    @staticmethod
     def get_problem(operation: str, level: int, user_id: Optional[int] = None, 
                     db = None) -> Problem:
         """
         Generate a math problem based on operation and level.
         If user_id and db are provided, consider user's history for adaptive difficulty.
         Excludes mastered problems from the problem set.
+        
+        Returns a problem dict with an additional 'all_mastered' key if all problems
+        in this level have been mastered.
         """
         print(f"\nGenerating problem with: operation={operation}, level={level}")  # Debug log
         
@@ -148,6 +180,17 @@ class ProblemGenerator:
                         mastered_problems.add(attempt.problem)
 
                 print(f"Found {len(mastered_problems)} mastered problems")  # Debug log
+
+                # Check if all possible problems are mastered
+                all_problems = ProblemGenerator.get_all_possible_problems(operation, level)
+                if all_problems.issubset(mastered_problems):
+                    print("All problems in this level are mastered!")
+                    return {
+                        'all_mastered': True,
+                        'operation': operation,
+                        'level': level,
+                        'next_level': level + 1 if level < 5 else None
+                    }
 
                 # Try to select a practice problem that isn't mastered
                 if random.random() < ProblemGenerator.PRACTICE_PROBABILITY:

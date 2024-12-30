@@ -45,6 +45,34 @@ async function getNewProblem() {
 }
 
 function displayProblem(data) {
+    if (data.all_mastered) {
+        // Create congratulations message
+        const problemDiv = document.getElementById('current-problem');
+        problemDiv.innerHTML = `
+            <div class="alert alert-success">
+                <h4 class="alert-heading">Congratulations! 🎉</h4>
+                <p>You've mastered all problems in Level ${data.level} ${data.operation}!</p>
+                ${data.next_level ? `
+                    <hr>
+                    <p class="mb-0">Ready for a new challenge? Try Level ${data.next_level}!</p>
+                    <button class="btn btn-primary mt-3" onclick="moveToNextLevel('${data.operation}', ${data.next_level})">
+                        Move to Level ${data.next_level}
+                    </button>
+                ` : `
+                    <hr>
+                    <p class="mb-0">You've reached the highest level! Keep practicing to maintain your skills.</p>
+                `}
+            </div>
+        `;
+        
+        // Hide answer input and check button
+        document.getElementById('answer-section').style.display = 'none';
+        document.getElementById('answer-hint').style.display = 'none';
+        return;
+    }
+
+    // Show answer input and check button for normal problems
+    document.getElementById('answer-section').style.display = 'block';
     document.getElementById('current-problem').textContent = data.problem;
     currentProblem = data;
     
@@ -54,6 +82,15 @@ function displayProblem(data) {
     } else {
         document.getElementById('answer-hint').style.display = 'none';
     }
+}
+
+function moveToNextLevel(operation, level) {
+    // Update the level select
+    const select = document.getElementById(`${operation}-select`);
+    select.value = level;
+    
+    // Get a new problem at the new level
+    getNewProblem();
 }
 
 // Operation selection
