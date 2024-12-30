@@ -32,125 +32,15 @@ from models.practice_attempt import PracticeAttempt
 # Import and register blueprints
 from routes.auth_routes import auth_bp
 from routes.layout_routes import layout_bp
+from routes.main_routes import main_bp
+
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
+app.register_blueprint(main_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-@app.route('/')
-def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('welcome'))
-    return render_template('index.html')
-
-@app.route('/welcome')
-@login_required
-def welcome():
-    if current_user.is_teacher:
-        # Get all students for this teacher
-        students = current_user.students
-        classes = current_user.classes
-        return render_template('welcome.html', 
-                            is_teacher=True,
-                            students=students,
-                            classes=classes)
-    else:
-        # Get the student's enrolled class
-        enrolled_class = current_user.enrolled_class
-        return render_template('welcome.html',
-                            is_teacher=False,
-                            enrolled_class=enrolled_class)
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-@app.route('/practice')
-@login_required
-def practice():
-    print("In practice route")
-    return render_template('practice.html')
-
-@app.route('/record_attempt', methods=['POST'])
-@login_required
-def record_attempt():
-    data = request.json
-    attempt = PracticeAttempt(
-        user_id=current_user.id,
-        operation=data['operation'],
-        level=data['level'],
-        problem=data['problem'],
-        user_answer=data['userAnswer'],
-        correct_answer=data['correctAnswer'],
-        is_correct=data['isCorrect'],
-        time_taken=data.get('timeTaken')
-    )
-    db.session.add(attempt)
-    db.session.commit()
-    return jsonify({'success': True})
-
-@app.route('/get_problem', methods=['POST'])
-@login_required
-def get_problem_route():
-    """Get a new problem based on user's history and mastery level."""
-    try:
-        data = request.json
-        print(f"\nReceived request data: {data}")  # Debug log
-        
-        operation = data.get('operation')
-        level = data.get('level')
-        
-        print(f"Operation: {operation}, Level: {level}")  # Debug log
-        
-        if not operation or level is None:
-            print(f"Missing data: operation={operation}, level={level}")  # Debug log
-            return jsonify({'error': 'Missing operation or level'}), 400
-        
-        try:
-            level = int(level)
-        except (TypeError, ValueError) as e:
-            print(f"Error converting level to int: {e}")  # Debug log
-            return jsonify({'error': 'Invalid level format'}), 400
-            
-        # Use ProblemGenerator.get_problem instead of get_problem
-        print(f"Calling ProblemGenerator.get_problem with: operation={operation}, level={level}")  # Debug log
-        problem = ProblemGenerator.get_problem(
-            operation=operation,
-            level=level,
-            user_id=current_user.id,
-            db=db
-        )
-        
-        print(f"Generated problem: {problem}")  # Debug log
-        return jsonify(problem)
-        
-    except Exception as e:
-        print(f"Error generating problem: {str(e)}")  # Detailed error log
-        import traceback
-        print(traceback.format_exc())  # Print full stack trace
-        return jsonify({'error': 'Error generating problem'}), 500
-
-@app.route('/check_answer', methods=['POST'])
-@login_required
-def check_answer():
-    user_answer = request.form.get('answer')
-    correct_answer = request.form.get('correct_answer')
-    
-    try:
-        is_correct = int(user_answer) == int(correct_answer)
-        return jsonify({
-            'success': True,
-            'is_correct': is_correct
-        })
-    except (ValueError, TypeError):
-        return jsonify({
-            'success': False,
-            'error': 'Invalid answer format'
-        }), 400
 
 def get_problem_history(user_id, operation=None, limit=10):
     """Get recent problem history for a user, optionally filtered by operation."""
@@ -228,6 +118,83 @@ def calculate_difficulty_level(user_id, operation, current_level):
         return max(current_level - 1, 1)
     
     return current_level
+
+@app.route('/record_attempt', methods=['POST'])
+@login_required
+def record_attempt():
+    data = request.json
+    attempt = PracticeAttempt(
+        user_id=current_user.id,
+        operation=data['operation'],
+        level=data['level'],
+        problem=data['problem'],
+        user_answer=data['userAnswer'],
+        correct_answer=data['correctAnswer'],
+        is_correct=data['isCorrect'],
+        time_taken=data.get('timeTaken')
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/get_problem', methods=['POST'])
+@login_required
+def get_problem_route():
+    """Get a new problem based on user's history and mastery level."""
+    try:
+        data = request.json
+        print(f"\nReceived request data: {data}")  # Debug log
+        
+        operation = data.get('operation')
+        level = data.get('level')
+        
+        print(f"Operation: {operation}, Level: {level}")  # Debug log
+        
+        if not operation or level is None:
+            print(f"Missing data: operation={operation}, level={level}")  # Debug log
+            return jsonify({'error': 'Missing operation or level'}), 400
+        
+        try:
+            level = int(level)
+        except (TypeError, ValueError) as e:
+            print(f"Error converting level to int: {e}")  # Debug log
+            return jsonify({'error': 'Invalid level format'}), 400
+            
+        # Use ProblemGenerator.get_problem instead of get_problem
+        print(f"Calling ProblemGenerator.get_problem with: operation={operation}, level={level}")  # Debug log
+        problem = ProblemGenerator.get_problem(
+            operation=operation,
+            level=level,
+            user_id=current_user.id,
+            db=db
+        )
+        
+        print(f"Generated problem: {problem}")  # Debug log
+        return jsonify(problem)
+        
+    except Exception as e:
+        print(f"Error generating problem: {str(e)}")  # Detailed error log
+        import traceback
+        print(traceback.format_exc())  # Print full stack trace
+        return jsonify({'error': 'Error generating problem'}), 500
+
+@app.route('/check_answer', methods=['POST'])
+@login_required
+def check_answer():
+    user_answer = request.form.get('answer')
+    correct_answer = request.form.get('correct_answer')
+    
+    try:
+        is_correct = int(user_answer) == int(correct_answer)
+        return jsonify({
+            'success': True,
+            'is_correct': is_correct
+        })
+    except (ValueError, TypeError):
+        return jsonify({
+            'success': False,
+            'error': 'Invalid answer format'
+        }), 400
 
 @app.route('/progress')
 @login_required
@@ -387,6 +354,12 @@ def progress():
         print(traceback.format_exc())
         flash('An error occurred while loading progress data.', 'danger')
         return redirect(url_for('welcome'))
+
+@app.route('/practice')
+@login_required
+def practice():
+    print("In practice route")
+    return render_template('practice.html')
 
 @app.route('/student_progress/<int:student_id>')
 @login_required
@@ -598,8 +571,8 @@ def analyze_level(operation, level, student_id=None):
                 'created_at': attempt.created_at
             })
             stats['recent_attempts'] = sorted(stats['recent_attempts'], 
-                                           key=lambda x: x['created_at'], 
-                                           reverse=True)[:5]
+                                        key=lambda x: x['created_at'], 
+                                        reverse=True)[:5]
         
         # Convert to list and add mastery status
         problems_list = []
