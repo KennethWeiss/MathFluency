@@ -1,0 +1,49 @@
+<tr>
+    <td>{{ problem['problem'] }} = {{ problem['correct_answer'] }}</td>
+    <td>
+        {% if problem['mastery_status'] == 'mastered' %}
+            <span class="badge rounded-pill text-bg-success">Mastered</span>
+        {% elif problem['mastery_status'] == 'learning' %}
+            <span class="badge rounded-pill text-bg-warning">Learning</span>
+        {% else %}
+            <span class="badge rounded-pill text-bg-secondary">Practice Needed</span>
+        {% endif %}
+    </td>
+    <td>
+        {{ problem['correct_count'] }}/{{ problem['total_attempts'] }}
+        <br>
+        <small class="text-muted">
+            {{ "%.1f"|format(problem['accuracy']) }}% correct
+        </small>
+    </td>
+    <td>
+        <div class="progress" style="height: 20px;">
+            <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                    role="progressbar" 
+                    style="width: {{ problem['accuracy'] }}%"
+                    aria-valuenow="{{ problem['accuracy'] }}" 
+                    aria-valuemin="0" 
+                    aria-valuemax="100">
+                {{ "%.1f"|format(problem['accuracy']) }}%
+            </div>
+        </div>
+    </td>
+    <td>
+        {% for attempt in problem['recent_attempts'] %}
+            {% if attempt['is_correct'] %}
+                <span class="badge rounded-pill text-bg-success">✓</span>
+            {% else %}
+                <span class="badge rounded-pill text-bg-danger">✗</span>
+            {% endif %}
+        {% endfor %}
+        {% if problem['incorrect_count'] > 0 %}
+        <br>
+        <small class="text-muted">
+            Common mistakes:
+            {% for answer in problem['user_answers']|unique|sort %}
+            <span class="badge text-bg-light">{{ answer }}</span>
+            {% endfor %}
+        </small>
+        {% endif %}
+    </td>
+</tr>
