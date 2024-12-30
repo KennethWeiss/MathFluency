@@ -22,15 +22,19 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-4 text-center mb-3">
+                <div class="col-md-3 text-center mb-3">
                     <h4>Total Attempts</h4>
                     <div class="display-4">{{ total_attempts }}</div>
                 </div>
-                <div class="col-md-4 text-center mb-3">
-                    <h4>Incorrect Attempts</h4>
+                <div class="col-md-3 text-center mb-3">
+                    <h4>Correct</h4>
+                    <div class="display-4">{{ correct_count }}</div>
+                </div>
+                <div class="col-md-3 text-center mb-3">
+                    <h4>Incorrect</h4>
                     <div class="display-4">{{ incorrect_count }}</div>
                 </div>
-                <div class="col-md-4 text-center mb-3">
+                <div class="col-md-3 text-center mb-3">
                     <h4>Accuracy</h4>
                     <div class="display-4">{{ "%.1f"|format(accuracy) }}%</div>
                 </div>
@@ -38,11 +42,11 @@
         </div>
     </div>
 
-    <!-- Incorrect Problems Analysis -->
+    <!-- Problem Analysis -->
     {% if problems %}
     <div class="card mb-4 shadow">
-        <div class="card-header bg-danger text-white">
-            <h3 class="mb-0">Problems Needing Practice</h3>
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">Problem Analysis</h3>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -50,21 +54,61 @@
                     <thead>
                         <tr>
                             <th>Problem</th>
-                            <th>Correct Answer</th>
-                            <th>Times Missed</th>
-                            <th>Common Wrong Answers</th>
+                            <th>Mastery</th>
+                            <th>Attempts</th>
+                            <th>Accuracy</th>
+                            <th>Recent Performance</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for problem in problems %}
                         <tr>
-                            <td>{{ problem['problem'] }}</td>
-                            <td>{{ problem['correct_answer'] }}</td>
-                            <td>{{ problem['incorrect_count'] }}</td>
+                            <td>{{ problem['problem'] }} = {{ problem['correct_answer'] }}</td>
                             <td>
-                                {% for answer in problem['user_answers']|unique|sort %}
-                                <span class="badge bg-secondary me-1">{{ answer }}</span>
+                                {% if problem['mastery_status'] == 'mastered' %}
+                                    <span class="badge rounded-pill text-bg-success">Mastered</span>
+                                {% elif problem['mastery_status'] == 'learning' %}
+                                    <span class="badge rounded-pill text-bg-warning">Learning</span>
+                                {% else %}
+                                    <span class="badge rounded-pill text-bg-secondary">Practice Needed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ problem['correct_count'] }}/{{ problem['total_attempts'] }}
+                                <br>
+                                <small class="text-muted">
+                                    {{ "%.1f"|format(problem['accuracy']) }}% correct
+                                </small>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ problem['accuracy'] }}%"
+                                         aria-valuenow="{{ problem['accuracy'] }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ "%.1f"|format(problem['accuracy']) }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% for attempt in problem['recent_attempts'] %}
+                                    {% if attempt['is_correct'] %}
+                                        <span class="badge rounded-pill text-bg-success">✓</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill text-bg-danger">✗</span>
+                                    {% endif %}
                                 {% endfor %}
+                                {% if problem['incorrect_count'] > 0 %}
+                                <br>
+                                <small class="text-muted">
+                                    Common mistakes:
+                                    {% for answer in problem['user_answers']|unique|sort %}
+                                    <span class="badge text-bg-light">{{ answer }}</span>
+                                    {% endfor %}
+                                </small>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -75,8 +119,8 @@
     </div>
     {% else %}
     <div class="alert alert-success" role="alert">
-        <h4 class="alert-heading">Great job!</h4>
-        <p>You haven't made any mistakes at this level yet. Keep up the good work!</p>
+        <h4 class="alert-heading">No attempts yet!</h4>
+        <p>Start practicing this level to see your progress.</p>
     </div>
     {% endif %}
 

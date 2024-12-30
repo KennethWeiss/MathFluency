@@ -548,42 +548,81 @@ def analyze_level(operation, level):
             PracticeAttempt.level == level
         ).order_by(PracticeAttempt.created_at.desc()).all()
         
-        # Analyze the attempts
-        total_attempts = len(attempts)
-        incorrect_attempts = [a for a in attempts if not a.is_correct]
-        
-        # Group incorrect attempts by problem
+        # Group attempts by problem
         problem_stats = {}
-        for attempt in incorrect_attempts:
+        for attempt in attempts:
             if attempt.problem not in problem_stats:
                 problem_stats[attempt.problem] = {
+                    'total_attempts': 0,
+                    'correct_count': 0,
                     'incorrect_count': 0,
                     'user_answers': [],
-                    'correct_answer': attempt.correct_answer
+                    'correct_answer': attempt.correct_answer,
+                    'recent_attempts': []
                 }
-            problem_stats[attempt.problem]['incorrect_count'] += 1
-            problem_stats[attempt.problem]['user_answers'].append(attempt.user_answer)
+            
+            stats = problem_stats[attempt.problem]
+            stats['total_attempts'] += 1
+            if attempt.is_correct:
+                stats['correct_count'] += 1
+            else:
+                stats['incorrect_count'] += 1
+                stats['user_answers'].append(attempt.user_answer)
+            
+            # Keep track of 5 most recent attempts
+            stats['recent_attempts'].append({
+                'is_correct': attempt.is_correct,
+                'user_answer': attempt.user_answer,
+                'time_taken': attempt.time_taken,
+                'created_at': attempt.created_at
+            })
+            stats['recent_attempts'] = sorted(stats['recent_attempts'], 
+                                           key=lambda x: x['created_at'], 
+                                           reverse=True)[:5]
         
-        # Convert to list and sort by incorrect count
-        problems_list = [
-            {
+        # Convert to list and add mastery status
+        problems_list = []
+        for problem, stats in problem_stats.items():
+            accuracy = (stats['correct_count'] / stats['total_attempts'] * 100) if stats['total_attempts'] > 0 else 0
+            
+            # Determine mastery status
+            mastery_status = 'needs_practice'
+            if stats['total_attempts'] >= PracticeAttempt.MIN_ATTEMPTS:
+                if accuracy >= PracticeAttempt.MASTERY_THRESHOLD * 100:
+                    mastery_status = 'mastered'
+                elif accuracy >= PracticeAttempt.LEARNING_THRESHOLD * 100:
+                    mastery_status = 'learning'
+            
+            problems_list.append({
                 'problem': problem,
+                'total_attempts': stats['total_attempts'],
+                'correct_count': stats['correct_count'],
                 'incorrect_count': stats['incorrect_count'],
+                'accuracy': accuracy,
                 'user_answers': stats['user_answers'],
-                'correct_answer': stats['correct_answer']
-            }
-            for problem, stats in problem_stats.items()
-        ]
-        problems_list.sort(key=lambda x: x['incorrect_count'], reverse=True)
+                'correct_answer': stats['correct_answer'],
+                'mastery_status': mastery_status,
+                'recent_attempts': stats['recent_attempts']
+            })
+        
+        # Sort by mastery status (mastered first), then by accuracy
+        problems_list.sort(key=lambda x: (
+            0 if x['mastery_status'] == 'mastered' else
+            1 if x['mastery_status'] == 'learning' else 2,
+            -x['accuracy']
+        ))
         
         # Calculate overall statistics
-        accuracy = ((total_attempts - len(incorrect_attempts)) / total_attempts * 100) if total_attempts > 0 else 0
+        total_attempts = len(attempts)
+        correct_attempts = len([a for a in attempts if a.is_correct])
+        accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
         
         return render_template('analyze_level.html',
             operation=operation,
             level=level,
             total_attempts=total_attempts,
-            incorrect_count=len(incorrect_attempts),
+            correct_count=correct_attempts,
+            incorrect_count=total_attempts - correct_attempts,
             accuracy=accuracy,
             problems=problems_list
         )
