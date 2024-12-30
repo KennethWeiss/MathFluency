@@ -319,6 +319,7 @@ def progress():
                         'avg_time': avg_time,
                         'mastery_status': mastery_status
                     }
+                    print(f"Level {level} stats:", addition_stats[str(level)])  # Debug print
             
             operation_stats['addition'] = {
                 'total_attempts': addition_total,

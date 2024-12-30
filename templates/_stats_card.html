@@ -44,13 +44,13 @@
                         </td>
                         <td>
                             {% if data['mastery_status'] == 'mastered' %}
-                                <span class="badge bg-success">Mastered</span>
+                                <span class="badge rounded-pill text-bg-success">Mastered</span>
                             {% elif data['mastery_status'] == 'learning' %}
-                                <span class="badge bg-warning">Learning</span>
+                                <span class="badge rounded-pill text-bg-warning">Learning</span>
                             {% else %}
-                                <span class="badge bg-secondary">Practice Needed</span>
+                                <span class="badge rounded-pill text-bg-secondary">Practice Needed</span>
                             {% endif %}
-                        </td>
+                        </td> 
                     </tr>
                     {% endfor %}
                 </tbody>
