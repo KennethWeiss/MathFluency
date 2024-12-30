@@ -39,7 +39,9 @@
                                 <ul class="list-group">
                                 {% for student in students %}
                                     <li class="list-group-item">
-                                        <h6>{{ student.username }}</h6>
+                                        <a href="{{ url_for('student_progress', student_id=student.id) }}" class="text-decoration-none">
+                                            <h6>{{ student.username }}</h6>
+                                        </a>
                                         <p class="mb-0">{{ student.email }}</p>
                                     </li>
                                 {% endfor %}

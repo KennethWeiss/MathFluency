@@ -4,146 +4,124 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center mb-4">Your Progress</h1>
+    {% if viewing_as_teacher %}
+        <h1 class="text-center mb-4">Progress for {{ student.username }}</h1>
+    {% else %}
+        <h1 class="text-center mb-4">Your Progress</h1>
+    {% endif %}
 
-
-    <!-- Overall Stats Card -->
-<!--
+    <!-- Addition Levels Stats -->
+    {% if stats and stats['addition'] %}
     <div class="card mb-4 shadow">
         <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Overall Statistics</h3>
+            <h3 class="mb-0">Addition Statistics</h3>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4 text-center mb-3">
                     <h4>Total Problems</h4>
-                    <div class="display-4">{{ total_attempts }}</div>
+                    <div class="display-4">{{ stats['addition']['total_attempts'] }}</div>
                 </div>
                 <div class="col-md-4 text-center mb-3">
                     <h4>Accuracy</h4>
-                    <div class="display-4">{{ "%.1f"|format(accuracy) }}%</div>
+                    <div class="display-4">{{ "%.1f"|format(stats['addition']['accuracy']) }}%</div>
                 </div>
                 <div class="col-md-4 text-center mb-3">
                     <h4>Current Streak</h4>
-                    <div class="display-4">{{ current_streak }}</div>
+                    <div class="display-4">{{ stats['addition']['current_streak'] }}</div>
                 </div>
             </div>
-        </div>
-    </div>
--->
-
-
-    <!-- Time Stats Card -->
-<!--
-    <div class="card mb-4 shadow">
-        <div class="card-header bg-success text-white">
-            <h3 class="mb-0">Time Performance</h3>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 text-center mb-3">
-                    <h4>Average Time per Problem</h4>
-                    <div class="display-4">{{ "%.1f"|format(avg_time) }}s</div>
-                </div>
-                <div class="col-md-6 text-center mb-3">
-                    <h4>Fastest Correct Solution</h4>
-                    {% if fastest_correct %}
-                    <div class="lead">
-                        Problem: {{ fastest_correct['problem'] }}<br>
-                        Time: {{ "%.1f"|format(fastest_correct['time_taken']) }}s
-                    </div>
-                    {% else %}
-                    <div class="lead">No correct solutions yet</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
--->
-
-    <!-- Addition Levels Stats -->
-    {% if operation_stats and operation_stats['addition'] %}
-    <div class="card mb-4 shadow">
-        <div class="card-header bg-info text-white">
-            <h3 class="mb-0">Addition Level Statistics</h3>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
+            
+            <!-- Level Stats -->
+            {% if stats['addition']['levels'] %}
+            <div class="table-responsive mt-4">
                 <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Level</th>
                             <th>Description</th>
-                            <th>Total Attempts</th>
+                            <th>Attempts</th>
                             <th>Accuracy</th>
-                            <th>Average Time</th>
+                            <th>Avg Time</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for level, stats in operation_stats['addition'].items()|sort %}
+                        {% for level, data in stats['addition']['levels']|dictsort %}
                         <tr>
                             <td>{{ level }}</td>
-                            <td>{{ stats['description'] }}</td>
-                            <td>{{ stats['total'] }}</td>
+                            <td>{{ data['description'] }}</td>
+                            <td>{{ data['attempts'] }}</td>
                             <td>
                                 <a href="{{ url_for('analyze_level', operation='addition', level=level) }}" class="text-decoration-none">
-                                    {{ "%.1f"|format(stats['accuracy']) }}%
+                                    {{ "%.1f"|format(data['accuracy']) }}%
                                 </a>
                             </td>
-                            <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
+                            <td>{{ "%.1f"|format(data['avg_time']) }}s</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Multiplication Tables Stats -->
-    {% if operation_stats and operation_stats['multiplication'] %}
+    <!-- Multiplication Levels Stats -->
+    {% if stats and stats['multiplication'] %}
     <div class="card mb-4 shadow">
         <div class="card-header bg-warning text-dark">
-            <h3 class="mb-0">Multiplication Table Statistics</h3>
+            <h3 class="mb-0">Multiplication Statistics</h3>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
+            <div class="row">
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Total Problems</h4>
+                    <div class="display-4">{{ stats['multiplication']['total_attempts'] }}</div>
+                </div>
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Accuracy</h4>
+                    <div class="display-4">{{ "%.1f"|format(stats['multiplication']['accuracy']) }}%</div>
+                </div>
+                <div class="col-md-4 text-center mb-3">
+                    <h4>Current Streak</h4>
+                    <div class="display-4">{{ stats['multiplication']['current_streak'] }}</div>
+                </div>
+            </div>
+            
+            <!-- Level Stats -->
+            {% if stats['multiplication']['levels'] %}
+            <div class="table-responsive mt-4">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Table</th>
+                            <th>Level</th>
                             <th>Description</th>
-                            <th>Total Attempts</th>
+                            <th>Attempts</th>
                             <th>Accuracy</th>
-                            <th>Average Time</th>
+                            <th>Avg Time</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for level, stats in operation_stats['multiplication'].items()|sort %}
+                        {% for level, data in stats['multiplication']['levels']|dictsort %}
                         <tr>
                             <td>{{ level }}</td>
-                            <td>{{ stats['description'] }}</td>
-                            <td>{{ stats['total'] }}</td>
+                            <td>{{ data['description'] }}</td>
+                            <td>{{ data['attempts'] }}</td>
                             <td>
                                 <a href="{{ url_for('analyze_level', operation='multiplication', level=level) }}" class="text-decoration-none">
-                                    {{ "%.1f"|format(stats['accuracy']) }}%
+                                    {{ "%.1f"|format(data['accuracy']) }}%
                                 </a>
                             </td>
-                            <td>{{ "%.1f"|format(stats['avg_time']) }}s</td>
+                            <td>{{ "%.1f"|format(data['avg_time']) }}s</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
-
-    <!-- Return to Practice Button -->
-    <div class="text-center mb-4">
-        <a href="{{ url_for('practice') }}" class="btn btn-primary btn-lg">
-            Back to Practice
-        </a>
-    </div>
 </div>
 {% endblock %}
