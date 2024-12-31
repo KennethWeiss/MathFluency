@@ -10,16 +10,6 @@ from utils.math_problems import get_problem
 
 progress_bp = Blueprint('progress', __name__)
 
-def calculate_streak(attempts):
-    """Calculate current streak from attempts"""
-    streak = 0
-    for attempt in sorted(attempts, key=lambda x: x.created_at, reverse=True):
-        if attempt.is_correct:
-            streak += 1
-        else:
-            break
-    return streak
-
 def calculate_level_stats(attempts, description):
     """Calculate stats for a specific level"""
     total = len(attempts)
@@ -59,11 +49,11 @@ def get_operation_stats(user_id, operation):
     total = len(attempts)
     correct = len([a for a in attempts if a.is_correct])
     accuracy = (correct / total * 100) if total > 0 else 0
-    current_streak = calculate_streak(attempts)
+    current_streak = PracticeTracker.calculate_streak(attempts)
     
     # Get level stats
     levels_stats = {}
-    for level in set(a.level for a in attempts):
+    for level in sorted(set(a.level for a in attempts)):
         # Get a problem to get its description
         problem = get_problem(operation, level)
         if problem:
@@ -134,6 +124,9 @@ def analyze_level_problems(attempts):
     
     for attempt in attempts:
         if attempt.problem not in problem_stats:
+            consecutive_wrong = PracticeTracker.check_consecutive_wrong(
+                db, attempt.user_id, attempt.problem
+            )
             problem_stats[attempt.problem] = {
                 'total_attempts': 0,
                 'correct_count': 0,
@@ -141,39 +134,46 @@ def analyze_level_problems(attempts):
                 'operation': attempt.operation,
                 'level': attempt.level,
                 'user_answers': [],
-                'correct_answer': attempt.correct_answer
+                'correct_answer': attempt.correct_answer,
+                'consecutive_wrong': consecutive_wrong,
+                'needs_practice': consecutive_wrong >= PracticeTracker.CONSECUTIVE_WRONG_THRESHOLD
             }
         
-        problem_stats[attempt.problem]['total_attempts'] += 1
+        stats = problem_stats[attempt.problem]
+        stats['total_attempts'] += 1
         if attempt.is_correct:
-            problem_stats[attempt.problem]['correct_count'] += 1
+            stats['correct_count'] += 1
         else:
-            problem_stats[attempt.problem]['user_answers'].append(attempt.user_answer)
+            stats['user_answers'].append(attempt.user_answer)
         
-        # Update last seen if this attempt is more recent
-        if attempt.created_at > problem_stats[attempt.problem]['last_seen']:
-            problem_stats[attempt.problem]['last_seen'] = attempt.created_at
+        # Update last seen if more recent
+        if attempt.created_at > stats['last_seen']:
+            stats['last_seen'] = attempt.created_at
     
     # Convert to list and add accuracy
     problem_list = []
     for problem, stats in problem_stats.items():
         accuracy = (stats['correct_count'] / stats['total_attempts'] * 100) if stats['total_attempts'] > 0 else 0
-        incorrect_count = stats['total_attempts'] - stats['correct_count']
         problem_list.append({
             'problem': problem,
             'total_attempts': stats['total_attempts'],
             'correct_count': stats['correct_count'],
-            'incorrect_count': incorrect_count,
+            'incorrect_count': stats['total_attempts'] - stats['correct_count'],
             'accuracy': accuracy,
             'last_seen': stats['last_seen'],
             'operation': stats['operation'],
             'level': stats['level'],
-            'user_answers': list(set(stats['user_answers'])),
-            'correct_answer': stats['correct_answer']
+            'user_answers': list(set(stats['user_answers'])),  # Remove duplicates
+            'correct_answer': stats['correct_answer'],
+            'consecutive_wrong': stats['consecutive_wrong'],
+            'needs_practice': stats['needs_practice']
         })
     
-    # Sort by accuracy (ascending) so struggles are first
-    return sorted(problem_list, key=lambda x: x['accuracy'])
+    # Sort by accuracy (ascending) and then by consecutive wrong attempts (descending)
+    return sorted(
+        problem_list, 
+        key=lambda x: (x['accuracy'], -x['consecutive_wrong'])
+    )
 
 @progress_bp.route('/progress')
 @login_required
@@ -209,18 +209,21 @@ def progress():
 def student_progress(student_id):
     """View progress for a specific student (teacher only)"""
     try:
-        # Verify current user is a teacher
+        # Check if user is a teacher
         if not current_user.is_teacher:
             flash('Access denied. Teachers only.', 'danger')
             return redirect(url_for('main.welcome'))
         
-        # Get the student
-        student = User.query.get_or_404(student_id)
-        
-        # Verify student belongs to this teacher
+        # Get student
+        student = User.query.get(student_id)
+        if not student:
+            flash('Student not found.', 'danger')
+            return redirect(url_for('progress.progress'))
+            
+        # Check if student belongs to teacher
         if student.teacher_id != current_user.id:
             flash('Access denied. Not your student.', 'danger')
-            return redirect(url_for('main.welcome'))
+            return redirect(url_for('progress.progress'))
         
         # Get stats for each operation
         stats = {}
@@ -229,15 +232,20 @@ def student_progress(student_id):
             if operation_stats:
                 stats[operation] = operation_stats
         
+        # Get recent incorrect problems
+        recent_problems = PracticeTracker.get_problems_needing_practice(db, student_id, limit=5)
+        
         return render_template('progress.html',
                             stats=stats,
-                            student=student)
+                            student=student,
+                            recent_problems=recent_problems)
+    
     except Exception as e:
         print(f"Error in student_progress route: {str(e)}")
         import traceback
         print(traceback.format_exc())
-        flash('An error occurred while loading student progress data.', 'danger')
-        return redirect(url_for('main.welcome'))
+        flash('An error occurred while loading student progress.', 'danger')
+        return redirect(url_for('progress.progress'))
 
 @progress_bp.route('/analyze_level/<operation>/<int:level>')
 @progress_bp.route('/analyze_level/<operation>/<int:level>/<int:student_id>')
@@ -286,16 +294,16 @@ def analyze_level(operation, level, student_id=None):
         problems = analyze_level_problems(attempts)
         
         return render_template('analyze_level.html',
-                             operation=operation,
-                             level=level,
-                             description=description,
-                             stats=stats,
-                             recent_attempts=recent_attempts,
-                             total_attempts=total_attempts,
-                             correct_count=correct_count,
-                             incorrect_count=incorrect_count,
-                             accuracy=accuracy,
-                             problems=problems)
+                            operation=operation,
+                            level=level,
+                            description=description,
+                            stats=stats,
+                            recent_attempts=recent_attempts,
+                            total_attempts=total_attempts,
+                            correct_count=correct_count,
+                            incorrect_count=incorrect_count,
+                            accuracy=accuracy,
+                            problems=problems)
     
     except Exception as e:
         print(f"Error in analyze_level route: {str(e)}")
@@ -309,14 +317,14 @@ def analyze_level(operation, level, student_id=None):
 def incorrect_problems():
     """Display problems the user has answered incorrectly"""
     try:
-        # Get incorrect attempts grouped by problem
-        missed_problems = analyze_missed_problems(current_user.id)
+        # Get missed problems using PracticeTracker
+        problems = PracticeTracker.get_problems_needing_practice(db, current_user.id)
         
-        return render_template('incorrect_problems.html',
-                            problems=missed_problems)  # Already sorted by incorrect_attempts
+        return render_template('incorrect_problems.html', 
+                            problems=problems)
     except Exception as e:
         print(f"Error in incorrect_problems route: {str(e)}")
         import traceback
         print(traceback.format_exc())
         flash('An error occurred while loading incorrect problems.', 'danger')
-        return redirect(url_for('main.welcome'))
+        return redirect(url_for('progress.progress'))

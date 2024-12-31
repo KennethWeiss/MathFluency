@@ -58,6 +58,17 @@ class PracticeTracker:
         return sum(1 for attempt in recent_attempts if not attempt.is_correct)
 
     @staticmethod
+    def calculate_streak(attempts):
+        """Calculate current streak from attempts"""
+        streak = 0
+        for attempt in sorted(attempts, key=lambda x: x.created_at, reverse=True):
+            if attempt.is_correct:
+                streak += 1
+            else:
+                break
+        return streak
+
+    @staticmethod
     def get_problem(operation: str, level: int, user_id: Optional[int] = None, 
                    db = None) -> Problem:
         """
