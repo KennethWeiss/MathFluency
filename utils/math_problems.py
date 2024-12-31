@@ -74,10 +74,12 @@ def generate_multiplication_problem(table: int) -> Problem:
     }
 
 def get_random_number(number_spec):
-    """Get a random number based on range or set specification"""
+    """Get a random number based on range, set, or single number specification"""
     if number_spec['type'] == 'range':
         min_val, max_val = number_spec['value']
         return random.randint(min_val, max_val)
+    elif number_spec['type'] == 'single':
+        return number_spec['value'][0]  # Return the single number
     else:  # type == 'set'
         return random.choice(number_spec['value'])
 
@@ -91,6 +93,8 @@ def generate_custom_multiplication(number1_spec, number2_spec) -> Problem:
     def format_spec(spec):
         if spec['type'] == 'range':
             return f"{spec['value'][0]}-{spec['value'][1]}"
+        elif spec['type'] == 'single':
+            return str(spec['value'][0])
         else:
             return f"{','.join(map(str, spec['value']))}"
     

@@ -3,24 +3,76 @@ let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
+function validateNumber(num) {
+    // Check if it's a valid integer between 0 and 100
+    return !isNaN(num) && Number.isInteger(num) && num >= 0 && num <= 100;
+}
+
 function parseNumberInput(input) {
     input = input.trim();
+    
+    // Handle empty input
+    if (!input) {
+        return null;
+    }
+    
+    // Handle single number
+    if (!input.includes('-') && !input.includes(',')) {
+        const num = parseInt(input);
+        if (validateNumber(num)) {
+            return { type: 'single', value: [num] };
+        }
+        return null;
+    }
+    
+    // Handle range format (e.g., "2-7")
     if (input.includes('-')) {
-        // Handle range format (e.g., "2-7")
+        // Check if there's exactly one hyphen
+        if (input.split('-').length !== 2) {
+            return null;
+        }
+        
         const [min, max] = input.split('-').map(n => parseInt(n.trim()));
-        if (!isNaN(min) && !isNaN(max) && min <= max) {
+        if (validateNumber(min) && validateNumber(max) && min <= max) {
             return { type: 'range', value: [min, max] };
         }
-    } else if (input.includes(',')) {
-        // Handle set format (e.g., "2,4,6")
+        return null;
+    }
+    
+    // Handle set format (e.g., "2,4,6")
+    if (input.includes(',')) {
         const numbers = input.split(',')
             .map(n => parseInt(n.trim()))
-            .filter(n => !isNaN(n));
+            .filter(n => validateNumber(n));
+            
+        // Check if we lost any numbers in validation
+        if (numbers.length !== input.split(',').length) {
+            return null;
+        }
+        
         if (numbers.length > 0) {
             return { type: 'set', value: numbers };
         }
     }
+    
     return null;
+}
+
+function formatErrorMessage(input1, input2) {
+    let messages = [];
+    
+    if (!input1.trim() || !input2.trim()) {
+        messages.push("Both number fields are required");
+    } else {
+        if (!parseNumberInput(input1)) {
+            messages.push("First number: Enter a single number (e.g., '5'), a range (e.g., '2-7'), or a set (e.g., '2,4,6')");
+        }
+        if (!parseNumberInput(input2)) {
+            messages.push("Second number: Enter a single number (e.g., '5'), a range (e.g., '2-7'), or a set (e.g., '2,4,6')");
+        }
+    }
+    
+    return messages.join('<br>');
 }
 
 async function getNewProblem() {
@@ -44,7 +96,7 @@ async function getNewProblem() {
 
             if (!num1Data || !num2Data) {
                 document.getElementById('feedback').innerHTML = 
-                    '<div class="alert alert-danger">Please enter valid ranges (e.g., 2-7) or sets (e.g., 2,4,6)</div>';
+                    `<div class="alert alert-danger">${formatErrorMessage(num1Input, num2Input)}</div>`;
                 return;
             }
 
