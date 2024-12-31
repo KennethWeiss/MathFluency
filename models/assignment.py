@@ -23,7 +23,8 @@ class Assignment(db.Model):
     level = db.Column(db.Integer, nullable=False)
     required_problems = db.Column(db.Integer, default=10)
     min_correct_percentage = db.Column(db.Integer, default=80)
-    
+    active = db.Column(db.Boolean, default=True)  # Whether the assignment is visible to students
+
     # Custom multiplication settings
     custom_number1 = db.Column(db.Integer)
     custom_number2 = db.Column(db.Integer)
@@ -67,6 +68,23 @@ class Assignment(db.Model):
         secondaryjoin=(prerequisite_assignments.c.prerequisite_id == id),
         backref='required_for'
     )
+
+    def get_progress(self, student):
+        """Get or create progress entry for a student."""
+        progress = AssignmentProgress.query.filter_by(
+            assignment_id=self.id,
+            student_id=student.id
+        ).first()
+        
+        if not progress:
+            progress = AssignmentProgress(
+                assignment_id=self.id,
+                student_id=student.id
+            )
+            db.session.add(progress)
+            db.session.commit()
+        
+        return progress
     
     def get_assigned_students(self):
         """Get all students assigned to this assignment (class or individual)."""
@@ -160,6 +178,15 @@ class AssignmentProgress(db.Model):
     # Grading
     teacher_comment = db.Column(db.String(500))
     grade_override = db.Column(db.Integer)
+
+    @property
+    def score(self):
+        """Calculate the percentage score for this assignment."""
+        if self.problems_attempted == 0:
+            return 0
+        if self.grade_override is not None:
+            return self.grade_override
+        return round((self.problems_correct / self.problems_attempted) * 100)
     
     # Status flags
     needs_review = db.Column(db.Boolean, default=False)

@@ -2,193 +2,51 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1>Grade Assignment</h1>
-            <h4 class="text-muted">{{ assignment.title }}</h4>
-        </div>
-        <a href="{{ url_for('assignment.view_assignment', id=assignment.id) }}" 
-           class="btn btn-outline-secondary">
-            Back to Assignment
-        </a>
-    </div>
+    <h1>Grade Assignment: {{ assignment.title }}</h1>
+    
+    <ul class="nav nav-tabs mb-4" id="gradingTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="needs-grading-tab" data-bs-toggle="tab" href="#needs-grading" role="tab">
+                Needs Grading
+                <span class="badge bg-warning">
+                    {{ progress_entries|selectattr('needs_review')|list|length }}
+                </span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="all-submissions-tab" data-bs-toggle="tab" href="#all-submissions" role="tab">
+                All Submissions
+                <span class="badge bg-secondary">{{ progress_entries|length }}</span>
+            </a>
+        </li>
+    </ul>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" 
-                               id="needs-grading-tab" 
-                               data-bs-toggle="tab" 
-                               href="#needs-grading" 
-                               role="tab">
-                                Needs Grading 
-                                <span class="badge bg-warning">
-                                    {{ progress_entries|selectattr('needs_grading')|list|length }}
-                                </span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" 
-                               id="all-submissions-tab" 
-                               data-bs-toggle="tab" 
-                               href="#all-submissions" 
-                               role="tab">
-                                All Submissions
-                            </a>
-                        </li>
-                    </ul>
+    <div class="tab-content" id="gradingTabsContent">
+        <!-- Needs Grading Tab -->
+        <div class="tab-pane fade show active" id="needs-grading" role="tabpanel">
+            {% set needs_grading = progress_entries|selectattr('needs_review')|list %}
+            {% if needs_grading %}
+                {% for progress in needs_grading %}
+                    {{ render_submission_card(progress) }}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-success">
+                    No submissions need grading at this time.
                 </div>
-                <div class="card-body">
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" 
-                             id="needs-grading" 
-                             role="tabpanel">
-                            {% set needs_grading = progress_entries|selectattr('needs_grading')|list %}
-                            {% if needs_grading %}
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Student</th>
-                                            <th>Submitted</th>
-                                            <th>Auto Score</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for progress in needs_grading %}
-                                        <tr>
-                                            <td>{{ progress.student.name }}</td>
-                                            <td>{{ progress.last_attempt.strftime('%Y-%m-%d %H:%M') }}</td>
-                                            <td>{{ progress.auto_score }}%</td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-primary btn-sm"
-                                                        onclick="loadSubmission({{ progress.id }})">
-                                                    Grade
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% else %}
-                            <div class="alert alert-info">
-                                No submissions need grading at this time.
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="tab-pane fade" 
-                             id="all-submissions" 
-                             role="tabpanel">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Student</th>
-                                            <th>Status</th>
-                                            <th>Auto Score</th>
-                                            <th>Final Score</th>
-                                            <th>Graded By</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for progress in progress_entries %}
-                                        <tr>
-                                            <td>{{ progress.student.name }}</td>
-                                            <td>
-                                                {% if progress.completed %}
-                                                    <span class="badge bg-success">Completed</span>
-                                                {% elif progress.started %}
-                                                    <span class="badge bg-warning">In Progress</span>
-                                                {% else %}
-                                                    <span class="badge bg-secondary">Not Started</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ progress.auto_score }}%</td>
-                                            <td>
-                                                {% if progress.score is not none %}
-                                                    {{ progress.score }}%
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if progress.graded_by %}
-                                                    {{ progress.graded_by.name }}
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-outline-primary btn-sm"
-                                                        onclick="loadSubmission({{ progress.id }})">
-                                                    View/Grade
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
         </div>
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Grading Summary</h5>
+        <!-- All Submissions Tab -->
+        <div class="tab-pane fade" id="all-submissions" role="tabpanel">
+            {% if progress_entries %}
+                {% for progress in progress_entries %}
+                    {{ render_submission_card(progress) }}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    No submissions yet.
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            Total Submissions
-                            <span class="badge bg-primary rounded-pill">
-                                {{ progress_entries|selectattr('started')|list|length }}
-                            </span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            Needs Grading
-                            <span class="badge bg-warning rounded-pill">
-                                {{ progress_entries|selectattr('needs_grading')|list|length }}
-                            </span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            Graded
-                            <span class="badge bg-success rounded-pill">
-                                {{ progress_entries|selectattr('is_graded')|list|length }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-3">
-                        <h6>Class Statistics</h6>
-                        <p class="mb-1">Average Score: 
-                            {% set scores = progress_entries|selectattr('score', 'defined')|map(attribute='score')|list %}
-                            {% if scores %}
-                                {{ "%.1f"|format(scores|sum / scores|length) }}%
-                            {% else %}
-                                -
-                            {% endif %}
-                        </p>
-                        <p class="mb-1">Completion Rate: 
-                            {% set completion_rate = (progress_entries|selectattr('completed')|list|length / 
-                                                    progress_entries|length * 100) %}
-                            {{ "%.1f"|format(completion_rate) }}%
-                        </p>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -202,89 +60,103 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="submissionContent">
-                    Loading...
-                </div>
+                <form id="gradeForm">
+                    <input type="hidden" id="studentId" name="studentId">
+                    <div class="mb-3">
+                        <label for="grade" class="form-label">Override Grade (0-100)</label>
+                        <input type="number" class="form-control" id="grade" name="grade" min="0" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Feedback</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitGrade()">Save Grade</button>
             </div>
         </div>
     </div>
 </div>
 
+{% macro render_submission_card(progress) %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="card-title">{{ progress.student.username }}</h5>
+                <div class="progress-stats">
+                    <p><strong>Status:</strong> 
+                        {% if progress.completed %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif progress.started %}
+                            <span class="badge bg-warning">In Progress</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not Started</span>
+                        {% endif %}
+                    </p>
+                    
+                    {% if progress.started %}
+                        <p><strong>Started:</strong> {{ progress.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p><strong>Time Spent:</strong> {{ (progress.total_time_spent / 60)|round|int }} minutes</p>
+                        <p><strong>Problems:</strong> {{ progress.problems_correct }}/{{ progress.problems_attempted }} correct</p>
+                        <p><strong>Current Score:</strong> {{ progress.score }}%</p>
+                        {% if progress.last_attempt_at %}
+                            <p><strong>Last Activity:</strong> {{ progress.last_attempt_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if progress.teacher_comment %}
+                        <div class="mt-3">
+                            <strong>Previous Feedback:</strong>
+                            <p class="text-muted">{{ progress.teacher_comment }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary" 
+                        onclick="openGradingModal('{{ progress.student_id }}', '{{ progress.grade_override }}', '{{ progress.teacher_comment|default('', true) }}')"
+                        {% if not progress.started %}disabled{% endif %}>
+                    Grade
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% block scripts %}
 <script>
-function loadSubmission(progressId) {
-    const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
-    const contentDiv = document.getElementById('submissionContent');
-    
-    // Show modal with loading state
-    modal.show();
-    contentDiv.innerHTML = 'Loading...';
-    
-    // Fetch submission details
-    fetch(`/assignments/submission/${progressId}`)
-        .then(response => response.json())
-        .then(data => {
-            contentDiv.innerHTML = buildSubmissionHTML(data);
-            initializeGradingHandlers(progressId);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            contentDiv.innerHTML = 'Error loading submission.';
-        });
+function openGradingModal(studentId, currentGrade, currentComment) {
+    document.getElementById('studentId').value = studentId;
+    document.getElementById('grade').value = currentGrade;
+    document.getElementById('comment').value = currentComment;
+    new bootstrap.Modal(document.getElementById('gradingModal')).show();
 }
 
-function buildSubmissionHTML(data) {
-    // Build the HTML for the submission details
-    // This will be implemented based on your submission data structure
-    return `
-        <div class="submission-details">
-            <h6>Student: ${data.student_name}</h6>
-            <div class="mb-3">
-                <label class="form-label">Score</label>
-                <input type="number" class="form-control" id="score" 
-                       value="${data.auto_score}" min="0" max="100">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Comments</label>
-                <textarea class="form-control" id="comments" rows="3">${data.comments || ''}</textarea>
-            </div>
-            <button onclick="submitGrade(${data.progress_id})" 
-                    class="btn btn-primary">
-                Save Grade
-            </button>
-        </div>
-        <div class="mt-4">
-            <h6>Work Shown:</h6>
-            <div class="work-content">
-                ${data.work_content}
-            </div>
-        </div>
-    `;
-}
-
-function submitGrade(progressId) {
-    const score = document.getElementById('score').value;
-    const comments = document.getElementById('comments').value;
+function submitGrade() {
+    const studentId = document.getElementById('studentId').value;
+    const grade = document.getElementById('grade').value;
+    const comment = document.getElementById('comment').value;
     
-    fetch(`/assignments/${progressId}/grade`, {
+    fetch(`/assignments/{{ assignment.id }}/grade/${studentId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ score, comments }),
-        credentials: 'same-origin'
+        body: `grade=${grade}&comment=${encodeURIComponent(comment)}`
     })
-    .then(response => {
-        if (response.ok) {
-            window.location.reload();
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
         } else {
-            throw new Error('Failed to save grade');
+            alert('Error saving grade');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error saving grade');
     });
 }
 </script>
+{% endblock %}
 {% endblock %}

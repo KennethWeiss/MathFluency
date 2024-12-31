@@ -35,6 +35,7 @@ def create_assignment():
         required_problems = int(request.form.get('required_problems', 10))
         min_correct_percentage = int(request.form.get('min_correct_percentage', 80))
         due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d')
+        active = 'active' in request.form
         class_id = request.form.get('class_id')
         
         # Optional settings
@@ -51,6 +52,7 @@ def create_assignment():
             required_problems=required_problems,
             min_correct_percentage=min_correct_percentage,
             due_date=due_date,
+            active=active,
             teacher_id=current_user.id,
             class_id=class_id,
             max_attempts_per_problem=max_attempts,
