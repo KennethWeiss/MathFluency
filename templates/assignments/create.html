@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ 'Edit' if assignment else 'Create New' }} Assignment</h1>
+
+    <form method="POST" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" 
+                   value="{{ assignment.title if assignment else '' }}" required>
+            <div class="invalid-feedback">
+                Please provide a title.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required>{{ assignment.description if assignment else '' }}</textarea>
+            <div class="invalid-feedback">
+                Please provide a description.
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="operation" class="form-label">Operation</label>
+                <select class="form-select" id="operation" name="operation" required>
+                    <option value="" {% if not assignment %}selected{% endif %}>Choose operation...</option>
+                    <option value="addition" {% if assignment and assignment.operation == 'addition' %}selected{% endif %}>Addition</option>
+                    <option value="subtraction" {% if assignment and assignment.operation == 'subtraction' %}selected{% endif %}>Subtraction</option>
+                    <option value="multiplication" {% if assignment and assignment.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
+                    <option value="division" {% if assignment and assignment.operation == 'division' %}selected{% endif %}>Division</option>
+                </select>
+                <div class="invalid-feedback">
+                    Please select an operation.
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="level" class="form-label">Level</label>
+                <select class="form-select" id="level" name="level" required>
+                    <option value="" {% if not assignment %}selected{% endif %}>Choose level...</option>
+                    {% for i in range(1, 11) %}
+                    <option value="{{ i }}" {% if assignment and assignment.level == i %}selected{% endif %}>Level {{ i }}</option>
+                    {% endfor %}
+                </select>
+                <div class="invalid-feedback">
+                    Please select a level.
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="required_problems" class="form-label">Required Problems</label>
+                <input type="number" class="form-control" id="required_problems" name="required_problems"
+                       value="{{ assignment.required_problems if assignment else '10' }}" min="1" required>
+                <div class="invalid-feedback">
+                    Please specify the number of required problems.
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="min_correct_percentage" class="form-label">Minimum Correct Percentage</label>
+                <input type="number" class="form-control" id="min_correct_percentage" name="min_correct_percentage"
+                       value="{{ assignment.min_correct_percentage if assignment else '80' }}" min="0" max="100" required>
+                <div class="invalid-feedback">
+                    Please specify a percentage between 0 and 100.
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="due_date" class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="due_date" name="due_date"
+                   value="{{ assignment.due_date.strftime('%Y-%m-%d') if assignment and assignment.due_date else '' }}" required>
+            <div class="invalid-feedback">
+                Please specify a due date.
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="active" name="active"
+                       {% if not assignment or assignment.active %}checked{% endif %}>
+                <label class="form-check-label" for="active">
+                    Active (students can see and work on this assignment)
+                </label>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('assignment.list_assignments') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">{{ 'Save Changes' if assignment else 'Create Assignment' }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Form validation script
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}

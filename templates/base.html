@@ -24,6 +24,23 @@
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'practice' %}active{% endif %}" href="{{ url_for('practice') }}">Practice</a>
                     </li>
+                    {% if current_user.is_authenticated %}
+                    {% if current_user.is_teacher %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" 
+                            href="{{ url_for('assignment.list_assignments') }}">
+                            <i class="fas fa-tasks"></i> Assignments
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" 
+                            href="{{ url_for('assignment.student_assignments') }}">
+                            <i class="fas fa-book"></i> My Assignments
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'progress.progress' %}active{% endif %}" href="{{ url_for('progress.progress') }}">Progress</a>
                     </li>

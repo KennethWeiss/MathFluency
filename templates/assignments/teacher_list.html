@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Assignments</h1>
+        <a href="{{ url_for('assignment.create_assignment') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Assignment
+        </a>
+    </div>
+
+    {% if assignments %}
+    <div class="row">
+        {% for assignment in assignments %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ assignment.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {{ assignment.operation.title() }} - Level {{ assignment.level }}
+                    </h6>
+                    <p class="card-text">{{ assignment.description }}</p>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            Due: {{ assignment.due_date.strftime('%Y-%m-%d') }}
+                        </small>
+                    </div>
+                    
+                    <div class="progress mb-3">
+                        {% set completed = assignment.student_progress.filter_by(completed=true).count() %}
+                        {% set total = assignment.student_progress.count() %}
+                        {% set percentage = (completed / total * 100) if total > 0 else 0 %}
+                        <div class="progress-bar" 
+                             role="progressbar" 
+                             style="width: {{ percentage }}%"
+                             aria-valuenow="{{ percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ completed }}/{{ total }} Complete
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <a href="{{ url_for('assignment.view_assignment', id=assignment.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
+                        <a href="{{ url_for('assignment.edit_assignment', id=assignment.id) }}" 
+                           class="btn btn-sm btn-outline-secondary">
+                            Edit
+                        </a>
+                        <a href="{{ url_for('assignment.grade_assignment', id=assignment.id) }}" 
+                           class="btn btn-sm btn-outline-info">
+                            Grade
+                        </a>
+                        <button type="button"
+                                onclick="deleteAssignment({{ assignment.id }})" 
+                                class="btn btn-sm btn-outline-danger">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No assignments created yet. Click the "Create Assignment" button to get started!
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function deleteAssignment(id) {
+    if (confirm('Are you sure you want to delete this assignment?')) {
+        fetch(`/assignments/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Error deleting assignment');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting assignment');
+        });
+    }
+}
+</script>
+{% endblock %}

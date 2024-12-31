@@ -29,17 +29,20 @@ def unique_filter(l):
 from models.user import User
 from models.class_ import Class
 from models.practice_attempt import PracticeAttempt
+from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 
 # Import and register blueprints
 from routes.auth_routes import auth_bp
 from routes.layout_routes import layout_bp
 from routes.main_routes import main_bp
 from routes.progress_routes import progress_bp
+from routes.assignment_routes import assignment_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(progress_bp)
+app.register_blueprint(assignment_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
