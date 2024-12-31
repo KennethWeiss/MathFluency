@@ -143,12 +143,16 @@ def analyze_level_problems(attempts):
                 'correct_count': 0,
                 'last_seen': attempt.created_at,
                 'operation': attempt.operation,
-                'level': attempt.level
+                'level': attempt.level,
+                'user_answers': [],
+                'correct_answer': attempt.correct_answer
             }
         
         problem_stats[attempt.problem]['total_attempts'] += 1
         if attempt.is_correct:
             problem_stats[attempt.problem]['correct_count'] += 1
+        else:
+            problem_stats[attempt.problem]['user_answers'].append(attempt.user_answer)
         
         # Update last seen if this attempt is more recent
         if attempt.created_at > problem_stats[attempt.problem]['last_seen']:
@@ -167,7 +171,9 @@ def analyze_level_problems(attempts):
             'accuracy': accuracy,
             'last_seen': stats['last_seen'],
             'operation': stats['operation'],
-            'level': stats['level']
+            'level': stats['level'],
+            'user_answers': list(set(stats['user_answers'])),
+            'correct_answer': stats['correct_answer']
         })
     
     # Sort by accuracy (ascending) so struggles are first

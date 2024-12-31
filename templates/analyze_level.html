@@ -96,9 +96,7 @@
                             <td>
                                 {{ problem.correct_count }}/{{ problem.total_attempts }}
                                 <br>
-                                <small class="text-muted">
-                                    {{ "%.1f"|format(problem.accuracy) }}% correct
-                                </small>
+                                
                             </td>
                             <td>
                                 <div class="progress progress-container {% if problem['accuracy'] >= 80 %}bg-success-light{% elif problem['accuracy'] >= 60 %}bg-warning-light{% else %}bg-danger-light{% endif %}">
@@ -122,11 +120,11 @@
                                         <span class="badge rounded-pill text-bg-danger">✗</span>
                                     {% endif %}
                                 {% endfor %}
-                                {% if problem.incorrect_count > 0 %}
+                                {% if problem['incorrect_count'] > 0 and problem['user_answers']|length > 0 %}
                                 <br>
                                 <small class="text-muted">
                                     Common mistakes:
-                                    {% for answer in problem.user_answers|unique|sort %}
+                                    {% for answer in problem['user_answers'] %}
                                     <span class="badge text-bg-light">{{ answer }}</span>
                                     {% endfor %}
                                 </small>
