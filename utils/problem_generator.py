@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import random
-from typing import Dict, Optional, Union, List
+from typing import Dict, Union, Optional, List
 
 # Type aliases for clarity
 Problem = Dict[str, Union[str, int, bool]]
@@ -245,3 +245,35 @@ class ProblemGenerator:
         # If we couldn't find an unmastered problem after max_attempts, return the last generated one
         print(f"Could not find unmastered problem after {max_attempts} attempts")
         return problem
+
+def generate_addition_level1() -> Problem:
+    """Adding 1 to single digit"""
+    num = random.randint(1, 9)
+    return {
+        'problem': f"{num} + 1",
+        'answer': num + 1,
+        'description': "Adding 1 to single digit",
+        'operation': 'addition',
+        'level': 1
+    }
+
+def generate_addition_level2() -> Problem:
+    """Adding 2 to single digit"""
+    num = random.randint(1, 9)
+    return {
+        'problem': f"{num} + 2",
+        'answer': num + 2,
+        'description': "Adding 2 to single digit",
+        'operation': 'addition',
+        'level': 2
+    }
+
+def get_problem(operation: str, level: int) -> Optional[Problem]:
+    """Get a problem based on operation and level"""
+    if operation == 'addition':
+        if level == 1:
+            return generate_addition_level1()
+        elif level == 2:
+            return generate_addition_level2()
+    
+    return None

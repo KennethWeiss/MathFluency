@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
-from utils.problem_generator import ProblemGenerator
+from utils.math_problems import get_problem
 from sqlalchemy import func
 import os
 
@@ -113,15 +113,10 @@ def get_problem_route():
             print(f"Error converting level to int: {e}")  # Debug log
             return jsonify({'error': 'Invalid level format'}), 400
             
-        # Use ProblemGenerator.get_problem instead of get_problem
-        print(f"Calling ProblemGenerator.get_problem with: operation={operation}, level={level}")  # Debug log
-        problem = ProblemGenerator.get_problem(
-            operation=operation,
-            level=level,
-            user_id=current_user.id,
-            db=db
-        )
-        
+        problem = get_problem(operation, level)
+        if problem is None:
+            return jsonify({'error': 'Invalid operation or level'}), 400
+            
         print(f"Generated problem: {problem}")  # Debug log
         return jsonify(problem)
         
