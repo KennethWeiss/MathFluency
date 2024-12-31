@@ -25,10 +25,10 @@
                         <a class="nav-link {% if request.endpoint == 'practice' %}active{% endif %}" href="{{ url_for('practice') }}">Practice</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}" href="{{ url_for('progress') }}">Progress</a>
+                        <a class="nav-link {% if request.endpoint == 'progress.progress' %}active{% endif %}" href="{{ url_for('progress.progress') }}">Progress</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'incorrect_problems' %}active{% endif %}" href="{{ url_for('incorrect_problems') }}">Incorrect Problems</a>
+                        <a class="nav-link {% if request.endpoint == 'progress.incorrect_problems' %}active{% endif %}" href="{{ url_for('progress.incorrect_problems') }}">Incorrect Problems</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
