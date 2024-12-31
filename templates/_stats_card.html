@@ -39,9 +39,9 @@
                         <td>{{ data['attempts'] }}</td>
                         <td>
                             {% if viewing_as_teacher %}
-                                <a href="{{ url_for('analyze_level', operation=operation, level=level, student_id=student.id) }}" class="text-decoration-none">
+                                <a href="{{ url_for('progress.analyze_level', operation=operation, level=level, student_id=student.id) }}" class="text-decoration-none">
                             {% else %}
-                                <a href="{{ url_for('analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
+                                <a href="{{ url_for('progress.analyze_level', operation=operation, level=level) }}" class="text-decoration-none">
                             {% endif %}
                                 {{ "%.1f"|format(data['accuracy']) }}%
                             </a>

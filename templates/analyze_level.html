@@ -8,7 +8,7 @@
         <div class="col">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('progress') }}">Progress</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('progress.progress') }}">Progress</a></li>
                     <li class="breadcrumb-item active">Level {{ level }} {{ operation|title }}</li>
                 </ol>
             </nav>
@@ -83,11 +83,11 @@
                             <td>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                         role="progressbar" 
-                                         style="width: {{ problem['accuracy'] }}%"
-                                         aria-valuenow="{{ problem['accuracy'] }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
+                                        role="progressbar" 
+                                        style="width: {{ problem['accuracy'] }}%"
+                                        aria-valuenow="{{ problem['accuracy'] }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
                                         {{ "%.1f"|format(problem['accuracy']) }}%
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@
 
     <!-- Return Buttons -->
     <div class="text-center mb-4">
-        <a href="{{ url_for('progress') }}" class="btn btn-secondary me-2">
+        <a href="{{ url_for('progress.progress') }}" class="btn btn-secondary me-2">
             Back to Progress
         </a>
         <a href="{{ url_for('practice') }}" class="btn btn-primary">
