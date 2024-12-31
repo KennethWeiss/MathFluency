@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
+from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem
 from sqlalchemy import func
 import os
