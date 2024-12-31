@@ -3,9 +3,52 @@ let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
+const VALIDATION_RULES = {
+    MAX_SET_SIZE: 10,         // Maximum numbers in a set
+    MIN_NUMBER: 0,            // Minimum allowed number
+    MAX_NUMBER: 100,          // Maximum allowed number
+    MAX_RANGE_SPAN: 20,       // Maximum difference between min and max in a range
+};
+
 function validateNumber(num) {
-    // Check if it's a valid integer between 0 and 100
-    return !isNaN(num) && Number.isInteger(num) && num >= 0 && num <= 100;
+    // Check if it's a valid integer within allowed range
+    return !isNaN(num) && 
+           Number.isInteger(num) && 
+           num >= VALIDATION_RULES.MIN_NUMBER && 
+           num <= VALIDATION_RULES.MAX_NUMBER;
+}
+
+function validateRange(min, max) {
+    // Check if range is valid and within limits
+    if (!validateNumber(min) || !validateNumber(max)) {
+        return { valid: false, error: "Numbers must be between 0 and 100" };
+    }
+    if (min > max) {
+        return { valid: false, error: "First number must be less than or equal to second number" };
+    }
+    if (max - min > VALIDATION_RULES.MAX_RANGE_SPAN) {
+        return { valid: false, error: `Range span cannot exceed ${VALIDATION_RULES.MAX_RANGE_SPAN}` };
+    }
+    return { valid: true };
+}
+
+function validateSet(numbers) {
+    // Check if set is valid and within limits
+    if (numbers.length === 0) {
+        return { valid: false, error: "At least one number is required" };
+    }
+    if (numbers.length > VALIDATION_RULES.MAX_SET_SIZE) {
+        return { valid: false, error: `Cannot have more than ${VALIDATION_RULES.MAX_SET_SIZE} numbers` };
+    }
+    const invalidNumbers = numbers.filter(n => !validateNumber(n));
+    if (invalidNumbers.length > 0) {
+        return { valid: false, error: "All numbers must be between 0 and 100" };
+    }
+    // Check for duplicates
+    if (new Set(numbers).size !== numbers.length) {
+        return { valid: false, error: "Duplicate numbers are not allowed" };
+    }
+    return { valid: true };
 }
 
 function parseNumberInput(input) {
@@ -13,49 +56,47 @@ function parseNumberInput(input) {
     
     // Handle empty input
     if (!input) {
-        return null;
+        return { valid: false, error: "Input is required" };
     }
     
     // Handle single number
     if (!input.includes('-') && !input.includes(',')) {
         const num = parseInt(input);
         if (validateNumber(num)) {
-            return { type: 'single', value: [num] };
+            return { valid: true, data: { type: 'single', value: [num] } };
         }
-        return null;
+        return { valid: false, error: "Invalid number format" };
     }
     
     // Handle range format (e.g., "2-7")
     if (input.includes('-')) {
         // Check if there's exactly one hyphen
         if (input.split('-').length !== 2) {
-            return null;
+            return { valid: false, error: "Invalid range format. Use exactly one '-' (e.g., 2-7)" };
         }
         
         const [min, max] = input.split('-').map(n => parseInt(n.trim()));
-        if (validateNumber(min) && validateNumber(max) && min <= max) {
-            return { type: 'range', value: [min, max] };
+        const rangeValidation = validateRange(min, max);
+        if (!rangeValidation.valid) {
+            return rangeValidation;
         }
-        return null;
+        return { valid: true, data: { type: 'range', value: [min, max] } };
     }
     
     // Handle set format (e.g., "2,4,6")
     if (input.includes(',')) {
         const numbers = input.split(',')
             .map(n => parseInt(n.trim()))
-            .filter(n => validateNumber(n));
+            .filter(n => !isNaN(n));
             
-        // Check if we lost any numbers in validation
-        if (numbers.length !== input.split(',').length) {
-            return null;
+        const setValidation = validateSet(numbers);
+        if (!setValidation.valid) {
+            return setValidation;
         }
-        
-        if (numbers.length > 0) {
-            return { type: 'set', value: numbers };
-        }
+        return { valid: true, data: { type: 'set', value: numbers } };
     }
     
-    return null;
+    return { valid: false, error: "Invalid input format" };
 }
 
 function formatErrorMessage(input1, input2) {
@@ -63,13 +104,17 @@ function formatErrorMessage(input1, input2) {
     
     if (!input1.trim() || !input2.trim()) {
         messages.push("Both number fields are required");
-    } else {
-        if (!parseNumberInput(input1)) {
-            messages.push("First number: Enter a single number (e.g., '5'), a range (e.g., '2-7'), or a set (e.g., '2,4,6')");
-        }
-        if (!parseNumberInput(input2)) {
-            messages.push("Second number: Enter a single number (e.g., '5'), a range (e.g., '2-7'), or a set (e.g., '2,4,6')");
-        }
+        return messages.join('<br>');
+    }
+    
+    const result1 = parseNumberInput(input1);
+    const result2 = parseNumberInput(input2);
+    
+    if (!result1.valid) {
+        messages.push(`First number: ${result1.error}`);
+    }
+    if (!result2.valid) {
+        messages.push(`Second number: ${result2.error}`);
     }
     
     return messages.join('<br>');
@@ -91,18 +136,18 @@ async function getNewProblem() {
             const num1Input = document.getElementById('num1-input').value;
             const num2Input = document.getElementById('num2-input').value;
             
-            const num1Data = parseNumberInput(num1Input);
-            const num2Data = parseNumberInput(num2Input);
+            const num1Result = parseNumberInput(num1Input);
+            const num2Result = parseNumberInput(num2Input);
 
-            if (!num1Data || !num2Data) {
+            if (!num1Result.valid || !num2Result.valid) {
                 document.getElementById('feedback').innerHTML = 
                     `<div class="alert alert-danger">${formatErrorMessage(num1Input, num2Input)}</div>`;
                 return;
             }
 
             requestData.customNumbers = {
-                number1: num1Data,
-                number2: num2Data
+                number1: num1Result.data,
+                number2: num2Result.data
             };
         }
 
