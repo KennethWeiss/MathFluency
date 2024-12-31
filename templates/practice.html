@@ -49,7 +49,33 @@
                         <option value="10">10 Times Table</option>
                         <option value="11">11 Times Table</option>
                         <option value="12">12 Times Table</option>
+                        <option value="99">Custom Range</option>
                     </select>
+
+                    <!-- Custom Range Settings (initially hidden) -->
+                    <div id="custom-range-settings" class="mb-3" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Custom Problem Settings</h5>
+                                
+                                <!-- First Number -->
+                                <div class="mb-3">
+                                    <label class="form-label">First Number:</label>
+                                    <input type="text" class="form-control" id="num1-input" 
+                                           placeholder="Range (e.g., 2-7) or Set (e.g., 2,4,6)">
+                                    <small class="text-muted">Use "-" for range or "," for specific numbers</small>
+                                </div>
+                                
+                                <!-- Second Number -->
+                                <div class="mb-3">
+                                    <label class="form-label">Second Number:</label>
+                                    <input type="text" class="form-control" id="num2-input" 
+                                           placeholder="Range (e.g., 3-9) or Set (e.g., 2,7,8)">
+                                    <small class="text-muted">Use "-" for range or "," for specific numbers</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

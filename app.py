@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
 from utils.practice_tracker import PracticeTracker
-from utils.math_problems import get_problem
+from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
 import os
 
@@ -85,34 +85,39 @@ def get_problem_route():
     """Get a new problem based on user's history and mastery level."""
     try:
         data = request.json
-        print(f"\nReceived request data: {data}")  # Debug log
-        
         operation = data.get('operation')
         level = data.get('level')
         
-        print(f"Operation: {operation}, Level: {level}")  # Debug log
-        
         if not operation or level is None:
-            print(f"Missing data: operation={operation}, level={level}")  # Debug log
             return jsonify({'error': 'Missing operation or level'}), 400
-        
-        try:
-            level = int(level)
-        except (TypeError, ValueError) as e:
-            print(f"Error converting level to int: {e}")  # Debug log
-            return jsonify({'error': 'Invalid level format'}), 400
             
-        problem = get_problem(operation, level)
+        level = int(level)
+        
+        # Handle custom multiplication ranges/sets
+        if operation == 'multiplication' and level == 99:
+            custom_numbers = data.get('customNumbers')
+            if not custom_numbers:
+                return jsonify({'error': 'Missing custom number specifications'}), 400
+                
+            number1_spec = custom_numbers.get('number1')
+            number2_spec = custom_numbers.get('number2')
+            
+            if not number1_spec or not number2_spec:
+                return jsonify({'error': 'Invalid custom number format'}), 400
+                
+            problem = generate_custom_multiplication(number1_spec, number2_spec)
+        else:
+            problem = get_problem(operation, level)
+            
         if problem is None:
             return jsonify({'error': 'Invalid operation or level'}), 400
             
-        print(f"Generated problem: {problem}")  # Debug log
         return jsonify(problem)
         
+    except ValueError:
+        return jsonify({'error': 'Invalid number format'}), 400
     except Exception as e:
-        print(f"Error generating problem: {str(e)}")  # Detailed error log
-        import traceback
-        print(traceback.format_exc())  # Print full stack trace
+        print(f"Error in get_problem_route: {str(e)}")
         return jsonify({'error': 'Error generating problem'}), 500
 
 @app.route('/check_answer', methods=['POST'])

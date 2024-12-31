@@ -3,21 +3,63 @@ let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
+function parseNumberInput(input) {
+    input = input.trim();
+    if (input.includes('-')) {
+        // Handle range format (e.g., "2-7")
+        const [min, max] = input.split('-').map(n => parseInt(n.trim()));
+        if (!isNaN(min) && !isNaN(max) && min <= max) {
+            return { type: 'range', value: [min, max] };
+        }
+    } else if (input.includes(',')) {
+        // Handle set format (e.g., "2,4,6")
+        const numbers = input.split(',')
+            .map(n => parseInt(n.trim()))
+            .filter(n => !isNaN(n));
+        if (numbers.length > 0) {
+            return { type: 'set', value: numbers };
+        }
+    }
+    return null;
+}
+
 async function getNewProblem() {
     const level = currentOperation === 'addition' 
         ? document.getElementById('addition-select').value 
         : document.getElementById('multiplication-select').value;
     
     try {
+        let requestData = {
+            operation: currentOperation,
+            level: parseInt(level)
+        };
+
+        // Add custom range/set data if using custom multiplication
+        if (currentOperation === 'multiplication' && level === '99') {
+            const num1Input = document.getElementById('num1-input').value;
+            const num2Input = document.getElementById('num2-input').value;
+            
+            const num1Data = parseNumberInput(num1Input);
+            const num2Data = parseNumberInput(num2Input);
+
+            if (!num1Data || !num2Data) {
+                document.getElementById('feedback').innerHTML = 
+                    '<div class="alert alert-danger">Please enter valid ranges (e.g., 2-7) or sets (e.g., 2,4,6)</div>';
+                return;
+            }
+
+            requestData.customNumbers = {
+                number1: num1Data,
+                number2: num2Data
+            };
+        }
+
         const response = await fetch('/get_problem', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                operation: currentOperation,
-                level: parseInt(level)
-            })
+            body: JSON.stringify(requestData)
         });
         
         if (!response.ok) {
@@ -108,6 +150,12 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('addition-select').style.display = operation === 'addition' ? 'block' : 'none';
             document.getElementById('multiplication-select').style.display = operation === 'multiplication' ? 'block' : 'none';
             
+            // Show/hide custom range/settings when multiplication level changes
+            document.getElementById('multiplication-select').addEventListener('change', function() {
+                const customSettings = document.getElementById('custom-range-settings');
+                customSettings.style.display = this.value === '99' ? 'block' : 'none';
+            });
+
             getNewProblem();
         });
     });
