@@ -15,7 +15,7 @@ class PracticeTracker:
 
     @staticmethod
     def get_recent_attempts(db, user_id: int, operation: str, level: int, 
-                          days: int = DAYS_TO_LOOK_BACK) -> List:
+                        days: int = DAYS_TO_LOOK_BACK) -> List:
         """Get recent practice attempts for a user."""
         from models.practice_attempt import PracticeAttempt
         week_ago = datetime.utcnow() - timedelta(days=days)
@@ -70,7 +70,7 @@ class PracticeTracker:
 
     @staticmethod
     def get_problem(operation: str, level: int, user_id: Optional[int] = None, 
-                   db = None) -> Problem:
+                db = None) -> Problem:
         """
         Get a problem based on user's history and mastery level.
         If user_id and db are provided, considers user's history for adaptive difficulty.
