@@ -45,6 +45,12 @@ app.register_blueprint(progress_bp)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+@app.route('/practice')
+@login_required
+def practice():
+    print("In practice route")
+    return render_template('practice.html')
+
 def calculate_difficulty_level(user_id, operation, current_level):
     """Calculate the appropriate difficulty level based on user performance."""
     # Get recent attempts (last 10) for the current level
@@ -72,24 +78,6 @@ def calculate_difficulty_level(user_id, operation, current_level):
         return max(current_level - 1, 1)
     
     return current_level
-
-@app.route('/record_attempt', methods=['POST'])
-@login_required
-def record_attempt():
-    data = request.json
-    attempt = PracticeAttempt(
-        user_id=current_user.id,
-        operation=data['operation'],
-        level=data['level'],
-        problem=data['problem'],
-        user_answer=data['userAnswer'],
-        correct_answer=data['correctAnswer'],
-        is_correct=data['isCorrect'],
-        time_taken=data.get('timeTaken')
-    )
-    db.session.add(attempt)
-    db.session.commit()
-    return jsonify({'success': True})
 
 @app.route('/get_problem', methods=['POST'])
 @login_required
@@ -145,14 +133,23 @@ def check_answer():
             'error': 'Invalid answer format'
         }), 400
 
-
-
-@app.route('/practice')
+@app.route('/record_attempt', methods=['POST'])
 @login_required
-def practice():
-    print("In practice route")
-    return render_template('practice.html')
-
+def record_attempt():
+    data = request.json
+    attempt = PracticeAttempt(
+        user_id=current_user.id,
+        operation=data['operation'],
+        level=data['level'],
+        problem=data['problem'],
+        user_answer=data['userAnswer'],
+        correct_answer=data['correctAnswer'],
+        is_correct=data['isCorrect'],
+        time_taken=data.get('timeTaken')
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True)
