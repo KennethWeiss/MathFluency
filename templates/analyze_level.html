@@ -2,6 +2,26 @@
 
 {% block title %}Level Analysis - Math Fluency{% endblock %}
 
+{% block extra_css %}
+<style>
+.progress-container {
+    height: 20px;
+    position: relative;
+}
+.progress-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    line-height: 20px;
+    color: white;
+}
+.bg-success-light { background-color: #198754 !important; }
+.bg-warning-light { background-color: #ffc107 !important; }
+.bg-danger-light { background-color: #dc3545 !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row mb-4">
@@ -81,7 +101,7 @@
                                 </small>
                             </td>
                             <td>
-                                <div class="progress" style="height: 20px; background-color: {% if problem['accuracy'] >= 80 %}#198754{% elif problem['accuracy'] >= 60 %}#ffc107{% else %}#dc3545{% endif %}; position: relative;">
+                                <div class="progress progress-container {% if problem['accuracy'] >= 80 %}bg-success-light{% elif problem['accuracy'] >= 60 %}bg-warning-light{% else %}bg-danger-light{% endif %}">
                                     <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
                                         role="progressbar" 
                                         data-width="{{ problem['accuracy'] }}"
@@ -89,7 +109,7 @@
                                         aria-valuemin="0" 
                                         aria-valuemax="100">
                                     </div>
-                                    <div style="position: absolute; left: 0; right: 0; text-align: center; line-height: 20px; color: white;">
+                                    <div class="progress-text">
                                         {{ "%.1f"|format(problem['accuracy']) }}%
                                     </div>
                                 </div>
