@@ -3,6 +3,14 @@ let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
+// Operation configuration
+const OPERATIONS = {
+    addition: { symbol: '+', name: 'Addition' },
+    subtraction: { symbol: '-', name: 'Subtraction' },
+    multiplication: { symbol: '×', name: 'Multiplication' },
+    division: { symbol: '÷', name: 'Division' }
+};
+
 async function getNewProblem() {
     let level;
     
@@ -11,7 +19,7 @@ async function getNewProblem() {
         level = assignmentLevel;  // This is already set from practice.html
     } else {
         // Free practice mode - get level from select or use default
-        const select = document.getElementById(`${currentOperation}-select`);
+        const select = document.querySelector('.level-select:not([style*="display: none"])');
         level = select ? select.value : 1;  // Default to level 1 if select not found
     }
     
@@ -95,16 +103,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.add('active');
                 
                 // Show/hide appropriate level select
-                document.getElementById('addition-select').style.display = operation === 'addition' ? 'block' : 'none';
-                document.getElementById('multiplication-select').style.display = operation === 'multiplication' ? 'block' : 'none';
+                document.querySelectorAll('.level-select').forEach(select => {
+                    select.style.display = 'none';
+                });
+                const operationSelect = document.getElementById(`${operation}-select`);
+                if (operationSelect) {
+                    operationSelect.style.display = 'block';
+                }
                 
                 getNewProblem();
             });
         });
 
         // Add event listeners for selection menus
-        document.getElementById('addition-select').addEventListener('change', getNewProblem);
-        document.getElementById('multiplication-select').addEventListener('change', getNewProblem);
+        document.querySelectorAll('.level-select').forEach(select => {
+            select.addEventListener('change', getNewProblem);
+        });
         
         // Initialize with addition selected
         const additionButton = document.querySelector('[data-operation="addition"]');
@@ -131,23 +145,27 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Record attempt
+            const requestData = {
+                operation: currentOperation,
+                level: parseInt(document.querySelector('.level-select:not([style*="display: none"])')?.value || 1),
+                problem: document.getElementById('current-problem').textContent,
+                answer: parseInt(userAnswer),
+                correct_answer: parseInt(correctAnswer),
+                is_correct: isCorrect,
+                time_taken: timeTaken
+            };
+
+            // Only include assignment_id if we're in assignment mode
+            if (typeof assignmentId !== 'undefined') {
+                requestData.assignment_id = assignmentId;
+            }
+
             const response = await fetch('/check_answer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    assignment_id: assignmentId,
-                    operation: currentOperation,
-                    level: parseInt(currentOperation === 'addition' 
-                        ? document.getElementById('addition-select')?.value || 1
-                        : document.getElementById('multiplication-select')?.value || 1),
-                    problem: document.getElementById('current-problem').textContent,
-                    answer: parseInt(userAnswer),
-                    correct_answer: parseInt(correctAnswer),
-                    is_correct: isCorrect,
-                    time_taken: timeTaken
-                })
+                body: JSON.stringify(requestData)
             });
 
             if (!response.ok) {

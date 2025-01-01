@@ -36,7 +36,9 @@
                 <div class="card-body">
                     <div class="btn-group w-100" role="group">
                         <button type="button" class="btn btn-outline-primary" data-operation="addition">Addition</button>
+                        <button type="button" class="btn btn-outline-primary" data-operation="subtraction">Subtraction</button>
                         <button type="button" class="btn btn-outline-primary" data-operation="multiplication">Multiplication</button>
+                        <button type="button" class="btn btn-outline-primary" data-operation="division">Division</button>
                     </div>
                 </div>
             </div>
@@ -48,7 +50,7 @@
                 </div>
                 <div class="card-body">
                     <!-- Addition Levels -->
-                    <select id="addition-select" class="form-select mb-3">
+                    <select id="addition-select" class="form-select mb-3 level-select">
                         <option value="1">Level 1: Adding 1</option>
                         <option value="2">Level 2: Adding 2</option>
                         <option value="3">Level 3: Making 10</option>
@@ -56,8 +58,17 @@
                         <option value="5">Level 5: Double Digit Addition</option>
                     </select>
                     
+                    <!-- Subtraction Levels -->
+                    <select id="subtraction-select" class="form-select mb-3 level-select" style="display: none;">
+                        <option value="1">Level 1: Subtracting 1</option>
+                        <option value="2">Level 2: Subtracting 2</option>
+                        <option value="3">Level 3: Subtracting from 10</option>
+                        <option value="4">Level 4: Subtracting from Double Digits</option>
+                        <option value="5">Level 5: Double Digit Subtraction</option>
+                    </select>
+
                     <!-- Multiplication Levels -->
-                    <select id="multiplication-select" class="form-select mb-3" style="display: none;">
+                    <select id="multiplication-select" class="form-select mb-3 level-select" style="display: none;">
                         <option value="0">0 Times Table</option>
                         <option value="1">1 Times Table</option>
                         <option value="2">2 Times Table</option>
@@ -71,6 +82,20 @@
                         <option value="10">10 Times Table</option>
                         <option value="11">11 Times Table</option>
                         <option value="12">12 Times Table</option>
+                    </select>
+
+                    <!-- Division Levels -->
+                    <select id="division-select" class="form-select mb-3 level-select" style="display: none;">
+                        <option value="1">Level 1: Division by 1</option>
+                        <option value="2">Level 2: Division by 2</option>
+                        <option value="3">Level 3: Division by 3</option>
+                        <option value="4">Level 4: Division by 4</option>
+                        <option value="5">Level 5: Division by 5</option>
+                        <option value="6">Level 6: Division by 6</option>
+                        <option value="7">Level 7: Division by 7</option>
+                        <option value="8">Level 8: Division by 8</option>
+                        <option value="9">Level 9: Division by 9</option>
+                        <option value="10">Level 10: Division by 10</option>
                     </select>
                 </div>
             </div>
