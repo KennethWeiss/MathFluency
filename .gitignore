@@ -3,3 +3,9 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
+
+# Database files
+instance/
+*.db
+*.sqlite
+*.sqlite3
