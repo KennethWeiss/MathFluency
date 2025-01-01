@@ -62,6 +62,63 @@ def generate_addition_level5() -> Problem:
         'level': 5
     }
 
+def generate_subtraction_level1() -> Problem:
+    """Subtracting 1 from single digit"""
+    num = random.randint(2, 10)  # Start from 2 to avoid negative numbers
+    return {
+        'problem': f"{num} - 1",
+        'answer': num - 1,
+        'description': "Subtracting 1 from single digit",
+        'operation': 'subtraction',
+        'level': 1
+    }
+
+def generate_subtraction_level2() -> Problem:
+    """Subtracting 2 from single digit"""
+    num = random.randint(3, 10)  # Start from 3 to avoid negative numbers
+    return {
+        'problem': f"{num} - 2",
+        'answer': num - 2,
+        'description': "Subtracting 2 from single digit",
+        'operation': 'subtraction',
+        'level': 2
+    }
+
+def generate_subtraction_level3() -> Problem:
+    """Subtract from 10"""
+    num2 = random.randint(1, 9)
+    return {
+        'problem': f"10 - {num2}",
+        'answer': 10 - num2,
+        'description': "Subtract from 10",
+        'operation': 'subtraction',
+        'level': 3
+    }
+
+def generate_subtraction_level4() -> Problem:
+    """Subtract single digit from double digit"""
+    num1 = random.randint(11, 99)  # Double digit
+    num2 = random.randint(1, 9)    # Single digit
+    return {
+        'problem': f"{num1} - {num2}",
+        'answer': num1 - num2,
+        'description': "Subtract single digit from double digit",
+        'operation': 'subtraction',
+        'level': 4
+    }
+
+def generate_subtraction_level5() -> Problem:
+    """Subtract double digit from double digit"""
+    num1 = random.randint(20, 99)  # First double digit
+    num2 = random.randint(10, num1 - 1)  # Second double digit, smaller than first
+    return {
+        'problem': f"{num1} - {num2}",
+        'answer': num1 - num2,
+        'description': "Subtract double digit from double digit",
+        'operation': 'subtraction',
+        'level': 5
+    }
+
 def generate_multiplication_problem(table: int) -> Problem:
     """Generate multiplication fact for a specific times table"""
     factor = random.randint(0, 12)
@@ -121,6 +178,17 @@ def get_problem(operation: str, level: int) -> Optional[Problem]:
             return generate_addition_level4()
         elif level == 5:
             return generate_addition_level5()
+    elif operation == 'subtraction':
+        if level == 1:
+            return generate_subtraction_level1()
+        elif level == 2:
+            return generate_subtraction_level2()
+        elif level == 3:
+            return generate_subtraction_level3()
+        elif level == 4:
+            return generate_subtraction_level4()
+        elif level == 5:
+            return generate_subtraction_level5()
     elif operation == 'multiplication':
         if level == 99:  # Special level for custom problems
             number1_spec = {'type': 'range', 'value': (2, 6)}

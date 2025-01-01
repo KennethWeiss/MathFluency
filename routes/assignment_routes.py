@@ -170,6 +170,18 @@ def submit_grade(id, student_id):
     
     return jsonify({'success': True})
 
+@assignment_bp.route('/assignment/<int:id>/info', methods=['GET'])
+@login_required
+def get_assignment_info(id):
+    assignment = Assignment.query.get_or_404(id)
+    print(f"Returning info for assignment {id}: operation={assignment.operation}, level={assignment.level}")  # Debug log
+    return jsonify({
+        'id': assignment.id,
+        'operation': assignment.operation,
+        'level': assignment.level,
+        'required_problems': assignment.required_problems
+    })
+
 # Student routes
 @assignment_bp.route('/student/assignments')
 @login_required

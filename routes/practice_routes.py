@@ -22,12 +22,17 @@ def practice():
             student_id=current_user.id
         ).first_or_404()
         
+        print("Assignment mode: id=", assignment_id)  # Debug log
+        print("Found assignment: id=", assignment.id)  # Debug log
+        print("Found progress: id=", progress.id)  # Debug log
+        
         return render_template('practice.html', 
                             mode='assignment',
                             assignment=assignment,
                             progress=progress)
     else:
         # Free practice mode
+        print("Free practice mode")  # Debug log
         return render_template('practice.html', 
                             mode='free')
 
@@ -35,23 +40,43 @@ def practice():
 @login_required
 def get_problem_route():
     data = request.json
+    print("Received request data:", data)  # Debug log
+    
     assignment_id = data.get('assignment_id')
     
     if assignment_id:
         # Get problem based on assignment settings
         assignment = Assignment.query.get_or_404(assignment_id)
-        problem = get_problem(
-            operation=assignment.operation,
-            level=assignment.level,
-            custom_numbers=None if assignment.operation != 'multiplication' 
-                        else [assignment.custom_number1, assignment.custom_number2]
-        )
+        print(f"Found assignment: id={assignment.id}, operation={assignment.operation}, level={assignment.level}")  # Debug log
+        
+        if assignment.operation == 'multiplication' and assignment.custom_number1 and assignment.custom_number2:
+            number1_spec = {'type': 'single', 'value': assignment.custom_number1}
+            number2_spec = {'type': 'single', 'value': assignment.custom_number2}
+            problem = generate_custom_multiplication(number1_spec, number2_spec)
+        else:
+            problem = get_problem(
+                operation=assignment.operation,
+                level=assignment.level
+            )
     else:
         # Free practice - use provided settings
         operation = data.get('operation', 'addition')
-        level = int(data.get('level', 1))
-        problem = get_problem(operation=operation, level=level)
+        level = data.get('level', 1)
+        print(f"Free practice mode: operation={operation}, level={level}")  # Debug log
+        
+        if operation == 'multiplication' and level == 99:
+            custom_numbers = data.get('customNumbers', {})
+            number1_spec = {'type': 'single', 'value': custom_numbers.get('number1')}
+            number2_spec = {'type': 'single', 'value': custom_numbers.get('number2')}
+            problem = generate_custom_multiplication(number1_spec, number2_spec)
+        else:
+            problem = get_problem(operation=operation, level=level)
     
+    if not problem:
+        print("No problem generated")  # Debug log
+        return jsonify({'error': 'Invalid operation or level'})
+    
+    print("Generated problem:", problem)  # Debug log
     return jsonify(problem)
 
 @practice_bp.route('/check_answer', methods=['POST'])
@@ -92,7 +117,7 @@ def check_answer():
         operation=data.get('operation'),
         level=data.get('level'),
         problem=data.get('problem'),
-        student_answer=answer,
+        user_answer=answer,
         correct_answer=correct_answer,
         is_correct=is_correct,
         time_taken=time_taken
@@ -100,11 +125,14 @@ def check_answer():
     db.session.add(attempt)
     db.session.commit()
     
-    return jsonify({
-        'correct': is_correct,
-        'progress': {
-            'attempted': getattr(progress, 'problems_attempted', 0),
-            'correct': getattr(progress, 'problems_correct', 0),
-            'completed': getattr(progress, 'completed', False)
-        } if assignment_id else None
-    })
+    # Return progress info if this is an assignment
+    if assignment_id:
+        return jsonify({
+            'is_correct': is_correct,
+            'progress': {
+                'problems_correct': progress.problems_correct,
+                'required_problems': assignment.required_problems
+            }
+        })
+    
+    return jsonify({'is_correct': is_correct})
