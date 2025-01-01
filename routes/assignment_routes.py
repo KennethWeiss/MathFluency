@@ -4,6 +4,7 @@ from app import db
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 from models.class_ import Class
 from datetime import datetime
+from sqlalchemy import func
 
 # Create blueprint
 assignment_bp = Blueprint('assignment', __name__)
@@ -81,6 +82,16 @@ def create_assignment():
     classes = Class.query.filter_by(teacher_id=current_user.id).all()
     return render_template('assignments/create.html', classes=classes)
 
+@assignment_bp.route('/assignments/<int:id>')
+@login_required
+def view_assignment(id):
+    assignment = Assignment.query.get_or_404(id)
+    if not current_user.is_teacher and not assignment.is_assigned_to_student(current_user):
+        flash('Access denied.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    return render_template('assignments/view.html', assignment=assignment, func=func, AssignmentProgress = AssignmentProgress)
+
 @assignment_bp.route('/assignments/<int:id>/grade')
 @login_required
 def grade_assignment(id):
@@ -93,15 +104,6 @@ def grade_assignment(id):
     return render_template('assignments/grade.html', assignment=assignment, progress_entries=progress_entries)
 
 
-@assignment_bp.route('/assignments/<int:id>')
-@login_required
-def view_assignment(id):
-    assignment = Assignment.query.get_or_404(id)
-    if not current_user.is_teacher and not assignment.is_assigned_to_student(current_user):
-        flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
-    
-    return render_template('assignments/view.html', assignment=assignment)
 
 @assignment_bp.route('/assignments/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
