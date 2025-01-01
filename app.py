@@ -37,22 +37,21 @@ from routes.layout_routes import layout_bp
 from routes.main_routes import main_bp
 from routes.progress_routes import progress_bp
 from routes.assignment_routes import assignment_bp
+from routes.practice_routes import practice_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(progress_bp)
 app.register_blueprint(assignment_bp)
+app.register_blueprint(practice_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route('/practice')
-@login_required
-def practice():
-    print("In practice route")
-    return render_template('practice.html')
+
+
 
 def calculate_difficulty_level(user_id, operation, current_level):
     """Calculate the appropriate difficulty level based on user performance."""
@@ -81,65 +80,6 @@ def calculate_difficulty_level(user_id, operation, current_level):
         return max(current_level - 1, 1)
     
     return current_level
-
-@app.route('/get_problem', methods=['POST'])
-@login_required
-def get_problem_route():
-    """Get a new problem based on user's history and mastery level."""
-    try:
-        data = request.json
-        operation = data.get('operation')
-        level = data.get('level')
-        
-        if not operation or level is None:
-            return jsonify({'error': 'Missing operation or level'}), 400
-            
-        level = int(level)
-        
-        # Handle custom multiplication ranges/sets
-        if operation == 'multiplication' and level == 99:
-            custom_numbers = data.get('customNumbers')
-            if not custom_numbers:
-                return jsonify({'error': 'Missing custom number specifications'}), 400
-                
-            number1_spec = custom_numbers.get('number1')
-            number2_spec = custom_numbers.get('number2')
-            
-            if not number1_spec or not number2_spec:
-                return jsonify({'error': 'Invalid custom number format'}), 400
-                
-            problem = generate_custom_multiplication(number1_spec, number2_spec)
-        else:
-            problem = get_problem(operation, level)
-            
-        if problem is None:
-            return jsonify({'error': 'Invalid operation or level'}), 400
-            
-        return jsonify(problem)
-        
-    except ValueError:
-        return jsonify({'error': 'Invalid number format'}), 400
-    except Exception as e:
-        print(f"Error in get_problem_route: {str(e)}")
-        return jsonify({'error': 'Error generating problem'}), 500
-
-@app.route('/check_answer', methods=['POST'])
-@login_required
-def check_answer():
-    user_answer = request.form.get('answer')
-    correct_answer = request.form.get('correct_answer')
-    
-    try:
-        is_correct = int(user_answer) == int(correct_answer)
-        return jsonify({
-            'success': True,
-            'is_correct': is_correct
-        })
-    except (ValueError, TypeError):
-        return jsonify({
-            'success': False,
-            'error': 'Invalid answer format'
-        }), 400
 
 @app.route('/record_attempt', methods=['POST'])
 @login_required

@@ -1,11 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Practice - Math Fluency{% endblock %}
+{% block title %}
+    {% if mode == 'assignment' %}
+        {{ assignment.title }} - Math Fluency
+    {% else %}
+        Practice - Math Fluency
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
+    {% if mode == 'assignment' %}
+        <div class="row mb-4">
+            <div class="col">
+                <h2>{{ assignment.title }}</h2>
+                <p class="text-muted">{{ assignment.description }}</p>
+                <div class="progress">
+                    <div id="assignment-progress" class="progress-bar" role="progressbar" 
+                         style="width: {{ (progress.problems_correct / assignment.required_problems * 100)|round }}%">
+                        {{ progress.problems_correct }}/{{ assignment.required_problems }} correct
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
     <div class="row">
-        <!-- Operation Selection -->
+        {% if mode != 'assignment' %}
+        <!-- Operation Selection - Only show in free practice mode -->
         <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-header">
@@ -49,64 +71,37 @@
                         <option value="10">10 Times Table</option>
                         <option value="11">11 Times Table</option>
                         <option value="12">12 Times Table</option>
-                        <option value="99">Custom Range</option>
                     </select>
-
-                    <!-- Custom Range Settings (initially hidden) -->
-                    <div id="custom-range-settings" class="mb-3" style="display: none;">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Custom Problem Settings</h5>
-                                
-                                <!-- First Number -->
-                                <div class="mb-3">
-                                    <label class="form-label">First Number:</label>
-                                    <input type="text" class="form-control" id="num1-input" 
-                                           placeholder="Single number (5), range (2-7), or set (2,4,6)">
-                                    <small class="text-muted">Enter a single number, use "-" for range, or "," for multiple numbers</small>
-                                </div>
-                                
-                                <!-- Second Number -->
-                                <div class="mb-3">
-                                    <label class="form-label">Second Number:</label>
-                                    <input type="text" class="form-control" id="num2-input" 
-                                           placeholder="Single number (5), range (2-7), or set (2,4,6)">
-                                    <small class="text-muted">Enter a single number, use "-" for range, or "," for multiple numbers</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
+        {% endif %}
         
-        <!-- Problem Display and Input -->
-        <div class="col-md-8">
+        <!-- Practice Area -->
+        <div class="col-md-{% if mode == 'assignment' %}12{% else %}8{% endif %}">
             <div class="card">
                 <div class="card-header">
-                    <h4>Practice Problem</h4>
+                    <h4>
+                        {% if mode == 'assignment' %}
+                            Assignment Problem
+                        {% else %}
+                            Practice Problem
+                        {% endif %}
+                    </h4>
                 </div>
-                <div class="card-body text-center">
-                    <div id="problem-display" class="text-center mb-4">
-                        <h2 id="current-problem" class="display-4 mb-4"></h2>
-                        <div id="answer-hint" class="alert alert-info" style="display: none;">
-                            <strong>Hint:</strong> The answer is <span id="correct-answer"></span>
+                <div class="card-body">
+                    <div id="problem-display">
+                        <h2 id="current-problem" class="text-center mb-4"></h2>
+                        <div id="answer-section" class="text-center">
+                            <input type="number" id="answer-input" class="form-control form-control-lg mb-3" placeholder="Enter your answer">
+                            <button id="check-answer" class="btn btn-primary btn-lg">Check Answer</button>
+                            <button id="new-problem" class="btn btn-secondary btn-lg ms-2">New Problem</button>
                         </div>
-                    </div>
-                    
-                    <div id="answer-section">
-                        <div class="mb-4">
-                            <input type="number" id="answer-input" class="form-control form-control-lg text-center" placeholder="Enter your answer">
-                            <input type="hidden" id="correct-answer-hidden">
+                        <div id="answer-hint" class="alert alert-info mt-3" style="display: none;">
+                            The correct answer is: <span id="correct-answer"></span>
                         </div>
-                        
-                        <div class="btn-group">
-                            <button id="new-problem" class="btn btn-primary btn-lg">New Problem</button>
-                            <button id="check-answer" class="btn btn-success btn-lg">Check Answer</button>
-                        </div>
-                        
-                        <div id="feedback" class="mt-3">
-                        </div>
+                        <input type="hidden" id="correct-answer-hidden">
+                        <div id="feedback" class="mt-3"></div>
                     </div>
                 </div>
             </div>
@@ -116,5 +111,13 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    {% if mode == 'assignment' %}
+    const assignment = {
+        required_problems: {{ assignment.required_problems }},
+        min_correct_percentage: {{ assignment.min_correct_percentage }}
+    };
+    {% endif %}
+</script>
 <script src="{{ url_for('static', filename='js/practice.js') }}"></script>
 {% endblock %}

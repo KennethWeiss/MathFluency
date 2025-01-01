@@ -22,7 +22,7 @@
                         <a class="nav-link {% if request.endpoint == 'main.home' %}active{% endif %}" href="{{ url_for('main.home') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'practice' %}active{% endif %}" href="{{ url_for('practice') }}">Practice</a>
+                        <a class="nav-link {% if request.endpoint == 'practice.practice' %}active{% endif %}" href="{{ url_for('practice.practice') }}">Practice</a>
                     </li>
                     {% if current_user.is_authenticated %}
                     {% if current_user.is_teacher %}

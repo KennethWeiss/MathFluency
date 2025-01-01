@@ -217,4 +217,4 @@ def start_assignment(id):
         progress.start_time = datetime.utcnow()
         db.session.commit()
     
-    return redirect(url_for('practice', assignment_id=id))
+    return redirect(url_for('practice.practice', assignment_id=id))
