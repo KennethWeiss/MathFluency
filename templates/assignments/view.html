@@ -60,8 +60,9 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-6">
-                            {% set completed = assignment.student_progress.filter_by(completed=true).count() %}
-                            {% set total = assignment.student_progress.count() %}
+                            {% set progress_query = assignment.student_progress %}
+                            {% set completed = progress_query.filter_by(completed=true).count() %}
+                            {% set total = progress_query.count() %}
                             {% set percentage = (completed / total * 100) if total > 0 else 0 %}
                             <div class="progress" style="height: 25px;">
                                 <div class="progress-bar" 
@@ -78,9 +79,10 @@
                             <p class="mb-0 text-muted">
                                 Average Score: 
                                 {% set scores = [] %}
-                                {% for progress in assignment.student_progress %}
-                                    {% if progress.score is not none %}
-                                        {% set _ = scores.append(progress.score) %}
+                                {% for progress in progress_query.filter(AssignmentProgress.problems_attempted > 0).all() %}
+                                    {% set score = progress.calculate_score() %}
+                                    {% if score is not none %}
+                                        {% set _ = scores.append(score) %}
                                     {% endif %}
                                 {% endfor %}
                                 {% if scores|length > 0 %}
@@ -124,8 +126,8 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if progress.score is not none %}
-                                            {{ progress.score }}%
+                                        {% if progress.calculate_score() is not none %}
+                                            {{ progress.calculate_score() }}%
                                         {% else %}
                                             -
                                         {% endif %}
@@ -171,8 +173,8 @@
                                     <span class="badge bg-secondary">Not Started</span>
                                 {% endif %}
                             </p>
-                            {% if progress.score is not none %}
-                            <p><strong>Current Score:</strong> {{ progress.score }}%</p>
+                            {% if progress.calculate_score() is not none %}
+                            <p><strong>Current Score:</strong> {{ progress.calculate_score() }}%</p>
                             {% endif %}
                         </div>
                         <div class="col-md-6">

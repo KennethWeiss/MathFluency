@@ -28,16 +28,33 @@
                     </div>
                     
                     <div class="progress mb-3">
-                        {% set completed = assignment.student_progress.filter_by(completed=true).count() %}
-                        {% set total = assignment.student_progress.count() %}
+                        {% set progress_query = assignment.student_progress %}
+                        {% set total = progress_query.count() %}
+                        {% set completed = progress_query.filter_by(completed=True).count() %}
                         {% set percentage = (completed / total * 100) if total > 0 else 0 %}
+                        
+                        {% set scores = [] %}
+                        {% for progress in progress_query.filter(AssignmentProgress.problems_attempted > 0).all() %}
+                            {% set score = progress.calculate_score() %}
+                            {% if score is not none %}
+                                {% set _ = scores.append(score) %}
+                            {% endif %}
+                        {% endfor %}
+                        
                         <div class="progress-bar" 
                              role="progressbar" 
                              style="width: {{ percentage }}%"
                              aria-valuenow="{{ percentage }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100">
-                            {{ completed }}/{{ total }} Complete
+                            {% if total > 0 %}
+                                {{ completed }}/{{ total }} Complete
+                                {% if scores|length > 0 %}
+                                    (Avg: {{ "%.1f"|format(scores|sum / scores|length) }}%)
+                                {% endif %}
+                            {% else %}
+                                No students assigned
+                            {% endif %}
                         </div>
                     </div>
 

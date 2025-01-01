@@ -17,8 +17,9 @@ def list_assignments():
         flash('Access denied. Teachers only.', 'danger')
         return redirect(url_for('main.index'))
     
+    # Get assignments without eager loading
     assignments = Assignment.query.filter_by(teacher_id=current_user.id).all()
-    return render_template('assignments/teacher_list.html', assignments=assignments)
+    return render_template('assignments/teacher_list.html', assignments=assignments, AssignmentProgress=AssignmentProgress)
 
 @assignment_bp.route('/assignments/create', methods=['GET', 'POST'])
 @login_required
@@ -90,7 +91,10 @@ def view_assignment(id):
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
-    return render_template('assignments/view.html', assignment=assignment, func=func, AssignmentProgress = AssignmentProgress)
+    return render_template('assignments/view.html', 
+                         assignment=assignment,
+                         func=func,
+                         AssignmentProgress=AssignmentProgress)
 
 @assignment_bp.route('/assignments/<int:id>/grade')
 @login_required
@@ -180,6 +184,28 @@ def get_assignment_info(id):
         'level': assignment.level,
         'required_problems': assignment.required_problems
     })
+
+@assignment_bp.route('/assignments/<int:assignment_id>/student/<int:student_id>')
+@login_required
+def view_student_work(assignment_id, student_id):
+    assignment = Assignment.query.get_or_404(assignment_id)
+    if not current_user.is_teacher or assignment.teacher_id != current_user.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    progress = AssignmentProgress.query.filter_by(
+        assignment_id=assignment_id,
+        student_id=student_id
+    ).first_or_404()
+    
+    attempts = AttemptHistory.query.filter_by(
+        progress_id=progress.id
+    ).order_by(AttemptHistory.created_at.desc()).all()
+    
+    return render_template('assignments/student_work.html',
+                         assignment=assignment,
+                         progress=progress,
+                         attempts=attempts)
 
 # Student routes
 @assignment_bp.route('/student/assignments')

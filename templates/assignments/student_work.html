@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('assignment.list_assignments') }}">Assignments</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('assignment.view_assignment', id=assignment.id) }}">{{ assignment.title }}</a></li>
+                    <li class="breadcrumb-item active">{{ progress.student.name }}'s Work</li>
+                </ol>
+            </nav>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Student Progress Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Student:</strong> {{ progress.student.name }}</p>
+                            <p><strong>Problems Attempted:</strong> {{ progress.problems_attempted }}</p>
+                            <p><strong>Problems Correct:</strong> {{ progress.problems_correct }}</p>
+                            <p><strong>Completion Status:</strong>
+                                {% if progress.completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-warning">In Progress</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Current Score:</strong> {{ progress.calculate_score() }}%</p>
+                            <p><strong>Time Spent:</strong> {{ progress.total_time_spent // 60 }} minutes</p>
+                            <p><strong>Last Attempt:</strong> 
+                                {% if progress.last_attempt_at %}
+                                    {{ progress.last_attempt_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    Not started
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4>Attempt History</h4>
+                </div>
+                <div class="card-body">
+                    {% if attempts %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Problem</th>
+                                    <th>Student Answer</th>
+                                    <th>Correct Answer</th>
+                                    <th>Result</th>
+                                    <th>Time Spent</th>
+                                    {% if assignment.requires_work_shown %}
+                                    <th>Work Shown</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in attempts %}
+                                <tr>
+                                    <td>{{ attempt.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ attempt.problem }}</td>
+                                    <td>{{ attempt.student_answer }}</td>
+                                    <td>{{ attempt.correct_answer }}</td>
+                                    <td>
+                                        {% if attempt.is_correct %}
+                                        <span class="badge bg-success">Correct</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Incorrect</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attempt.time_spent }} seconds</td>
+                                    {% if assignment.requires_work_shown %}
+                                    <td>
+                                        {% if attempt.work_shown %}
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#workModal{{ attempt.id }}">
+                                            View Work
+                                        </button>
+                                        
+                                        <!-- Work Modal -->
+                                        <div class="modal fade" id="workModal{{ attempt.id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Student Work for {{ attempt.problem }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <pre>{{ attempt.work_shown }}</pre>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">No work shown</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No attempts recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
