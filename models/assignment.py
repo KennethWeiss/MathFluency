@@ -166,6 +166,8 @@ class AssignmentProgress(db.Model):
     problems_correct = db.Column(db.Integer, default=0)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime)
+    started = db.Column(db.Boolean, default=False)
+    start_time = db.Column(db.DateTime)
     
     # Enhanced tracking
     total_time_spent = db.Column(db.Integer, default=0)  # Total time in seconds
@@ -179,15 +181,6 @@ class AssignmentProgress(db.Model):
     teacher_comment = db.Column(db.String(500))
     grade_override = db.Column(db.Integer)
 
-    @property
-    def score(self):
-        """Calculate the percentage score for this assignment."""
-        if self.problems_attempted == 0:
-            return 0
-        if self.grade_override is not None:
-            return self.grade_override
-        return round((self.problems_correct / self.problems_attempted) * 100)
-    
     # Status flags
     needs_review = db.Column(db.Boolean, default=False)
     

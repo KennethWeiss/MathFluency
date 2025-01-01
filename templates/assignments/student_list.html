@@ -31,22 +31,22 @@
                         
                         {% if progress and progress.started %}
                         <div class="progress mb-2">
-                            {% set percentage = (progress.problems_completed / assignment.required_problems * 100)|round %}
+                            {% set percentage = (progress.problems_correct / assignment.required_problems * 100)|round %}
                             <div class="progress-bar" 
                                 role="progressbar" 
                                 style="width: {{ percentage }}%"
                                 aria-valuenow="{{ percentage }}" 
                                 aria-valuemin="0" 
                                 aria-valuemax="100">
-                                {{ progress.problems_completed }}/{{ assignment.required_problems }} Problems
+                                {{ progress.problems_correct}}/{{ assignment.required_problems }} Problems
                             </div>
                         </div>
                         {% endif %}
                         
-                        {% if progress and progress.score is not none %}
+                        {% if progress %}
                         <p class="mb-2">
-                            <strong>Current Score:</strong> {{ progress.score }}%
-                            {% if progress.score >= assignment.min_correct_percentage %}
+                            <strong>Current Score:</strong> {{ progress.calculate_score() }}%
+                            {% if progress.calculate_score() >= assignment.min_correct_percentage %}
                                 <i class="fas fa-check-circle text-success"></i>
                             {% endif %}
                         </p>
