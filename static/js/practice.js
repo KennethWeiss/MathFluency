@@ -6,22 +6,13 @@ let wrongAttempts = 0;
 async function getNewProblem() {
     let level;
     
-    // Debug assignment mode variables
-    console.log('Assignment Mode Check:', {
-        assignmentId: typeof assignmentId !== 'undefined' ? assignmentId : 'undefined',
-        assignmentLevel: typeof assignmentLevel !== 'undefined' ? assignmentLevel : 'undefined',
-        currentOperation: currentOperation
-    });
-    
     // If in assignment mode, use assignment level
     if (typeof assignmentId !== 'undefined' && typeof assignmentLevel !== 'undefined') {
         level = assignmentLevel;  // This is already set from practice.html
-        console.log('Using Assignment Level:', level);
     } else {
         // Free practice mode - get level from select or use default
         const select = document.getElementById(`${currentOperation}-select`);
         level = select ? select.value : 1;  // Default to level 1 if select not found
-        console.log('Using Free Practice Level:', level);
     }
     
     try {
@@ -40,11 +31,7 @@ async function getNewProblem() {
             }
             const assignmentData = await response.json();
             requestData.operation = assignmentData.operation;
-            console.log('Assignment Data:', assignmentData);  // Debug log
         }
-
-        // Debug request data
-        console.log('Request Data:', requestData);
 
         const response = await fetch('/get_problem', {
             method: 'POST',
@@ -55,17 +42,10 @@ async function getNewProblem() {
         });
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server Response:', {
-                status: response.status,
-                statusText: response.statusText,
-                body: errorText
-            });
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const problemData = await response.json();
-        console.log('Problem Data:', problemData);
         
         if (problemData.error) {
             throw new Error(problemData.error);

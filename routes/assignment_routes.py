@@ -174,7 +174,6 @@ def submit_grade(id, student_id):
 @login_required
 def get_assignment_info(id):
     assignment = Assignment.query.get_or_404(id)
-    print(f"Returning info for assignment {id}: operation={assignment.operation}, level={assignment.level}")  # Debug log
     return jsonify({
         'id': assignment.id,
         'operation': assignment.operation,
