@@ -6,16 +6,23 @@ from models.user import User
 from datetime import datetime, timedelta
 import os
 
+##DEBUGGING
+# Add this temporarily at the top of your routes to debug
+print("GOOGLE_CLIENT_ID:", os.environ.get("GOOGLE_CLIENT_ID"))
+print("GOOGLE_CLIENT_SECRET:", os.environ.get("GOOGLE_CLIENT_SECRET", "exists but hidden"))
+
 # Create blueprint for Google OAuth
 google_bp = make_google_blueprint(
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
     scope=["profile", "email"],
-    offline=True
-)
+    redirect_url="oauth/google/callback",
+    offline=True,
+    reprompt_consent=True,  # Always ask for consent
+    )
 
 oauth_bp = Blueprint('oauth', __name__)
-
+url_prefix = '/oauth'
 
 # List of allowed school domain endings
 ALLOWED_DOMAINS = [
@@ -48,7 +55,10 @@ def check_session_timeout():
 @oauth_bp.route('/login/google')
 def google_login():
     if not google.authorized:
-        return redirect(url_for('google.login'))
+        login_url = url_for('google.login', prompt='select_account', _external=True)
+        print(f"Redirecting to: {login_url}")  # Debug print
+        return redirect(login_url)
+       # return redirect(url_for('google.login', prompt='select_account'))
     
     try:
         resp = google.get('/oauth2/v2/userinfo')

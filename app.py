@@ -39,6 +39,7 @@ from routes.progress_routes import progress_bp
 from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
 from routes.class_routes import class_bp
+from routes.oauth_routes import oauth_bp, google_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
@@ -47,6 +48,8 @@ app.register_blueprint(progress_bp)
 app.register_blueprint(assignment_bp)
 app.register_blueprint(practice_bp)
 app.register_blueprint(class_bp)
+app.register_blueprint(oauth_bp, url_prefix='/oauth')
+app.register_blueprint(google_bp, url_prefix='/oauth')
 
 @login_manager.user_loader
 def load_user(user_id):
