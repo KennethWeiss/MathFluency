@@ -29,7 +29,11 @@
                     <div class="btn-group w-100">
                         <a href="{{ url_for('class.view_class', id=class.id) }}" 
                             class="btn btn-outline-primary">
-                            <i class="fas fa-eye"></i> View
+                            <i class="fas fa-eye"></i> View Students
+                        </a>
+                        <a href="{{ url_for('class.view_class', id=class.id) }}" 
+                            class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Assignments
                         </a>
                         <a href="{{ url_for('class.manage_students', id=class.id) }}" 
                             class="btn btn-outline-secondary">
