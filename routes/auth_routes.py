@@ -17,7 +17,7 @@ def login():
             login_user(user)
             return redirect(url_for('main.welcome'))
         flash('Invalid username or password', 'danger')
-    return render_template('login.html', form=form)
+    return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -31,7 +31,7 @@ def register():
         db.session.commit()
         flash('Registration successful!', 'success')
         return redirect(url_for('auth.login'))
-    return render_template('register.html', form=form)
+    return render_template('auth/register.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
