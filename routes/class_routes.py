@@ -54,11 +54,10 @@ def view_class(id):
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
-    student_count = class_.students.count()
+    student_count = User.query.filter_by(class_id=id).count()
 
-    assignment_count = class_.assignments.count()
-
-    return render_template('classes/view.html', class_=class_, student_count=student_count, assignment_count=assignment_count)
+    
+    return render_template('classes/view.html', class_=class_, student_count=student_count)
 
 @class_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
