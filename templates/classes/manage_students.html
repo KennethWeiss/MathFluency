@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - {{ class_.name }} - Math Fluency{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('class.list_classes') }}">Classes</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('class.view_class', id=class_.id) }}">{{ class_.name }}</a></li>
+            <li class="breadcrumb-item active">Manage Students</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Current Students -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Current Students</h4>
+                </div>
+                <div class="card-body">
+                    {% if class_.students %}
+                        <div class="list-group">
+                            {% for student in class_.students %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ student.username }}</h6>
+                                    <small class="text-muted">{{ student.email }}</small>
+                                </div>
+                                <form method="POST" action="{{ url_for('class.remove_student', id=class_.id) }}" 
+                                      class="d-inline">
+                                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('Remove this student from the class?')">
+                                        <i class="fas fa-user-minus"></i> Remove
+                                    </button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No students in this class yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Students -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Add Students</h4>
+                </div>
+                <div class="card-body">
+                    {% if available_students %}
+                        <div class="list-group">
+                            {% for student in available_students %}
+                                {% if student not in class_.students %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ student.username }}</h6>
+                                        <small class="text-muted">{{ student.email }}</small>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('class.add_student', id=class_.id) }}" 
+                                          class="d-inline">
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-user-plus"></i> Add
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No available students to add.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
