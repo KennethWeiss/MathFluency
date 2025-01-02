@@ -95,6 +95,78 @@ MathFluency/
 - **Progress**: Statistical display with charts
 - **Practice**: Interactive problem solving
 
+## Routes Documentation
+
+The application is organized into several route blueprints, each handling specific functionality:
+
+### Authentication Routes (`auth_routes.py`)
+- `/login` (GET, POST): User login page and authentication
+  - Template: `login.html`
+  - DB: Queries User table for authentication
+- `/register` (GET, POST): New user registration
+  - Template: `register.html`
+  - DB: Creates new User record
+- `/logout`: Logs out the current user
+  - Redirects to home page
+
+### Main Routes (`main_routes.py`)
+- `/` (GET): Home page
+  - Template: `index.html` or redirects to welcome
+- `/welcome` (GET): Dashboard after login
+  - Template: `welcome.html`
+  - Different views for teachers (shows students/classes) and students (shows enrolled class)
+
+### Practice Routes (`practice_routes.py`)
+- `/practice` (GET): Main practice interface
+  - Template: `practice.html`
+  - Supports both free practice and assignment modes
+- `/get_problem` (POST): API endpoint for getting math problems
+  - Generates problems based on operation/level or assignment settings
+- `/check_answer` (POST): Validates answers and records attempts
+  - DB: Updates PracticeAttempt and AssignmentProgress
+
+### Assignment Routes (`assignment_routes.py`)
+Teacher Routes:
+- `/assignments` (GET): List all teacher's assignments
+  - Template: `assignments/teacher_list.html`
+- `/assignments/create` (GET, POST): Create new assignments
+  - Template: `assignments/create.html`
+  - DB: Creates Assignment and AssignmentProgress records
+- `/assignments/<id>` (GET): View assignment details
+  - Template: `assignments/view.html`
+- `/assignments/<id>/grade` (GET): Grade assignment interface
+  - Template: `assignments/grade.html`
+- `/assignments/<id>/edit` (GET, POST): Edit assignment
+  - Template: `assignments/edit.html`
+  - DB: Updates Assignment record
+
+Student Routes:
+- `/assignments/student` (GET): List student's assignments
+  - Template: `assignments/student_list.html`
+- `/assignments/<id>/start` (GET): Start an assignment
+  - Template: `practice.html` with assignment mode
+  - DB: Updates AssignmentProgress
+
+### Progress Routes (`progress_routes.py`)
+- `/progress` (GET): View overall progress
+  - Template: `progress/overview.html`
+  - Shows stats across all operations
+- `/progress/student/<id>` (GET): View specific student's progress (teachers only)
+  - Template: `progress/student.html`
+  - Shows detailed student performance
+- `/progress/analyze/<operation>/<level>` (GET): Detailed level analysis
+  - Template: `progress/level_analysis.html`
+  - Shows performance metrics and problem patterns
+- `/progress/incorrect` (GET): View incorrect problems
+  - Template: `progress/incorrect.html`
+  - Lists problems that need more practice
+
+### Layout Routes (`layout_routes.py`)
+- Contains shared layout components and navigation elements
+- Manages common UI elements across the application
+
+Each route is protected with appropriate authentication checks using Flask-Login's `@login_required` decorator where necessary. Teachers have additional authorization checks for teacher-specific routes.
+
 ## Setup and Installation
 
 1. **Clone the Repository**
