@@ -41,6 +41,12 @@
                         <a class="nav-link {% if request.endpoint == 'practice.practice' %}active{% endif %}" href="{{ url_for('practice.practice') }}">Practice</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'class.join_class' %}active{% endif %}" 
+                            href="{{ url_for('class.join_class') }}">
+                            <i class="fas fa-door-open"></i> Join Class
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" 
                             href="{{ url_for('assignment.student_assignments') }}">
                             <i class="fas fa-book"></i> My Assignments

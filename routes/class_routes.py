@@ -35,16 +35,50 @@ def create_class():
         new_class = Class(
             name=name,
             description=description,
-            teacher_id=current_user.id
+            teacher_id=current_user.id,
+            class_code=Class.generate_class_code()
         )
         
         db.session.add(new_class)
         db.session.commit()
         
-        flash('Class created successfully!', 'success')
+        flash('Class created successfully! Class code: ' + new_class.class_code, 'success')
         return redirect(url_for('class.view_class', id=new_class.id))
     
     return render_template('classes/create.html')
+
+@class_bp.route('/join-class', methods=['GET', 'POST'])
+@login_required
+def join_class():
+    if current_user.is_teacher:
+        flash('Teachers cannot join classes.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        class_code = request.form.get('class_code')
+        if not class_code:
+            flash('Please enter a class code.', 'danger')
+            return render_template('classes/join.html')
+        
+        class_ = Class.query.filter_by(class_code=class_code.upper()).first()
+        if not class_:
+            flash('Invalid class code. Please check and try again.', 'danger')
+            return render_template('classes/join.html')
+        
+        if current_user.class_id == class_.id:
+            flash('You are already in this class.', 'warning')
+            return redirect(url_for('main.index'))
+        
+        current_user.class_id = class_.id
+        current_user.teacher_id = class_.teacher_id
+        db.session.commit()
+        
+        flash(f'Successfully joined {class_.name}!', 'success')
+        return redirect(url_for('main.index'))
+    
+    return render_template('classes/join.html')
+
+
 
 @class_bp.route('/classes/<int:id>')
 @login_required
