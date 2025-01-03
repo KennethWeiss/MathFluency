@@ -48,13 +48,7 @@ from routes.main_routes import main_bp
 from routes.progress_routes import progress_bp
 from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
-from routes.class_routes import class_bpfrom models.user import User
-from app import db
-admin = User(username='admin', email='your-email@example.com')
-admin.set_password('your-password')
-admin.is_admin = True
-db.session.add(admin)
-db.session.commit()
+from routes.class_routes import class_bp
 from routes.oauth_routes import oauth_bp, google_bp
 from routes.admin_routes import admin_bp  # New import
 
