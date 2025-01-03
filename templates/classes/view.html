@@ -1,118 +1,134 @@
 {% extends "base.html" %}
 
-{% block title %}{{ class_.name }} - Math Fluency{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
-    {% if current_user.is_teacher and class_.teacher_id == current_user.id %}
-    <div class="alert alert-info d-flex justify-content-between align-items-center">
-        <div>
-            <strong>Class Code:</strong> {{ class_.class_code }}
-            <small class="d-block">Share this code with your students to let them join the class</small>
-        </div>
-        <button class="btn btn-outline-info" onclick="navigator.clipboard.writeText('{{ class_.class_code }}')">
-            <i class="fas fa-copy"></i> Copy Code
-        </button>
-    </div>
-    {% endif %}
-    
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('class.list_classes') }}">Classes</a></li>
-            <li class="breadcrumb-item active">{{ class_.name }}</li>
+            <li class="breadcrumb-item active" aria-current="page">{{ class_.name }}</li>
         </ol>
     </nav>
 
     <div class="row">
         <div class="col-md-8">
-            <!-- Class Info -->
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">{{ class_.name }}</h3>
-                    <a href="{{ url_for('class.edit_class', id=class_.id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit"></i> Edit Class
-                    </a>
-                </div>
                 <div class="card-body">
-                    <p class="text-muted">{{ class_.description or 'No description provided.' }}</p>
-                    <hr>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Created:</strong> {{ class_.created_at.strftime('%Y-%m-%d') }}</p>
-                            <p><strong>Students:</strong> {{ student_count }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <a href="{{ url_for('class.manage_students', id=class_.id) }}" 
-                                class="btn btn-outline-secondary">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="card-title mb-0">{{ class_.name }}</h2>
+                        {% if current_user.is_teacher and current_user in class_.teachers %}
+                        <div class="btn-group">
+                            <a href="{{ url_for('class.edit_class', id=class_.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit Class
+                            </a>
+                            <a href="{{ url_for('class.manage_students', id=class_.id) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-users"></i> Manage Students
                             </a>
                         </div>
+                        {% endif %}
                     </div>
-                </div>
-            </div>
-
-            <!-- Student List -->
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Students</h4>
-                </div>
-                <div class="card-body">
-                    {% if class_.students %}
-                        <div class="list-group">
-                            {% for student in class_.students %}
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">{{ student.username }}</h5>
-                                    <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" 
-                                        class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-chart-line"></i> View Progress
-                                    </a>
-                                </div>
-                                <p class="mb-1">{{ student.email }}</p>
-                                <!-- Add more student details as needed -->
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-muted">No students in this class yet.</p>
-                        <a href="{{ url_for('class.manage_students', id=class_.id) }}" class="btn btn-primary">
-                            <i class="fas fa-user-plus"></i> Add Students
-                        </a>
+                    
+                    <p class="card-text">{{ class_.description or 'No description available' }}</p>
+                    
+                    {% if current_user.is_teacher and current_user in class_.teachers %}
+                    <div class="alert alert-info">
+                        <strong>Class Code:</strong> {{ class_.class_code }}
+                        <button class="btn btn-sm btn-outline-info ms-2" onclick="copyToClipboard('{{ class_.class_code }}')">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <!-- Quick Actions -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h4 class="mb-0">Quick Actions</h4>
+                    <h3 class="card-title mb-0">Teachers</h3>
                 </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('assignment.create_assignment') }}?class_id={{ class_.id }}" 
-                            class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create Assignment
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary">
-                            <i class="fas fa-file-export"></i> Export Class Data
-                        </a>
+                    <div class="list-group">
+                        {% for teacher in class_.teachers %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if teacher.avatar_url %}
+                                <img src="{{ teacher.avatar_url }}" alt="{{ teacher.username }}" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                {% endif %}
+                                {{ teacher.username }}
+                                {% if teacher == primary_teacher %}
+                                <span class="badge bg-primary ms-2">Primary</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
 
-            <!-- Class Statistics -->
+            {% if current_user.is_teacher and current_user in class_.teachers %}
             <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Class Statistics</h4>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Students ({{ class_.students.count() }})</h3>
+                    <a href="{{ url_for('class.manage_students', id=class_.id) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-user-plus"></i> Manage Students
+                    </a>
                 </div>
                 <div class="card-body">
-                    <p><strong>Active Assignments:</strong> {{ assignment_count }}</p>
-                    <!-- Add more statistics as needed -->
+                    {% if class_.students.count() > 0 %}
+                    <div class="list-group">
+                        {% for student in class_.students %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if student.avatar_url %}
+                                <img src="{{ student.avatar_url }}" alt="{{ student.username }}" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                {% endif %}
+                                {{ student.username }}
+                            </div>
+                            <div>
+                                <a href="#" class="btn btn-outline-primary btn-sm">View Progress</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No students enrolled yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Class Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-users text-primary"></i>
+                            <strong>Students:</strong> {{ class_.students.count() }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-chalkboard-teacher text-primary"></i>
+                            <strong>Teachers:</strong> {{ class_.teachers.count() }}
+                        </li>
+                        <li>
+                            <i class="fas fa-calendar-alt text-primary"></i>
+                            <strong>Created:</strong> {{ class_.created_at.strftime('%B %d, %Y') }}
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Class code copied to clipboard!');
+    }).catch(function(err) {
+        console.error('Failed to copy text: ', err);
+    });
+}
+</script>
 {% endblock %}
