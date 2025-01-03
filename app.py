@@ -21,35 +21,18 @@ for key, value in os.environ.items():
 print("===========================")
 
 # Database configuration
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    print(f"Original DATABASE_URL: {database_url}")
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        print(f"Modified DATABASE_URL: {database_url}")
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(f"Final SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-else:
-    print("WARNING: No DATABASE_URL found, using SQLite")
-    # For local development, use SQLite
-    sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_path}'
-    print(f"Using SQLite at: {sqlite_path}")
-
+database_url = os.environ.get('DATABASE_URL', 'postgresql://mathfluency_db_0izz_user:2MHTlRA0mgLXNiokMOEivtPRTlyzGnJF@dpg-ctrnm6jtq21c738v2e1g-a.oregon-postgres.render.com/mathfluency_db_0izz')
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # Ensure all tables exist
 with app.app_context():
-    try:
-        db.create_all()
-        print("Database tables created successfully")
-    except Exception as e:
-        print(f"Error creating database tables: {e}")
+    db.create_all()
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'  # Updated to use blueprint route
