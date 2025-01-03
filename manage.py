@@ -3,6 +3,7 @@ from app import app, db
 from models.user import User
 from models.class_ import Class
 from models.practice_attempt import PracticeAttempt
+from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 import os
 from sqlalchemy import inspect
 
@@ -71,6 +72,16 @@ def safe_setup_db():
     print("Checking admin user...")
     create_admin()
     print("Setup complete!")
+
+@cli.command("full_init_db")
+def full_init_db():
+    """Fully initialize the database by dropping all tables and recreating them"""
+    with app.app_context():
+        # Drop all tables
+        db.drop_all()
+        # Create all tables
+        db.create_all()
+        print("Database initialized successfully!")
 
 if __name__ == '__main__':
     cli()

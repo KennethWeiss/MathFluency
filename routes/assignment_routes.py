@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
-from models.class_ import Class
+from models.class_ import Class, teacher_class
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, and_
 
 # Create blueprint
 assignment_bp = Blueprint('assignment', __name__)
@@ -17,7 +17,7 @@ def list_assignments():
         flash('Access denied. Teachers only.', 'danger')
         return redirect(url_for('main.index'))
     
-    # Get assignments without eager loading
+    # Get assignments created by this teacher
     assignments = Assignment.query.filter_by(teacher_id=current_user.id).all()
     return render_template('assignments/teacher_list.html', assignments=assignments, AssignmentProgress=AssignmentProgress)
 
@@ -56,7 +56,6 @@ def create_assignment():
             due_date=due_date,
             active=active,
             teacher_id=current_user.id,
-            class_id=class_id,
             max_attempts_per_problem=max_attempts,
             show_solution_after_attempts=show_solution_after,
             requires_work_shown=requires_work
@@ -80,7 +79,8 @@ def create_assignment():
         return redirect(url_for('assignment.list_assignments'))
     
     # GET request - show create form
-    classes = Class.query.filter_by(teacher_id=current_user.id).all()
+    # Get all classes where the current user is a teacher
+    classes = Class.query.join(Class.teachers).filter(Class.teachers.contains(current_user)).all()
     return render_template('assignments/create.html', classes=classes)
 
 @assignment_bp.route('/assignments/<int:id>')
@@ -136,7 +136,7 @@ def edit_assignment(id):
         flash('Assignment updated successfully!', 'success')
         return redirect(url_for('assignment.list_assignments'))
     
-    classes = Class.query.filter_by(teacher_id=current_user.id).all()
+    classes = Class.query.join(Class.teachers).filter(Class.teachers.contains(current_user)).all()
     return render_template('assignments/edit.html', assignment=assignment, classes=classes)
 
 @assignment_bp.route('/assignments/<int:id>/delete', methods=['POST'])
@@ -216,7 +216,7 @@ def student_assignments():
     
     # Get all assignments from classes the student is in
     assignments = Assignment.query\
-        .join(Class, Assignment.class_id == Class.id)\
+        .join(Class, Assignment.classes.any(Class.id))\
         .join(Class.students)\
         .filter(Class.students.any(id=current_user.id))\
         .all()
@@ -242,8 +242,8 @@ def start_assignment(id):
     
     if not progress:
         progress = AssignmentProgress(
-            assignment_id=id,
-            student_id=current_user.id
+            student_id=current_user.id,
+            assignment_id=assignment.id
         )
         db.session.add(progress)
         db.session.commit()
