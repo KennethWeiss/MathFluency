@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, logout_user, current_user
+from models.class_ import Class
 
 main_bp = Blueprint('main', __name__)
 
@@ -13,19 +14,22 @@ def home():
 @login_required
 def welcome():
     if current_user.is_teacher:
-        # Get all students for this teacher
-        students = current_user.students
-        classes = current_user.classes
+        # Get all classes where this teacher is teaching
+        classes = Class.query.join(Class.teachers).filter(Class.teachers.contains(current_user)).all()
+        # Get all students from these classes
+        students = set()
+        for class_ in classes:
+            students.update(class_.students)
         return render_template('welcome.html', 
                             is_teacher=True,
-                            students=students,
+                            students=list(students),
                             classes=classes)
     else:
-        # Get the student's enrolled class
-        enrolled_class = current_user.enrolled_class
+        # Get all classes where this student is enrolled
+        enrolled_classes = Class.query.join(Class.students).filter(Class.students.contains(current_user)).all()
         return render_template('welcome.html',
                             is_teacher=False,
-                            enrolled_class=enrolled_class)
+                            enrolled_classes=enrolled_classes)
 
 @main_bp.route('/logout')
 @login_required
