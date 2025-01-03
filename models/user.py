@@ -10,6 +10,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(128))
     is_teacher = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Google OAuth fields

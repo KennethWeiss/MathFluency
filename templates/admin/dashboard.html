@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Admin Dashboard</h1>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">User Management</h2>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Is Admin</th>
+                        <th>Is Teacher</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ "Yes" if user.is_admin else "No" }}</td>
+                        <td>{{ "Yes" if user.is_teacher else "No" }}</td>
+                        <td>
+                            {% if not user.is_admin %}
+                            <form action="{{ url_for('admin.make_admin', user_id=user.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-primary">Make Admin</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
