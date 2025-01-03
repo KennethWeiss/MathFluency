@@ -8,7 +8,6 @@ def create_test_users():
     with app.app_context():
         # First, clear existing data
         print("\nClearing existing data...")
-        TeacherClass.query.delete()
         Class.query.delete()
         User.query.delete()
         db.session.commit()
