@@ -10,28 +10,87 @@ def create_test_users():
         Class.query.delete()
         db.session.commit()
         
-        # Create test teacher
-        print("\nCreating teacher account...")
-        teacher = User(
-            username='teacher1',
-            email='teacher1@example.com',
-            is_teacher=True
-        )
-        teacher.set_password('teacher123')
-        db.session.add(teacher)
-        db.session.commit()
-        print(f"Teacher created with ID: {teacher.id}")
+        # Create test teachers
+        print("\nCreating teacher accounts...")
+        teachers = [
+            {
+                'username': 'teacher1',
+                'email': 'teacher1@example.com',
+                'password': 'teacher123'
+            },
+            {
+                'username': 'teacher2',
+                'email': 'teacher2@example.com',
+                'password': 'teacher123'
+            },
+            {
+                'username': 'teacher3',
+                'email': 'teacher3@example.com',
+                'password': 'teacher123'
+            }
+        ]
         
-        # Create a class
-        print("\nCreating class...")
-        math_class = Class(
-            name='Math 101',
-            description='Introduction to Mathematics',
-            teacher_id=teacher.id
-        )
-        db.session.add(math_class)
+        created_teachers = []
+        for teacher_data in teachers:
+            teacher = User(
+                username=teacher_data['username'],
+                email=teacher_data['email'],
+                is_teacher=True
+            )
+            teacher.set_password(teacher_data['password'])
+            db.session.add(teacher)
+            created_teachers.append(teacher)
+            print(f"Teacher created: {teacher.username}")
+        
         db.session.commit()
-        print(f"Class created with ID: {math_class.id}")
+        
+        # Create test classes
+        print("\nCreating classes...")
+        classes = [
+            {
+                'name': 'Math 101',
+                'description': 'Introduction to Mathematics',
+                'primary_teacher': created_teachers[0]
+            },
+            {
+                'name': 'Math 201',
+                'description': 'Intermediate Mathematics',
+                'primary_teacher': created_teachers[1]
+            },
+            {
+                'name': 'Math 301',
+                'description': 'Advanced Mathematics',
+                'primary_teacher': created_teachers[2]
+            },
+            {
+                'name': 'Math Club',
+                'description': 'Math enthusiasts club - multiple teachers',
+                'primary_teacher': created_teachers[0]
+            }
+        ]
+        
+        created_classes = []
+        for class_data in classes:
+            class_ = Class(
+                name=class_data['name'],
+                description=class_data['description']
+            )
+            db.session.add(class_)
+            db.session.commit()  # Commit to get the class ID
+            
+            # Add primary teacher
+            class_.add_teacher(class_data['primary_teacher'])
+            db.session.commit()
+            
+            # For Math Club, add all teachers
+            if class_data['name'] == 'Math Club':
+                for teacher in created_teachers:
+                    if teacher != class_data['primary_teacher']:
+                        class_.add_teacher(teacher)
+                db.session.commit()
+            
+            created_classes.append(class_)
+            print(f"Class created: {class_.name}")
         
         # Create test students
         print("\nCreating student accounts...")
@@ -45,6 +104,21 @@ def create_test_users():
                 'username': 'student2',
                 'email': 'student2@example.com',
                 'password': 'student123'
+            },
+            {
+                'username': 'student3',
+                'email': 'student3@example.com',
+                'password': 'student123'
+            },
+            {
+                'username': 'student4',
+                'email': 'student4@example.com',
+                'password': 'student123'
+            },
+            {
+                'username': 'student5',
+                'email': 'student5@example.com',
+                'password': 'student123'
             }
         ]
         
@@ -53,61 +127,50 @@ def create_test_users():
             student = User(
                 username=student_data['username'],
                 email=student_data['email'],
-                is_teacher=False,
-                class_id=math_class.id,
-                teacher_id=teacher.id
+                is_teacher=False
             )
             student.set_password(student_data['password'])
             db.session.add(student)
             created_students.append(student)
+            print(f"Student created: {student.username}")
         
         db.session.commit()
         
-        # Verify the data
-        print("\nVerifying data...")
-        teacher = User.query.filter_by(username='teacher1').first()
-        if teacher:
-            print(f"\nTeacher verification:")
-            print(f"ID: {teacher.id}")
-            print(f"Username: {teacher.username}")
-            print(f"Is Teacher: {teacher.is_teacher}")
-            print(f"Number of classes: {teacher.classes.count()}")
-            print(f"Number of students: {teacher.students.count()}")
+        # Enroll students in classes
+        print("\nEnrolling students in classes...")
         
-        math_class = Class.query.filter_by(name='Math 101').first()
-        if math_class:
-            print(f"\nClass verification:")
-            print(f"ID: {math_class.id}")
-            print(f"Name: {math_class.name}")
-            print(f"Teacher ID: {math_class.teacher_id}")
-            print(f"Number of students: {math_class.students.count()}")
+        # Math 101 - All students
+        for student in created_students:
+            created_classes[0].add_student(student)
+        db.session.commit()
+        print(f"Enrolled all students in {created_classes[0].name}")
         
-        print("\nStudent verification:")
-        for student in User.query.filter_by(is_teacher=False).all():
-            print(f"\nStudent: {student.username}")
-            print(f"ID: {student.id}")
-            print(f"Teacher ID: {student.teacher_id}")
-            print(f"Class ID: {student.class_id}")
+        # Math 201 - First 3 students
+        for student in created_students[:3]:
+            created_classes[1].add_student(student)
+        db.session.commit()
+        print(f"Enrolled first 3 students in {created_classes[1].name}")
         
-        print("\nTest accounts created successfully!")
-        print("\nTeacher Account:")
-        print("----------------")
-        print(f"Username: {teacher.username}")
-        print(f"Password: teacher123")
-        print(f"Email: {teacher.email}")
+        # Math 301 - Last 2 students
+        for student in created_students[3:]:
+            created_classes[2].add_student(student)
+        db.session.commit()
+        print(f"Enrolled last 2 students in {created_classes[2].name}")
         
-        print("\nStudent Accounts:")
-        print("----------------")
-        for student_data in students:
-            print(f"\nUsername: {student_data['username']}")
-            print(f"Password: {student_data['password']}")
-            print(f"Email: {student_data['email']}")
+        # Math Club - Students 2, 3, and 4
+        for student in created_students[1:4]:
+            created_classes[3].add_student(student)
+        db.session.commit()
+        print(f"Enrolled students 2-4 in {created_classes[3].name}")
         
-        print("\nClass created:")
-        print("----------------")
-        print(f"Name: {math_class.name}")
-        print(f"Description: {math_class.description}")
-        print(f"Teacher: {teacher.username}")
+        print("\nTest data creation completed!")
+        print("\nCreated accounts:")
+        print("\nTeachers:")
+        for teacher in teachers:
+            print(f"Username: {teacher['username']}, Password: {teacher['password']}")
+        print("\nStudents:")
+        for student in students:
+            print(f"Username: {student['username']}, Password: {student['password']}")
 
 if __name__ == '__main__':
     create_test_users()

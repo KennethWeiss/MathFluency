@@ -1,27 +1,25 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-from app import db
 from models.class_ import Class
 from models.user import User
-from datetime import datetime
+from app import db
 
 class_bp = Blueprint('class', __name__)
 
 @class_bp.route('/classes')
 @login_required
 def list_classes():
-    if not current_user.is_teacher:
-        flash('Access denied. Teachers only.', 'danger')
-        return redirect(url_for('main.index'))
-    
-    classes = Class.query.filter_by(teacher_id=current_user.id).all()
+    if current_user.is_teacher:
+        classes = current_user.taught_classes.all()
+    else:
+        classes = current_user.enrolled_classes.all()
     return render_template('classes/list.html', classes=classes)
 
 @class_bp.route('/classes/create', methods=['GET', 'POST'])
 @login_required
 def create_class():
     if not current_user.is_teacher:
-        flash('Access denied. Teachers only.', 'danger')
+        flash('Only teachers can create classes.', 'danger')
         return redirect(url_for('main.index'))
     
     if request.method == 'POST':
@@ -32,72 +30,47 @@ def create_class():
             flash('Class name is required.', 'danger')
             return render_template('classes/create.html')
         
-        new_class = Class(
+        class_ = Class(
             name=name,
             description=description,
-            teacher_id=current_user.id,
             class_code=Class.generate_class_code()
         )
         
-        db.session.add(new_class)
+        db.session.add(class_)
+        class_.add_teacher(current_user, is_primary=True)
         db.session.commit()
         
-        flash('Class created successfully! Class code: ' + new_class.class_code, 'success')
-        return redirect(url_for('class.view_class', id=new_class.id))
+        flash('Class created successfully!', 'success')
+        return redirect(url_for('class.view_class', id=class_.id))
     
     return render_template('classes/create.html')
-
-@class_bp.route('/join-class', methods=['GET', 'POST'])
-@login_required
-def join_class():
-    if current_user.is_teacher:
-        flash('Teachers cannot join classes.', 'danger')
-        return redirect(url_for('main.index'))
-    
-    if request.method == 'POST':
-        class_code = request.form.get('class_code')
-        if not class_code:
-            flash('Please enter a class code.', 'danger')
-            return render_template('classes/join.html')
-        
-        class_ = Class.query.filter_by(class_code=class_code.upper()).first()
-        if not class_:
-            flash('Invalid class code. Please check and try again.', 'danger')
-            return render_template('classes/join.html')
-        
-        if current_user.class_id == class_.id:
-            flash('You are already in this class.', 'warning')
-            return redirect(url_for('main.index'))
-        
-        current_user.class_id = class_.id
-        current_user.teacher_id = class_.teacher_id
-        db.session.commit()
-        
-        flash(f'Successfully joined {class_.name}!', 'success')
-        return redirect(url_for('main.index'))
-    
-    return render_template('classes/join.html')
-
-
 
 @class_bp.route('/classes/<int:id>')
 @login_required
 def view_class(id):
     class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or class_.teacher_id != current_user.id:
+    
+    # Check if user has access to this class
+    if current_user.is_teacher and current_user not in class_.teachers:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('main.index'))
+    elif not current_user.is_teacher and current_user not in class_.students:
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
-    student_count = User.query.filter_by(class_id=id).count()
-
+    student_count = class_.students.count()
+    primary_teacher = class_.get_primary_teacher()
     
-    return render_template('classes/view.html', class_=class_, student_count=student_count)
+    return render_template('classes/view.html', 
+                         class_=class_, 
+                         student_count=student_count,
+                         primary_teacher=primary_teacher)
 
 @class_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_class(id):
     class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or class_.teacher_id != current_user.id:
+    if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
@@ -122,21 +95,24 @@ def edit_class(id):
 @login_required
 def manage_students(id):
     class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or class_.teacher_id != current_user.id:
+    if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
-    # Get all students not in this class
-    available_students = User.query.filter_by(is_teacher=False).all()
+    # Get all non-teacher users who aren't in this class
+    available_students = User.query.filter_by(is_teacher=False)\
+                                 .filter(~User.enrolled_classes.any(Class.id == id))\
+                                 .all()
+    
     return render_template('classes/manage_students.html', 
-                        class_=class_,
-                        available_students=available_students)
+                         class_=class_,
+                         available_students=available_students)
 
 @class_bp.route('/classes/<int:id>/add_student', methods=['POST'])
 @login_required
 def add_student(id):
     class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or class_.teacher_id != current_user.id:
+    if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
@@ -154,9 +130,7 @@ def add_student(id):
         flash('Student is already in this class.', 'warning')
         return redirect(url_for('class.manage_students', id=id))
     
-    class_.students.append(student)
-    db.session.commit()
-    
+    class_.add_student(student)
     flash('Student added successfully!', 'success')
     return redirect(url_for('class.manage_students', id=id))
 
@@ -164,7 +138,7 @@ def add_student(id):
 @login_required
 def remove_student(id):
     class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or class_.teacher_id != current_user.id:
+    if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
         return redirect(url_for('main.index'))
     
@@ -178,8 +152,34 @@ def remove_student(id):
         flash('Student is not in this class.', 'warning')
         return redirect(url_for('class.manage_students', id=id))
     
-    class_.students.remove(student)
-    db.session.commit()
-    
+    class_.remove_student(student)
     flash('Student removed successfully!', 'success')
     return redirect(url_for('class.manage_students', id=id))
+
+@class_bp.route('/join', methods=['GET', 'POST'])
+@login_required
+def join_class():
+    if current_user.is_teacher:
+        flash('Teachers cannot join classes as students.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        code = request.form.get('class_code')
+        if not code:
+            flash('Class code is required.', 'danger')
+            return render_template('classes/join.html')
+        
+        class_ = Class.query.filter_by(class_code=code).first()
+        if not class_:
+            flash('Invalid class code.', 'danger')
+            return render_template('classes/join.html')
+        
+        if current_user in class_.students:
+            flash('You are already in this class.', 'warning')
+            return redirect(url_for('class.view_class', id=class_.id))
+        
+        class_.add_student(current_user)
+        flash('Successfully joined the class!', 'success')
+        return redirect(url_for('class.view_class', id=class_.id))
+    
+    return render_template('classes/join.html')
