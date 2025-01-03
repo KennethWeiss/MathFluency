@@ -9,9 +9,19 @@ from sqlalchemy import func
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['DEBUG'] = True  # Enable debug mode
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
+# Database configuration
+if os.environ.get('DATABASE_URL'):
+    # Render adds postgres:// instead of postgresql://, so we need to fix that
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -38,7 +48,13 @@ from routes.main_routes import main_bp
 from routes.progress_routes import progress_bp
 from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
-from routes.class_routes import class_bp
+from routes.class_routes import class_bpfrom models.user import User
+from app import db
+admin = User(username='admin', email='your-email@example.com')
+admin.set_password('your-password')
+admin.is_admin = True
+db.session.add(admin)
+db.session.commit()
 from routes.oauth_routes import oauth_bp, google_bp
 from routes.admin_routes import admin_bp  # New import
 
