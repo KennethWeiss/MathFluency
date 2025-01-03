@@ -67,8 +67,17 @@ app.register_blueprint(admin_bp)  # Register admin blueprint
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
-
+@app.cli.command("reset-db")
+def reset_db():
+    """Reset the database by dropping and recreating all tables."""
+    print("Dropping all tables...")
+    db.drop_all()
+    print("Creating all tables...")
+    db.create_all()
+    print("Stamping alembic version...")
+    from flask_migrate import stamp
+    stamp()
+    print("Database reset complete!")
 
 def calculate_difficulty_level(user_id, operation, current_level):
     """Calculate the appropriate difficulty level based on user performance."""
