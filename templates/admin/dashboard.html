@@ -1,12 +1,12 @@
-{% extends "base.html" %}
+{% extends "admin/admin_base.html" %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Admin Dashboard</h1>
+    <h1 class="mb-4">Admin Dashboard</h1>
     
-    <div class="card mt-4">
+    <div class="card">
         <div class="card-header">
-            <h2 class="h5 mb-0">User Management</h2>
+            <h2>User Management</h2>
         </div>
         <div class="card-body">
             <table class="table">
@@ -25,15 +25,30 @@
                     <tr>
                         <td>{{ user.id }}</td>
                         <td>{{ user.email }}</td>
-                        <td>{{ user.name }}</td>
+                        <td>{{ user.username }}</td>
                         <td>{{ "Yes" if user.is_admin else "No" }}</td>
                         <td>{{ "Yes" if user.is_teacher else "No" }}</td>
                         <td>
-                            {% if not user.is_admin %}
-                            <form action="{{ url_for('admin.make_admin', user_id=user.id) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn btn-sm btn-primary">Make Admin</button>
-                            </form>
-                            {% endif %}
+                            <div class="btn-group" role="group">
+                                {% if not user.is_admin %}
+                                <form action="{{ url_for('admin.make_admin', user_id=user.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-primary btn-sm">Make Admin</button>
+                                </form>
+                                {% endif %}
+                                
+                                <form action="{{ url_for('admin.toggle_teacher', user_id=user.id) }}" method="post" class="d-inline ms-2">
+                                    <button type="submit" class="btn btn-info btn-sm">
+                                        {% if user.is_teacher %}Remove Teacher{% else %}Make Teacher{% endif %}
+                                    </button>
+                                </form>
+
+                                {% if not user.is_admin and current_user.id != user.id %}
+                                <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline ms-2"
+                                      onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -42,4 +57,13 @@
         </div>
     </div>
 </div>
+
+<style>
+.btn-group form {
+    display: inline-block;
+}
+.ms-2 {
+    margin-left: 0.5rem;
+}
+</style>
 {% endblock %}
