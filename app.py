@@ -21,9 +21,8 @@ for key, value in os.environ.items():
 print("===========================")
 
 # Database configuration
-if os.environ.get('DATABASE_URL'):
-    # Render adds postgres:// instead of postgresql://, so we need to fix that
-    database_url = os.environ.get('DATABASE_URL')
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
     print(f"Original DATABASE_URL: {database_url}")
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
@@ -32,7 +31,12 @@ if os.environ.get('DATABASE_URL'):
     print(f"Final SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 else:
     print("WARNING: No DATABASE_URL found, using SQLite")
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    # For local development, use SQLite
+    sqlite_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'site.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{sqlite_path}'
+    print(f"Using SQLite at: {sqlite_path}")
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
 
@@ -157,4 +161,5 @@ def record_attempt():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
