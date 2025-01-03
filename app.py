@@ -11,6 +11,15 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
+# Debug environment variables
+print("=== Environment Variables ===")
+for key, value in os.environ.items():
+    if 'SECRET' in key.upper() or 'PASSWORD' in key.upper() or 'KEY' in key.upper():
+        print(f"{key}: <hidden>")
+    else:
+        print(f"{key}: {value}")
+print("===========================")
+
 # Database configuration
 if os.environ.get('DATABASE_URL'):
     # Render adds postgres:// instead of postgresql://, so we need to fix that
