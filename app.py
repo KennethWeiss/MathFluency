@@ -76,7 +76,16 @@ def reset_db():
     db.create_all()
     print("Stamping alembic version...")
     from flask_migrate import stamp
-    stamp()
+    # Get the migration directory
+    migrations_dir = os.path.join(os.path.dirname(__file__), 'migrations', 'versions')
+    # Get the latest revision file
+    revision_files = [f for f in os.listdir(migrations_dir) if f.endswith('.py')]
+    if revision_files:
+        latest_revision = revision_files[0].split('_')[0]
+        print(f"Stamping with revision: {latest_revision}")
+        stamp(revision=latest_revision)
+    else:
+        print("No revision files found")
     print("Database reset complete!")
 
 def calculate_difficulty_level(user_id, operation, current_level):
