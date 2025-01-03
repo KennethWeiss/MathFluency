@@ -17,8 +17,18 @@ def table_exists(table_name):
 def init_db():
     """Initialize the database only if tables don't exist"""
     if not table_exists('user'):
-        print("Creating database tables...")
-        db.create_all()
+        print("Creating database tables in order...")
+        # Create tables in order of dependencies
+        models = [
+            User,           # First create User table
+            Class,          # Then Class table (depends on User)
+            PracticeAttempt # Then PracticeAttempt (depends on User and Class)
+        ]
+        
+        for model in models:
+            print(f"Creating table: {model.__tablename__}")
+            model.__table__.create(db.engine)
+            
         print("Database initialized!")
     else:
         print("Database tables already exist, skipping initialization")
@@ -46,8 +56,12 @@ def create_admin():
     admin.set_password(admin_password)
     admin.is_admin = True
     db.session.add(admin)
-    db.session.commit()
-    print(f"Created admin user: {admin_email}")
+    try:
+        db.session.commit()
+        print(f"Created admin user: {admin_email}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating admin user: {str(e)}")
 
 @cli.command("safe_setup_db")
 def safe_setup_db():
