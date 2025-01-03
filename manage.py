@@ -83,5 +83,17 @@ def full_init_db():
         db.create_all()
         print("Database initialized successfully!")
 
+@app.cli.command("reset-db")
+def reset_db():
+    """Reset the database by dropping and recreating all tables."""
+    with app.app_context():
+        # Drop all tables
+        db.drop_all()
+        # Create all tables
+        db.create_all()
+        # Create alembic_version table with current head
+        from flask_migrate import stamp
+        stamp()
+
 if __name__ == '__main__':
     cli()
