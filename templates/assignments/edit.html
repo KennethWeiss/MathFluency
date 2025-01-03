@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit Assignment</h1>
+    <form method="POST">
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ assignment.title }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ assignment.description }}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="operation" class="form-label">Operation</label>
+                            <select class="form-select" id="operation" name="operation" required>
+                                {% for op in ['add', 'subtract', 'multiply', 'divide'] %}
+                                <option value="{{ op }}" {% if assignment.operation == op %}selected{% endif %}>
+                                    {{ op.title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Level</label>
+                            <select class="form-select" id="level" name="level" required>
+                                {% for lvl in range(1, 6) %}
+                                <option value="{{ lvl }}" {% if assignment.level == lvl %}selected{% endif %}>
+                                    Level {{ lvl }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="required_problems" class="form-label">Required Problems</label>
+                            <input type="number" class="form-control" id="required_problems" name="required_problems" 
+                                   value="{{ assignment.required_problems }}" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="min_correct_percentage" class="form-label">Minimum Correct Percentage</label>
+                            <input type="number" class="form-control" id="min_correct_percentage" name="min_correct_percentage" 
+                                   value="{{ assignment.min_correct_percentage }}" min="0" max="100" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label">Due Date</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" 
+                                   value="{{ assignment.due_date.strftime('%Y-%m-%d') if assignment.due_date else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="max_attempts_per_problem" class="form-label">Max Attempts per Problem</label>
+                            <input type="number" class="form-control" id="max_attempts_per_problem" name="max_attempts_per_problem" 
+                                   value="{{ assignment.max_attempts_per_problem }}" min="1">
+                            <small class="form-text text-muted">Leave blank for unlimited attempts</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="show_solution_after_attempts" class="form-label">Show Solution After # Attempts</label>
+                            <input type="number" class="form-control" id="show_solution_after_attempts" name="show_solution_after_attempts" 
+                                   value="{{ assignment.show_solution_after_attempts }}" min="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3 form-check mt-4">
+                            <input type="checkbox" class="form-check-input" id="requires_work_shown" name="requires_work_shown" 
+                                   {% if assignment.requires_work_shown %}checked{% endif %}>
+                            <label class="form-check-label" for="requires_work_shown">Requires Work Shown</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="classes" class="form-label">Assigned Classes</label>
+                    <select class="form-select" id="classes" name="classes" multiple required>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {% if class in assignment.classes.all() %}selected{% endif %}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ url_for('assignment.view_assignment', id=assignment.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

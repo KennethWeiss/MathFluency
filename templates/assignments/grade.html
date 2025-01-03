@@ -1,5 +1,52 @@
 {% extends "base.html" %}
 
+{% macro render_submission_card(progress) %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="card-title">{{ progress.student.username }}</h5>
+                <div class="progress-stats">
+                    <p><strong>Status:</strong> 
+                        {% if progress.completed_at %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif progress.started_at %}
+                            <span class="badge bg-warning">In Progress</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not Started</span>
+                        {% endif %}
+                    </p>
+                    
+                    {% if progress.started_at %}
+                        <p><strong>Started:</strong> {{ progress.started_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% if progress.completed_at %}
+                            <p><strong>Completed:</strong> {{ progress.completed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if progress.problems_completed > 0 %}
+                        <p>
+                            <strong>Progress:</strong> 
+                            {{ progress.problems_completed }}/{{ progress.assignment.required_problems }} problems completed
+                        </p>
+                        <p>
+                            <strong>Accuracy:</strong> 
+                            {{ progress.accuracy }}%
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary" 
+                        onclick="openGradingModal('{{ progress.student_id }}', '{{ progress.accuracy }}', '')">
+                    Grade
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
 {% block content %}
 <div class="container mt-4">
     <h1>Grade Assignment: {{ assignment.title }}</h1>
@@ -80,54 +127,6 @@
     </div>
 </div>
 
-{% macro render_submission_card(progress) %}
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <h5 class="card-title">{{ progress.student.username }}</h5>
-                <div class="progress-stats">
-                    <p><strong>Status:</strong> 
-                        {% if progress.completed %}
-                            <span class="badge bg-success">Completed</span>
-                        {% elif progress.started %}
-                            <span class="badge bg-warning">In Progress</span>
-                        {% else %}
-                            <span class="badge bg-secondary">Not Started</span>
-                        {% endif %}
-                    </p>
-                    
-                    {% if progress.started %}
-                        <p><strong>Started:</strong> {{ progress.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
-                        <p><strong>Time Spent:</strong> {{ (progress.total_time_spent / 60)|round|int }} minutes</p>
-                        <p><strong>Problems:</strong> {{ progress.problems_correct }}/{{ progress.problems_attempted }} correct</p>
-                        <p><strong>Current Score:</strong> {{ progress.score }}%</p>
-                        {% if progress.last_attempt_at %}
-                            <p><strong>Last Activity:</strong> {{ progress.last_attempt_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                        {% endif %}
-                    {% endif %}
-                    
-                    {% if progress.teacher_comment %}
-                        <div class="mt-3">
-                            <strong>Previous Feedback:</strong>
-                            <p class="text-muted">{{ progress.teacher_comment }}</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-md-4 text-end">
-                <button class="btn btn-primary" 
-                        onclick="openGradingModal('{{ progress.student_id }}', '{{ progress.grade_override }}', '{{ progress.teacher_comment|default('', true) }}')"
-                        {% if not progress.started %}disabled{% endif %}>
-                    Grade
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endmacro %}
-
-{% block scripts %}
 <script>
 function openGradingModal(studentId, currentGrade, currentComment) {
     document.getElementById('studentId').value = studentId;
@@ -137,26 +136,31 @@ function openGradingModal(studentId, currentGrade, currentComment) {
 }
 
 function submitGrade() {
-    const studentId = document.getElementById('studentId').value;
-    const grade = document.getElementById('grade').value;
-    const comment = document.getElementById('comment').value;
-    
-    fetch(`/assignments/{{ assignment.id }}/grade/${studentId}`, {
+    const data = {
+        studentId: document.getElementById('studentId').value,
+        grade: document.getElementById('grade').value,
+        comment: document.getElementById('comment').value
+    };
+
+    fetch(`/assignments/{{ assignment.id }}/grade`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         },
-        body: `grade=${grade}&comment=${encodeURIComponent(comment)}`
+        body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
+    .then(response => {
+        if (response.ok) {
+            window.location.reload();
         } else {
             alert('Error saving grade');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving grade');
     });
 }
 </script>
-{% endblock %}
 {% endblock %}
