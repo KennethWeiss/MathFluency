@@ -10,7 +10,7 @@ class_bp = Blueprint('class', __name__)
 @login_required
 def list_classes():
     if current_user.is_teacher:
-        classes = current_user.taught_classes.all()
+        classes = current_user.teaching_classes.all()
     else:
         classes = current_user.enrolled_classes.all()
     return render_template('classes/list.html', classes=classes)
