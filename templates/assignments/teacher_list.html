@@ -30,14 +30,13 @@
                     <div class="progress mb-3">
                         {% set progress_query = assignment.student_progress %}
                         {% set total = progress_query.count() %}
-                        {% set completed = progress_query.filter_by(completed=True).count() %}
+                        {% set completed = progress_query.filter(AssignmentProgress.completed_at.isnot(None)).count() %}
                         {% set percentage = (completed / total * 100) if total > 0 else 0 %}
                         
                         {% set scores = [] %}
-                        {% for progress in progress_query.filter(AssignmentProgress.problems_attempted > 0).all() %}
-                            {% set score = progress.calculate_score() %}
-                            {% if score is not none %}
-                                {% set _ = scores.append(score) %}
+                        {% for progress in progress_query.filter(AssignmentProgress.problems_completed > 0).all() %}
+                            {% if progress.accuracy %}
+                                {% set _ = scores.append(progress.accuracy) %}
                             {% endif %}
                         {% endfor %}
                         

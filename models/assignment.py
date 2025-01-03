@@ -33,6 +33,11 @@ class Assignment(db.Model):
                             backref=db.backref('assignments', lazy='dynamic'),
                             lazy='dynamic')
     
+    # One-to-many relationship with progress entries
+    student_progress = db.relationship('AssignmentProgress',
+                                     back_populates='assignment',
+                                     lazy='dynamic')
+    
     def __init__(self, title, description, operation, level, required_problems=10,
                  min_correct_percentage=80, due_date=None, active=True, teacher_id=None,
                  class_id=None, max_attempts_per_problem=None,
@@ -100,7 +105,7 @@ class AssignmentProgress(db.Model):
     
     # Relationships
     student = db.relationship('User', backref='assignment_progress')
-    assignment = db.relationship('Assignment', backref='student_progress')
+    assignment = db.relationship('Assignment', back_populates='student_progress')
     attempts = db.relationship('AttemptHistory', backref='progress', lazy='dynamic')
     
     def __init__(self, student_id, assignment_id):
