@@ -15,16 +15,29 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 if os.environ.get('DATABASE_URL'):
     # Render adds postgres:// instead of postgresql://, so we need to fix that
     database_url = os.environ.get('DATABASE_URL')
+    print(f"Original DATABASE_URL: {database_url}")
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        print(f"Modified DATABASE_URL: {database_url}")
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"Final SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 else:
+    print("WARNING: No DATABASE_URL found, using SQLite")
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 
 app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# Ensure all tables exist
+with app.app_context():
+    try:
+        db.create_all()
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Error creating database tables: {e}")
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'  # Updated to use blueprint route
 
