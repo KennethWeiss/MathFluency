@@ -1,7 +1,7 @@
 from app import app, db
 from models.user import User
 from models.class_ import Class
-from models.teacher_class import TeacherClass  # Add this import
+from sqlalchemy import text
 
 
 def create_test_users():
