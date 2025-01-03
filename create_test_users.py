@@ -6,11 +6,6 @@ from sqlalchemy import text
 
 def create_test_users():
     with app.app_context():
-        # First, clear existing data
-        print("\nClearing existing data...")
-        Class.query.delete()
-        User.query.delete()
-        db.session.commit()
         
         # Create test teachers
         print("\nCreating teacher accounts...")
