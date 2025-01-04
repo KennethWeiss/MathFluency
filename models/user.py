@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     avatar_url = db.Column(db.String(256), nullable=True)
     
     # Note: relationships are defined via backref in the Class model
-    # taught_classes - classes where user is a teacher
+    # teacher_classes - classes where user is a teacher
     # enrolled_classes - classes where user is a student
 
     def __repr__(self):
