@@ -208,44 +208,39 @@ def progress():
 @login_required
 def student_progress(student_id):
     """View progress for a specific student (teacher only)"""
-    try:
-        # Check if user is a teacher
-        if not current_user.is_teacher:
-            flash('Access denied. Teachers only.', 'danger')
-            return redirect(url_for('main.welcome'))
-        
-        # Get student
-        student = User.query.get(student_id)
-        if not student:
-            flash('Student not found.', 'danger')
-            return redirect(url_for('progress.progress'))
-            
-        # Check if student belongs to teacher
-        if student.teacher_id != current_user.id:
-            flash('Access denied. Not your student.', 'danger')
-            return redirect(url_for('progress.progress'))
-        
-        # Get stats for each operation
-        stats = {}
-        for operation in ['addition', 'multiplication']:  # Add more operations here
-            operation_stats = get_operation_stats(student_id, operation)
-            if operation_stats:
-                stats[operation] = operation_stats
-        
-        # Get recent incorrect problems
-        recent_problems = PracticeTracker.get_problems_needing_practice(db, student_id, limit=5)
-        
-        return render_template('progress.html',
-                            stats=stats,
-                            student=student,
-                            recent_problems=recent_problems)
+    if not current_user.is_teacher:
+        flash('Access denied. Teachers only.', 'danger')
+        return redirect(url_for('main.welcome'))
     
-    except Exception as e:
-        print(f"Error in student_progress route: {str(e)}")
-        import traceback
-        print(traceback.format_exc())
-        flash('An error occurred while loading student progress.', 'danger')
+    # Get student
+    student = User.query.get(student_id)
+    if not student:
+        flash('Student not found.', 'danger')
         return redirect(url_for('progress.progress'))
+        
+    # Check if student is in any of teacher's classes
+    teacher_classes = current_user.get_primary_classes()
+    student_in_class = any(student in class_.students for class_ in teacher_classes)
+    
+    if not student_in_class:
+        flash('Access denied. Not your student.', 'danger')
+        return redirect(url_for('progress.progress'))
+    
+    # Get stats for each operation
+    stats = {}
+    for operation in ['addition', 'multiplication']:
+        operation_stats = get_operation_stats(student_id, operation)
+        if operation_stats:
+            stats[operation] = operation_stats
+    
+    # Get recent incorrect problems
+    recent_problems = PracticeTracker.get_problems_needing_practice(db, student_id, limit=5)
+    
+    return render_template('progress.html',
+                          stats=stats,
+                          student=student,
+                          recent_problems=recent_problems,
+                          viewing_as_teacher=True)
 
 @progress_bp.route('/analyze_level/<operation>/<int:level>')
 @progress_bp.route('/analyze_level/<operation>/<int:level>/<int:student_id>')

@@ -83,7 +83,7 @@
                                 {{ student.username }}
                             </div>
                             <div>
-                                <a href="#" class="btn btn-outline-primary btn-sm">View Progress</a>
+                                <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" class="btn btn-outline-primary btn-sm">View Progress</a>
                             </div>
                         </div>
                         {% endfor %}
