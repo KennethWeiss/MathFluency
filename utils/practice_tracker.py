@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, Union, Optional, List
 from utils.math_problems import get_problem as get_math_problem
+from sqlalchemy import or_
 
 # Type aliases for clarity
 Problem = Dict[str, Union[str, int, bool]]
@@ -20,26 +21,56 @@ class PracticeTracker:
         from models.practice_attempt import PracticeAttempt
         week_ago = datetime.utcnow() - timedelta(days=days)
         
-        return db.session.query(
-            PracticeAttempt.problem,
-            PracticeAttempt.correct_answer,
-            db.func.count(PracticeAttempt.id).label('attempt_count'),
-            db.func.sum(
-                db.case((PracticeAttempt.is_correct == False, 1), else_=0)
-            ).label('incorrect_count')
-        ).filter(
-            PracticeAttempt.user_id == user_id,
-            PracticeAttempt.operation == operation,
-            PracticeAttempt.level == level,
-            PracticeAttempt.created_at >= week_ago
-        ).group_by(
-            PracticeAttempt.problem,
-            PracticeAttempt.correct_answer
-        ).having(
-            db.func.sum(db.case((PracticeAttempt.is_correct == False, 1), else_=0)) > 0
-        ).order_by(
-            'incorrect_count DESC'  # Order by most incorrect attempts first
-        ).all()
+        # For multiplication, consider both n×m and m×n as the same problem
+        if operation == 'multiplication':
+            return db.session.query(
+                PracticeAttempt.problem,
+                PracticeAttempt.correct_answer,
+                db.func.count(PracticeAttempt.id).label('attempt_count'),
+                db.func.sum(
+                    db.case((PracticeAttempt.is_correct == False, 1), else_=0)
+                ).label('incorrect_count')
+            ).filter(
+                PracticeAttempt.user_id == user_id,
+                PracticeAttempt.operation == operation,
+                PracticeAttempt.level == level,
+                PracticeAttempt.created_at >= week_ago
+            ).group_by(
+                db.func.least(
+                    db.func.cast(db.func.split_part(PracticeAttempt.problem, '×', 1), db.Integer),
+                    db.func.cast(db.func.split_part(PracticeAttempt.problem, '×', 2), db.Integer)
+                ),
+                db.func.greatest(
+                    db.func.cast(db.func.split_part(PracticeAttempt.problem, '×', 1), db.Integer),
+                    db.func.cast(db.func.split_part(PracticeAttempt.problem, '×', 2), db.Integer)
+                ),
+                PracticeAttempt.correct_answer
+            ).having(
+                db.func.sum(db.case((PracticeAttempt.is_correct == False, 1), else_=0)) > 0
+            ).order_by(
+                'incorrect_count DESC'  # Order by most incorrect attempts first
+            ).all()
+        else:
+            return db.session.query(
+                PracticeAttempt.problem,
+                PracticeAttempt.correct_answer,
+                db.func.count(PracticeAttempt.id).label('attempt_count'),
+                db.func.sum(
+                    db.case((PracticeAttempt.is_correct == False, 1), else_=0)
+                ).label('incorrect_count')
+            ).filter(
+                PracticeAttempt.user_id == user_id,
+                PracticeAttempt.operation == operation,
+                PracticeAttempt.level == level,
+                PracticeAttempt.created_at >= week_ago
+            ).group_by(
+                PracticeAttempt.problem,
+                PracticeAttempt.correct_answer
+            ).having(
+                db.func.sum(db.case((PracticeAttempt.is_correct == False, 1), else_=0)) > 0
+            ).order_by(
+                'incorrect_count DESC'  # Order by most incorrect attempts first
+            ).all()
 
     @staticmethod
     def check_consecutive_wrong(db, user_id: int, problem: str) -> int:
@@ -47,13 +78,29 @@ class PracticeTracker:
         from models.practice_attempt import PracticeAttempt
         week_ago = datetime.utcnow() - timedelta(days=PracticeTracker.DAYS_TO_LOOK_BACK)
         
-        recent_attempts = db.session.query(PracticeAttempt).filter(
-            PracticeAttempt.user_id == user_id,
-            PracticeAttempt.problem == problem,
-            PracticeAttempt.created_at >= week_ago
-        ).order_by(
-            PracticeAttempt.created_at.desc()
-        ).limit(3).all()
+        # For multiplication, check both n×m and m×n
+        if '×' in problem:
+            n1, n2 = [int(n) for n in problem.split('×')]
+            alt_problem = f"{n2} × {n1}"
+            
+            recent_attempts = db.session.query(PracticeAttempt).filter(
+                PracticeAttempt.user_id == user_id,
+                or_(
+                    PracticeAttempt.problem == problem,
+                    PracticeAttempt.problem == alt_problem
+                ),
+                PracticeAttempt.created_at >= week_ago
+            ).order_by(
+                PracticeAttempt.created_at.desc()
+            ).limit(3).all()
+        else:
+            recent_attempts = db.session.query(PracticeAttempt).filter(
+                PracticeAttempt.user_id == user_id,
+                PracticeAttempt.problem == problem,
+                PracticeAttempt.created_at >= week_ago
+            ).order_by(
+                PracticeAttempt.created_at.desc()
+            ).limit(3).all()
         
         return sum(1 for attempt in recent_attempts if not attempt.is_correct)
 
@@ -99,4 +146,5 @@ class PracticeTracker:
                     'needs_practice': True
                 }
         
+        # Otherwise return the new problem
         return problem
