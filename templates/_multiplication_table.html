@@ -1,0 +1,55 @@
+{% macro multiplication_table(mult_table_stats) %}
+<div class="card mb-4 shadow">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Multiplication Table Progress</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center">×</th>
+                        {% for i in range(13) %}
+                            <th class="text-center">{{ i }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in range(13) %}
+                        <tr>
+                            <th class="text-center">{{ i }}</th>
+                            {% for j in range(13) %}
+                                {% set stats = mult_table_stats[i][j] %}
+                                {% if stats.attempts > 0 %}
+                                    {% set bg_color = "255, 0, 0" if stats.accuracy < 60 else "255, 165, 0" if stats.accuracy < 80 else "0, 128, 0" %}
+                                    {% set opacity = 0.3 if stats.attempts < 3 else 0.6 if stats.attempts < 6 else 0.9 %}
+                                    <td class="text-center" style="background-color: rgba({{ bg_color }}, {{ opacity }})">
+                                        <div>{{ "%.1f"|format(stats.accuracy) }}%</div>
+                                        <small class="text-muted">({{ stats.attempts }})</small>
+                                    </td>
+                                {% else %}
+                                    <td class="text-center bg-light">-</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3">
+            <p class="mb-1"><small>Color indicates accuracy:</small></p>
+            <div class="d-flex gap-3">
+                <div><span class="badge bg-danger">< 60%</span></div>
+                <div><span class="badge bg-warning">60-79%</span></div>
+                <div><span class="badge bg-success">≥ 80%</span></div>
+            </div>
+            <p class="mt-2 mb-0"><small>Color intensity indicates number of attempts:</small></p>
+            <div class="d-flex gap-3">
+                <div><small>Light: 1-2 attempts</small></div>
+                <div><small>Medium: 3-5 attempts</small></div>
+                <div><small>Dark: 6+ attempts</small></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

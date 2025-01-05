@@ -51,12 +51,20 @@
                     <div class="display-4">{{ correct_count }}</div>
                 </div>
                 <div class="col-md-3 text-center mb-3">
-                    <h4>Incorrect</h4>
-                    <div class="display-4">{{ incorrect_count }}</div>
-                </div>
-                <div class="col-md-3 text-center mb-3">
                     <h4>Accuracy</h4>
                     <div class="display-4">{{ "%.1f"|format(accuracy) }}%</div>
+                </div>
+                <div class="col-md-3 text-center mb-3">
+                    <h4>Mastery Status</h4>
+                    <div class="display-4">
+                        {% if stats.mastery_status == 'mastered' %}
+                            <span class="badge rounded-pill text-bg-success">Mastered</span>
+                        {% elif stats.mastery_status == 'learning' %}
+                            <span class="badge rounded-pill text-bg-warning">Learning</span>
+                        {% else %}
+                            <span class="badge rounded-pill text-bg-danger">Needs Practice</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -146,9 +154,15 @@
 
     <!-- Return Buttons -->
     <div class="text-center mb-4">
-        <a href="{{ url_for('progress.progress') }}" class="btn btn-secondary me-2">
-            Back to Progress
-        </a>
+        {% if student %}
+            <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" class="btn btn-secondary me-2">
+                Back to {{ student.username }}'s Progress
+            </a>
+        {% else %}
+            <a href="{{ url_for('progress.progress') }}" class="btn btn-secondary me-2">
+                Back to Progress
+            </a>
+        {% endif %}
         <a href="{{ url_for('practice.practice') }}" class="btn btn-primary">
             Practice This Level
         </a>

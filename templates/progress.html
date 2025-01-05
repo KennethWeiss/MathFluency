@@ -1,26 +1,30 @@
 {% extends "base.html" %}
-
 {% from "_stats_card.html" import stats_card %}
+{% from "_multiplication_table.html" import multiplication_table %}
 
 {% block title %}Progress - Math Fluency{% endblock %}
 
 {% block content %}
-
 <div class="container mt-4">
-    {% if viewing_as_teacher %}
-    <h1 class="text-center mb-4">Progress for {{ student.username }}</h1>
-{% else %}
-    <h1 class="text-center mb-4">Your Progress</h1>
-{% endif %}
+    <div class="row">
+        <div class="col">
+            <h1 class="mb-4">
+                {% if viewing_as_teacher %}
+                    {{ student.username }}'s Progress
+                {% else %}
+                    My Progress
+                {% endif %}
+            </h1>
+        </div>
+    </div>
 
-<!-- Addition Stats -->
-{% if stats and stats['addition'] %}
-    {{ stats_card('addition', stats['addition'], 'bg-primary text-white', viewing_as_teacher, student) }}
-{% endif %}
+    {% if 'multiplication' in stats %}
+        {{ multiplication_table(mult_table_stats) }}
+        {{ stats_card('multiplication', stats['multiplication'], 'bg-primary text-white', viewing_as_teacher, student) }}
+    {% endif %}
 
-<!-- Multiplication Stats -->
-{% if stats and stats['multiplication'] %}
-    {{ stats_card('multiplication', stats['multiplication'], 'bg-warning text-dark', viewing_as_teacher, student) }}
-{% endif %}
+    {% if 'addition' in stats %}
+        {{ stats_card('addition', stats['addition'], 'bg-success text-white', viewing_as_teacher, student) }}
+    {% endif %}
 </div>
 {% endblock %}

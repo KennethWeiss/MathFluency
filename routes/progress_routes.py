@@ -19,10 +19,11 @@ def calculate_level_stats(attempts, description):
     accuracy = (correct / total * 100) if total > 0 else 0
     
     mastery_status = 'needs_practice'
-    if total >= PracticeAttempt.MIN_ATTEMPTS:
-        if (correct / total) >= PracticeAttempt.MASTERY_THRESHOLD:
+    if total >= PracticeAttempt.MIN_ATTEMPTS:  # At least 3 attempts
+        accuracy_ratio = correct / total
+        if accuracy_ratio >= PracticeAttempt.MASTERY_THRESHOLD:  # 80% or higher
             mastery_status = 'mastered'
-        elif (correct / total) >= PracticeAttempt.LEARNING_THRESHOLD:
+        elif accuracy_ratio >= PracticeAttempt.LEARNING_THRESHOLD:  # 60% or higher
             mastery_status = 'learning'
     
     return {
@@ -151,10 +152,45 @@ def analyze_level_problems(attempts):
         key=lambda x: (x['accuracy'], -x['consecutive_wrong'])
     )
 
+def get_multiplication_table_stats(user_id):
+    """Get stats for each multiplication problem (0-12 × 0-12)"""
+    # Get all multiplication attempts
+    attempts = PracticeAttempt.query.filter_by(
+        user_id=user_id,
+        operation='multiplication'
+    ).all()
+    
+    # Initialize stats dictionary
+    stats = {}
+    for i in range(13):
+        stats[i] = {}
+        for j in range(13):
+            stats[i][j] = {'attempts': 0, 'correct': 0, 'accuracy': 0}
+    
+    # Calculate stats for each problem
+    for attempt in attempts:
+        # Extract numbers from problem string (e.g., "5 × 8")
+        nums = [int(n) for n in attempt.problem.split('×')]
+        if len(nums) == 2:
+            n1, n2 = nums
+            if n1 <= 12 and n2 <= 12:
+                stats[n1][n2]['attempts'] += 1
+                if attempt.is_correct:
+                    stats[n1][n2]['correct'] += 1
+    
+    # Calculate accuracy percentages
+    for i in range(13):
+        for j in range(13):
+            attempts = stats[i][j]['attempts']
+            if attempts > 0:
+                stats[i][j]['accuracy'] = (stats[i][j]['correct'] / attempts) * 100
+    
+    return stats
+
 @progress_bp.route('/progress')
 @login_required
 def progress():
-    """Show progress overview"""
+    """Show user progress"""
     try:
         # If viewing as teacher with student_id parameter, redirect to student_progress
         student_id = request.args.get('student_id')
@@ -171,7 +207,13 @@ def progress():
             if operation_stats:
                 stats[operation] = operation_stats
         
-        return render_template('progress.html', stats=stats)
+        # Get multiplication table stats
+        mult_table_stats = get_multiplication_table_stats(current_user.id)
+        
+        return render_template('progress.html',
+                            stats=stats,
+                            mult_table_stats=mult_table_stats,
+                            viewing_as_teacher=False)
         
     except Exception as e:
         print(f"Error in progress route: {str(e)}")
@@ -213,9 +255,13 @@ def student_progress(student_id):
         if operation_stats:
             stats[operation] = operation_stats
     
+    # Get multiplication table stats
+    mult_table_stats = get_multiplication_table_stats(student_id)
+    
     return render_template('progress.html',
                         stats=stats,
                         student=student,
+                        mult_table_stats=mult_table_stats,
                         viewing_as_teacher=True)
 
 @progress_bp.route('/analyze_level/<operation>/<int:level>')
@@ -229,6 +275,14 @@ def analyze_level(operation, level, student_id=None):
             return redirect(url_for('main.welcome'))
         
         user_id = student_id if student_id else current_user.id
+        
+        # Get the student if viewing as teacher
+        student = None
+        if student_id:
+            student = User.query.get(student_id)
+            if not student:
+                flash('Student not found.', 'danger')
+                return redirect(url_for('progress.progress'))
         
         # Get attempts for this level
         attempts = PracticeAttempt.query.filter_by(
@@ -274,7 +328,8 @@ def analyze_level(operation, level, student_id=None):
                             correct_count=correct_count,
                             incorrect_count=incorrect_count,
                             accuracy=accuracy,
-                            problems=problems)
+                            problems=problems,
+                            student=student)  # Pass the student object
     
     except Exception as e:
         print(f"Error in analyze_level route: {str(e)}")
