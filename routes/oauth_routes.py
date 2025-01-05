@@ -22,10 +22,18 @@ google_bp = make_google_blueprint(
     client_id=os.environ.get("GOOGLE_CLIENT_ID"),
     client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
     scope=["profile", "email"],
-    redirect_url=None,
-    offline=True,
-    reprompt_consent=True,  # Always ask for consent
-    )
+    redirect_url="/oauth/google/authorized",  # Updated to match Google Cloud Console
+    reprompt_consent=True,
+    offline=True
+)
+
+# Override OAuth settings based on environment
+if os.environ.get('RENDER'):
+    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+else:
+    # Local development settings
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 oauth_bp = Blueprint('oauth', __name__)
 url_prefix = '/oauth'
@@ -37,14 +45,10 @@ def oauth_debug():
         'google_client_id_exists': bool(os.environ.get('GOOGLE_CLIENT_ID')),
         'google_client_secret_exists': bool(os.environ.get('GOOGLE_CLIENT_SECRET')),
         'blueprint_name': google_bp.name,
-        'blueprint_url_prefix': url_prefix,
-        'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE', False),
-        'server_name': current_app.config.get('SERVER_NAME'),
-        'preferred_url_scheme': current_app.config.get('PREFERRED_URL_SCHEME', 'http'),
-        'request_url': request.url,
-        'request_base_url': request.base_url,
-        'request_host_url': request.host_url,
-        'google_authorized': getattr(google, 'authorized', False),
+        'current_uri': request.url,
+        'base_url': request.base_url,
+        'host_url': request.host_url,
+        'is_secure': request.is_secure,
         'render_enabled': bool(os.environ.get('RENDER')),
         'render_hostname': os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'Not set')
     }

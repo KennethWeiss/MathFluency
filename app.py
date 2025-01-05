@@ -11,11 +11,17 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # OAuth configuration
-app.config['PREFERRED_URL_SCHEME'] = 'https'  # Force HTTPS for OAuth
 if os.environ.get('RENDER'):
-    app.config['SERVER_NAME'] = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'  # Require HTTPS on production
+    app.config['SESSION_COOKIE_SECURE'] = True
+else:
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP for local development
 
 # Debug environment variables
 print("=== Environment Variables ===")
@@ -76,24 +82,22 @@ from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 from routes.auth_routes import auth_bp
 from routes.layout_routes import layout_bp
 from routes.main_routes import main_bp
-from routes.progress_routes import progress_bp
+from routes.class_routes import class_bp
 from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
-from routes.class_routes import class_bp
-from routes.oauth_routes import oauth_bp, google_bp
+from routes.google_auth import google_auth_bp
 from routes.admin_routes import admin_bp
 from routes.teacher_routes import teacher_bp
 
+# Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
 app.register_blueprint(main_bp)
-app.register_blueprint(progress_bp)
+app.register_blueprint(class_bp)
 app.register_blueprint(assignment_bp)
 app.register_blueprint(practice_bp)
-app.register_blueprint(class_bp)
-app.register_blueprint(oauth_bp, url_prefix='/oauth')
-app.register_blueprint(google_bp, url_prefix='/oauth')
-app.register_blueprint(admin_bp)  
+app.register_blueprint(google_auth_bp)  # The url_prefix is already set in the blueprint
+app.register_blueprint(admin_bp)
 app.register_blueprint(teacher_bp)
 
 @login_manager.user_loader

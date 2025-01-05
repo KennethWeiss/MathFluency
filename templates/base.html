@@ -25,22 +25,10 @@
                     {% if current_user.is_authenticated %}
                     {% if current_user.is_teacher %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('class.') %}active{% endif %}" 
-                            href="{{ url_for('class.list_classes') }}">
-                            <i class="fas fa-tasks"></i> Classes
-                        </a>
+                        <a class="nav-link {% if request.endpoint == 'class.manage_classes' %}active{% endif %}" href="{{ url_for('class.manage_classes') }}">Classes</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" 
-                            href="{{ url_for('assignment.list_assignments') }}">
-                            <i class="fas fa-tasks"></i> Assignments
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'teacher.active_students' %}active{% endif %}" 
-                            href="{{ url_for('teacher.active_students') }}">
-                            <i class="fas fa-users"></i> Active Students
-                        </a>
+                        <a class="nav-link {% if request.endpoint == 'assignment.manage_assignments' %}active{% endif %}" href="{{ url_for('assignment.manage_assignments') }}">Assignments</a>
                     </li>
                     {% else %}
                     <li class="nav-item">
@@ -57,12 +45,6 @@
                             href="{{ url_for('assignment.student_assignments') }}">
                             <i class="fas fa-book"></i> My Assignments
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'progress.progress' %}active{% endif %}" href="{{ url_for('progress.progress') }}">Progress</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'progress.incorrect_problems' %}active{% endif %}" href="{{ url_for('progress.incorrect_problems') }}">Incorrect Problems</a>
                     </li>
                     {% endif %}
                     {% endif %}
