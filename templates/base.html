@@ -12,48 +12,36 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.home') }}">Math Fluency</a>
+            <a class="navbar-brand" href="{{ url_for('main.welcome') }}">Math Fluency</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'main.home' %}active{% endif %}" href="{{ url_for('main.home') }}">Home</a>
-                    </li>
-                    
                     {% if current_user.is_authenticated %}
-                    {% if current_user.is_teacher %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'class.manage_classes' %}active{% endif %}" href="{{ url_for('class.manage_classes') }}">Classes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'assignment.manage_assignments' %}active{% endif %}" href="{{ url_for('assignment.manage_assignments') }}">Assignments</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'main.welcome' %}active{% endif %}" href="{{ url_for('main.welcome') }}">Home</a>
+                        </li>
+                        {% if current_user.is_teacher %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint.startswith('class.') %}active{% endif %}" href="{{ url_for('class.list_classes') }}">Classes</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'class.list_classes' %}active{% endif %}" href="{{ url_for('class.list_classes') }}">My Classes</a>
+                            </li>
+                        {% endif %}
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'practice.practice' %}active{% endif %}" href="{{ url_for('practice.practice') }}">Practice</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'class.join_class' %}active{% endif %}" 
-                            href="{{ url_for('class.join_class') }}">
-                            <i class="fas fa-door-open"></i> Join Class
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" 
-                            href="{{ url_for('assignment.student_assignments') }}">
-                            <i class="fas fa-book"></i> My Assignments
-                        </a>
-                    </li>
-                    {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" href="{{ url_for('auth.login') }}">Login</a>
+                        </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
