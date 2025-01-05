@@ -76,17 +76,16 @@ def is_school_email(email):
 @oauth_bp.before_request
 def check_session_timeout():
     """Check if the session has timed out"""
-    return None #Temporarily disable session timeout
-    # if current_user.is_authenticated:
-    #     last_active = session.get('last_active')
-    #     if last_active:
-    #         last_active = datetime.fromisoformat(last_active)
-    #         if datetime.utcnow() - last_active > timedelta(hours=24):
-    #             logout_user()
-    #             session.clear()
-    #             flash('Your session has expired. Please log in again.', 'info')
-    #             return redirect(url_for('auth.login'))
-    #     session['last_active'] = datetime.utcnow().isoformat()
+    if current_user.is_authenticated:
+        last_active = session.get('last_active')
+        if last_active:
+            last_active = datetime.fromisoformat(last_active)
+            if datetime.utcnow() - last_active > timedelta(days=7):  # Match app config
+                logout_user()
+                session.clear()
+                flash('Your session has expired. Please log in again.', 'info')
+                return redirect(url_for('auth.login'))
+        session['last_active'] = datetime.utcnow().isoformat()
 
 
 @oauth_bp.route('/login/google')
@@ -99,7 +98,6 @@ def google_login():
         print(f"Generated Login URL: {login_url}")
         print(f"Redirecting to: {login_url}")  # Debug print
         return redirect(login_url)
-       # return redirect(url_for('google.login', prompt='select_account'))
     
     try:
         resp = google.get('/oauth2/v2/userinfo')
@@ -135,9 +133,9 @@ def google_login():
             flash('Your account has been deactivated. Please contact support.', 'error')
             return redirect(url_for('auth.login'))
         
-        # Log in the user
-        login_user(user)
-        flash('Successfully signed in with Google.', 'success')
+        # Log in the user and make session permanent
+        login_user(user, remember=True)  # Enable "remember me" functionality
+        session.permanent = True  # Make the session permanent
         
         # Add session security measures
         session['user_id'] = user.id
