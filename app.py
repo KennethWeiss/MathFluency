@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from forms import LoginForm, RegistrationForm
+from datetime import datetime, timedelta
 from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
@@ -75,7 +76,8 @@ from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
 from routes.class_routes import class_bp
 from routes.oauth_routes import oauth_bp, google_bp
-from routes.admin_routes import admin_bp  # New import
+from routes.admin_routes import admin_bp
+from routes.teacher_routes import teacher_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
@@ -86,7 +88,8 @@ app.register_blueprint(practice_bp)
 app.register_blueprint(class_bp)
 app.register_blueprint(oauth_bp, url_prefix='/oauth')
 app.register_blueprint(google_bp, url_prefix='/oauth')
-app.register_blueprint(admin_bp)  # Register admin blueprint
+app.register_blueprint(admin_bp)  
+app.register_blueprint(teacher_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -112,6 +115,21 @@ def reset_db():
     else:
         print("No revision files found")
     print("Database reset complete!")
+
+@app.template_filter('timeago')
+def timeago(date):
+    """Convert a datetime to a time ago string."""
+    now = datetime.utcnow()
+    diff = now - date
+    
+    if diff.days > 0:
+        return f"{diff.days}d ago"
+    elif diff.seconds >= 3600:
+        return f"{diff.seconds // 3600}h ago"
+    elif diff.seconds >= 60:
+        return f"{diff.seconds // 60}m ago"
+    else:
+        return "just now"
 
 def calculate_difficulty_level(user_id, operation, current_level):
     """Calculate the appropriate difficulty level based on user performance."""

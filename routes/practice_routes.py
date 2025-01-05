@@ -3,14 +3,33 @@ from flask_login import login_required, current_user
 from app import db
 from models.practice_attempt import PracticeAttempt
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
+from models.active_session import ActiveSession
 from utils.math_problems import get_problem, generate_custom_multiplication
 from datetime import datetime
 
 practice_bp = Blueprint('practice', __name__)
 
+@practice_bp.before_app_request
+def update_session():
+    if current_user.is_authenticated:
+        session = ActiveSession.query.filter_by(user_id=current_user.id).first()
+        if not session:
+            session = ActiveSession(user_id=current_user.id)
+            db.session.add(session)
+        session.last_active = datetime.utcnow()
+        db.session.commit()
+
 @practice_bp.route('/practice')
 @login_required
 def practice():
+    # Update session activity
+    if current_user.is_authenticated:
+        session = current_user.active_session
+        if session:
+            session.activity_type = 'practice'
+            session.details = "Practice Mode"
+            db.session.commit()
+
     # Get assignment_id from query params if it exists
     assignment_id = request.args.get('assignment_id')
     
@@ -28,8 +47,7 @@ def practice():
                             progress=progress)
     else:
         # Free practice mode
-        return render_template('practice.html', 
-                            mode='free')
+        return render_template('practice.html', mode='practice')
 
 @practice_bp.route('/get_problem', methods=['POST'])
 @login_required
