@@ -12,6 +12,11 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
+# OAuth configuration
+app.config['PREFERRED_URL_SCHEME'] = 'https'  # Force HTTPS for OAuth
+if os.environ.get('RENDER'):
+    app.config['SERVER_NAME'] = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
 # Debug environment variables
 print("=== Environment Variables ===")
 for key, value in os.environ.items():

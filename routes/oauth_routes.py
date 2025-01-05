@@ -1,4 +1,4 @@
-from flask import Blueprint, url_for, redirect, flash, current_app, session
+from flask import Blueprint, url_for, redirect, flash, current_app, session, request
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_login import login_user, current_user, logout_user
 from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
@@ -6,10 +6,17 @@ from models.user import User
 from datetime import datetime, timedelta
 import os
 
+# Enable Flask-Dance debug logging
+import logging
+logging.getLogger('flask_dance').setLevel(logging.DEBUG)
+
 ##DEBUGGING
 # Add this temporarily at the top of your routes to debug
-print("GOOGLE_CLIENT_ID:", os.environ.get("GOOGLE_CLIENT_ID"))
-print("GOOGLE_CLIENT_SECRET:", os.environ.get("GOOGLE_CLIENT_SECRET", "exists but hidden"))
+print("=== OAuth Configuration ===")
+print("GOOGLE_CLIENT_ID:", os.environ.get("GOOGLE_CLIENT_ID", "Not set"))
+print("GOOGLE_CLIENT_SECRET:", "Present" if os.environ.get("GOOGLE_CLIENT_SECRET") else "Not set")
+print("Current URL:", request.url if 'request' in locals() else "Not in request context")
+print("=========================")
 
 # Create blueprint for Google OAuth
 google_bp = make_google_blueprint(
@@ -23,6 +30,30 @@ google_bp = make_google_blueprint(
 
 oauth_bp = Blueprint('oauth', __name__)
 url_prefix = '/oauth'
+
+@oauth_bp.route('/debug')
+def oauth_debug():
+    """Debug endpoint to check OAuth configuration"""
+    debug_info = {
+        'google_client_id_exists': bool(os.environ.get('GOOGLE_CLIENT_ID')),
+        'google_client_secret_exists': bool(os.environ.get('GOOGLE_CLIENT_SECRET')),
+        'blueprint_name': google_bp.name,
+        'blueprint_url_prefix': url_prefix,
+        'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE', False),
+        'server_name': current_app.config.get('SERVER_NAME'),
+        'preferred_url_scheme': current_app.config.get('PREFERRED_URL_SCHEME', 'http'),
+        'request_url': request.url if request else 'No request context',
+        'request_base_url': request.base_url if request else 'No request context',
+        'request_host_url': request.host_url if request else 'No request context',
+        'google_authorized': getattr(google, 'authorized', False),
+        'render_enabled': bool(os.environ.get('RENDER')),
+        'render_hostname': os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'Not set')
+    }
+    return str(debug_info)
+
+print("OAuth Blueprint Name:", google_bp.name)
+print("OAuth Blueprint URL Prefix:", url_prefix)
+
 
 # List of allowed school domain endings
 ALLOWED_DOMAINS = [
@@ -57,8 +88,12 @@ def check_session_timeout():
 
 @oauth_bp.route('/login/google')
 def google_login():
+    print("=== Google Login Debug===")
+    print(f"google.authorized: {getattr(google, 'authorized', False)}")
+    print(f"Session: {session}")
     if not google.authorized:
         login_url = url_for('google.login', prompt='select_account', _external=True)
+        print(f"Generated Login URL: {login_url}")
         print(f"Redirecting to: {login_url}")  # Debug print
         return redirect(login_url)
        # return redirect(url_for('google.login', prompt='select_account'))
