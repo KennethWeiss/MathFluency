@@ -38,11 +38,13 @@ def active_students():
             recent_operation = recent_attempts[0].operation if recent_attempts else None
         else:
             accuracy = 0 
+            recent_operation = None
         
         student_stats[session.user_id] = {
             'accuracy': accuracy,
             'recent_attempts': recent_attempts,
-            'accuracy_color': get_accuracy_color(accuracy)
+            'accuracy_color': get_accuracy_color(accuracy),
+            'recent_operation': recent_operation
         }
     
     return render_template('active_students.html', 
