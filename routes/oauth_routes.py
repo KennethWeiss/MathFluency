@@ -29,27 +29,30 @@ ALLOWED_DOMAINS = [
     'k12.ca.us',  # California K-12 schools
     'lausd.net',  # Los Angeles schools
     'gmail.com', #for testing purposes
+    '*',
     # Add more school domains as needed
 ]
 
 def is_school_email(email):
     """Check if email is from an allowed school domain."""
-    domain = email.split('@')[1].lower()
-    return any(domain.endswith(allowed_domain) for allowed_domain in ALLOWED_DOMAINS)
+    return True #Temporarily allow all emails
+    # domain = email.split('@')[1].lower()
+    # return any(domain.endswith(allowed_domain) for allowed_domain in ALLOWED_DOMAINS)
 
 @oauth_bp.before_request
 def check_session_timeout():
     """Check if the session has timed out"""
-    if current_user.is_authenticated:
-        last_active = session.get('last_active')
-        if last_active:
-            last_active = datetime.fromisoformat(last_active)
-            if datetime.utcnow() - last_active > timedelta(hours=24):
-                logout_user()
-                session.clear()
-                flash('Your session has expired. Please log in again.', 'info')
-                return redirect(url_for('auth.login'))
-        session['last_active'] = datetime.utcnow().isoformat()
+    return None #Temporarily disable session timeout
+    # if current_user.is_authenticated:
+    #     last_active = session.get('last_active')
+    #     if last_active:
+    #         last_active = datetime.fromisoformat(last_active)
+    #         if datetime.utcnow() - last_active > timedelta(hours=24):
+    #             logout_user()
+    #             session.clear()
+    #             flash('Your session has expired. Please log in again.', 'info')
+    #             return redirect(url_for('auth.login'))
+    #     session['last_active'] = datetime.utcnow().isoformat()
 
 
 @oauth_bp.route('/login/google')
