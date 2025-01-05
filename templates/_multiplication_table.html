@@ -1,11 +1,36 @@
 {% macro multiplication_table(mult_table_stats) %}
+<style>
+.mult-table th, .mult-table td {
+    padding: 0.5rem !important;
+    width: 4.5rem !important;
+    min-width: 4.5rem !important;
+    max-width: 4.5rem !important;
+}
+
+.mult-table th:first-child {
+    width: 3rem !important;
+    min-width: 3rem !important;
+    max-width: 3rem !important;
+}
+
+.mult-table .accuracy {
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.mult-table .attempts {
+    font-size: 0.75rem;
+    color: #666;
+}
+</style>
+
 <div class="card mb-4 shadow">
     <div class="card-header bg-primary text-white">
         <h3 class="mb-0">Multiplication Table Progress</h3>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table table-bordered mult-table">
                 <thead>
                     <tr>
                         <th class="text-center">×</th>
@@ -24,8 +49,8 @@
                                     {% set bg_color = "255, 0, 0" if stats.accuracy < 60 else "255, 165, 0" if stats.accuracy < 80 else "0, 128, 0" %}
                                     {% set opacity = 0.3 if stats.attempts < 3 else 0.6 if stats.attempts < 6 else 0.9 %}
                                     <td class="text-center" style="background-color: rgba({{ bg_color }}, {{ opacity }})">
-                                        <div>{{ "%.1f"|format(stats.accuracy) }}%</div>
-                                        <small class="text-muted">({{ stats.attempts }})</small>
+                                        <div class="accuracy">{{ "%.0f"|format(stats.accuracy) }}%</div>
+                                        <div class="attempts">({{ stats.attempts }})</div>
                                     </td>
                                 {% else %}
                                     <td class="text-center bg-light">-</td>
