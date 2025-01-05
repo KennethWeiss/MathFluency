@@ -2,10 +2,10 @@ from flask import Blueprint, render_template, redirect, url_for, flash, jsonify,
 from flask_login import login_required, current_user
 from models.practice_attempt import PracticeAttempt
 from models.user import User
+from models.class_ import Class, teacher_class
 from app import db
 from datetime import datetime, timedelta
 from sqlalchemy import func
-from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem
 
 progress_bp = Blueprint('progress', __name__)
@@ -49,7 +49,6 @@ def get_operation_stats(user_id, operation):
     total = len(attempts)
     correct = len([a for a in attempts if a.is_correct])
     accuracy = (correct / total * 100) if total > 0 else 0
-    current_streak = PracticeTracker.calculate_streak(attempts)
     
     # Get level stats
     levels_stats = {}
@@ -66,18 +65,12 @@ def get_operation_stats(user_id, operation):
     return {
         'total_attempts': total,
         'accuracy': accuracy,
-        'current_streak': current_streak,
         'levels': levels_stats
     }
 
 def analyze_missed_problems(user_id, operation=None):
     """Analyze commonly missed problems for a user"""
-    # Get recent attempts from PracticeTracker
-    recent_attempts = PracticeTracker.get_recent_attempts(
-        db, user_id, operation, None
-    ) if operation else []
-    
-    # Add any other missed problems not in recent attempts
+    # Get attempts
     query = PracticeAttempt.query.filter_by(user_id=user_id, is_correct=False)
     if operation:
         query = query.filter_by(operation=operation)
@@ -85,20 +78,6 @@ def analyze_missed_problems(user_id, operation=None):
     
     problem_stats = {}
     
-    # Process recent attempts first
-    for attempt in recent_attempts:
-        if attempt.problem not in problem_stats:
-            consecutive_wrong = PracticeTracker.check_consecutive_wrong(
-                db, user_id, attempt.problem
-            )
-            problem_stats[attempt.problem] = {
-                'total_attempts': attempt.attempt_count,
-                'incorrect_attempts': attempt.incorrect_count,
-                'consecutive_wrong': consecutive_wrong,
-                'needs_practice': consecutive_wrong >= PracticeTracker.CONSECUTIVE_WRONG_THRESHOLD
-            }
-    
-    # Add any other missed problems
     for attempt in missed_attempts:
         if attempt.problem not in problem_stats:
             problem_stats[attempt.problem] = {
@@ -124,9 +103,6 @@ def analyze_level_problems(attempts):
     
     for attempt in attempts:
         if attempt.problem not in problem_stats:
-            consecutive_wrong = PracticeTracker.check_consecutive_wrong(
-                db, attempt.user_id, attempt.problem
-            )
             problem_stats[attempt.problem] = {
                 'total_attempts': 0,
                 'correct_count': 0,
@@ -135,8 +111,8 @@ def analyze_level_problems(attempts):
                 'level': attempt.level,
                 'user_answers': [],
                 'correct_answer': attempt.correct_answer,
-                'consecutive_wrong': consecutive_wrong,
-                'needs_practice': consecutive_wrong >= PracticeTracker.CONSECUTIVE_WRONG_THRESHOLD
+                'consecutive_wrong': 0,
+                'needs_practice': False
             }
         
         stats = problem_stats[attempt.problem]
@@ -219,8 +195,12 @@ def student_progress(student_id):
         return redirect(url_for('progress.progress'))
         
     # Check if student is in any of teacher's classes
-    teacher_classes = current_user.get_primary_classes()
-    student_in_class = any(student in class_.students for class_ in teacher_classes)
+    teacher_classes = current_user.teaching_classes.all()
+    student_in_class = False
+    for class_ in teacher_classes:
+        if student in class_.students:
+            student_in_class = True
+            break
     
     if not student_in_class:
         flash('Access denied. Not your student.', 'danger')
@@ -233,14 +213,10 @@ def student_progress(student_id):
         if operation_stats:
             stats[operation] = operation_stats
     
-    # Get recent incorrect problems
-    recent_problems = PracticeTracker.get_problems_needing_practice(db, student_id, limit=5)
-    
     return render_template('progress.html',
-                          stats=stats,
-                          student=student,
-                          recent_problems=recent_problems,
-                          viewing_as_teacher=True)
+                        stats=stats,
+                        student=student,
+                        viewing_as_teacher=True)
 
 @progress_bp.route('/analyze_level/<operation>/<int:level>')
 @progress_bp.route('/analyze_level/<operation>/<int:level>/<int:student_id>')
@@ -285,7 +261,7 @@ def analyze_level(operation, level, student_id=None):
         incorrect_count = total_attempts - correct_count
         accuracy = stats['accuracy']
         
-        # Analyze problems using PracticeTracker
+        # Analyze problems
         problems = analyze_level_problems(attempts)
         
         return render_template('analyze_level.html',
@@ -312,8 +288,8 @@ def analyze_level(operation, level, student_id=None):
 def incorrect_problems():
     """Display problems the user has answered incorrectly"""
     try:
-        # Get missed problems using PracticeTracker
-        problems = PracticeTracker.get_problems_needing_practice(db, current_user.id)
+        # Get missed problems
+        problems = analyze_missed_problems(current_user.id)
         
         return render_template('incorrect_problems.html', 
                             problems=problems)

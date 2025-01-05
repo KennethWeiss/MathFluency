@@ -55,10 +55,6 @@ class User(UserMixin, db.Model):
         """Get classes where this user is the primary teacher"""
         if not self.is_teacher:
             return []
-        from models.class_ import teacher_class
-        return db.session.execute(
-            db.select(Class).
-            join(teacher_class).
-            where(teacher_class.c.teacher_id == self.id).
-            where(teacher_class.c.is_primary == True)
-        ).scalars().all()
+            
+        # Use teaching_classes relationship directly
+        return self.teaching_classes.all()
