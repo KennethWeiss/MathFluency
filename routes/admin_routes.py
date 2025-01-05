@@ -50,6 +50,22 @@ def toggle_teacher(user_id):
     flash(f'Updated {user.email} to {status}.', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
+@admin_bp.route('/admin/toggle_admin/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_admin(user_id):
+    # Don't allow admin to remove their own admin status
+    if user_id == current_user.id:
+        flash('You cannot remove your own admin status.', 'error')
+        return redirect(url_for('admin.admin_dashboard'))
+        
+    user = User.query.get_or_404(user_id)
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    status = "admin" if user.is_admin else "non-admin"
+    flash(f'Updated {user.email} to {status}.', 'success')
+    return redirect(url_for('admin.admin_dashboard'))
+
 @admin_bp.route('/admin/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required

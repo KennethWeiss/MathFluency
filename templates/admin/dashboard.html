@@ -30,9 +30,11 @@
                         <td>{{ "Yes" if user.is_teacher else "No" }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                {% if not user.is_admin %}
-                                <form action="{{ url_for('admin.make_admin', user_id=user.id) }}" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-primary btn-sm">Make Admin</button>
+                                {% if current_user.id != user.id %}
+                                <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        {% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
+                                    </button>
                                 </form>
                                 {% endif %}
                                 
@@ -56,7 +58,42 @@
             </table>
         </div>
     </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h2>Class Management</h2>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Teacher</th>
+                        <th>Students</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class in classes %}
+                    <tr>
+                        <td>{{ class.id }}</td>
+                        <td>{{ class.name }}</td>
+                        <td>{{ class.description }}</td>
+                        <td>
+                            {% for teacher in class.teachers.all() %}
+                                {{ teacher.username }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{ class.students.count() }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
 <style>
 .btn-group form {
@@ -66,4 +103,3 @@
     margin-left: 0.5rem;
 }
 </style>
-{% endblock %}
