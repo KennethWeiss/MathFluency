@@ -174,9 +174,11 @@ def get_multiplication_table_stats(user_id):
         if len(nums) == 2:
             n1, n2 = nums
             if n1 <= 12 and n2 <= 12:
-                stats[n1][n2]['attempts'] += 1
-                if attempt.is_correct:
-                    stats[n1][n2]['correct'] += 1
+                # Store stats in both positions (n1,n2) and (n2,n1)
+                for i, j in [(n1, n2), (n2, n1)]:
+                    stats[i][j]['attempts'] += 1
+                    if attempt.is_correct:
+                        stats[i][j]['correct'] += 1
     
     # Calculate accuracy percentages
     for i in range(13):
