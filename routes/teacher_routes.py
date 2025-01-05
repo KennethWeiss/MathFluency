@@ -34,17 +34,14 @@ def active_students():
         if recent_attempts:
             correct = sum(1 for attempt in recent_attempts if attempt.is_correct)
             accuracy = (correct / len(recent_attempts)) * 100
-            operation_counts = {}
-            for attempt in recent_attempts:
-                operation_counts[attempt.operation] = operation_counts.get(attempt.operation, 0) + 1
-            most_practiced = max(operation_counts.items(), key=lambda x: x[1])[0] if operation_counts else None
+            # Get the most recent operation
+            recent_operation = recent_attempts[0].operation if recent_attempts else None
         else:
-            accuracy = 0
-            most_practiced = None
-            
+            accuracy = 0 
+        
         student_stats[session.user_id] = {
             'accuracy': accuracy,
-            'most_practiced': most_practiced,
+            'recent_attempts': recent_attempts,
             'accuracy_color': get_accuracy_color(accuracy)
         }
     

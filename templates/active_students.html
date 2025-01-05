@@ -22,9 +22,9 @@
                     </div>
                     
                     <div class="mb-1">
-                        <div class="text-muted small">Most Practiced</div>
-                        {% if stats.most_practiced %}
-                        <span class="badge bg-info">{{ stats.most_practiced }}</span>
+                        <div class="text-muted small">Recently Practiced</div>
+                        {% if stats.recent_attempts %}
+                        <span class="badge bg-info">{{ stats.recent_attempts[0].operation }}</span>
                         {% else %}
                         <small class="text-muted">No practice data</small>
                         {% endif %}
