@@ -81,9 +81,19 @@
                                 <img src="{{ student.avatar_url }}" alt="{{ student.username }}" class="rounded-circle me-2" style="width: 30px; height: 30px;">
                                 {% endif %}
                                 {{ student.username }}
+                                <small class="text-muted ms-2">{{ student.email }}</small>
                             </div>
-                            <div>
-                                <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" class="btn btn-outline-primary btn-sm">View Progress</a>
+                            <div class="btn-group">
+                                {% if current_user.is_teacher %}
+                                <form action="{{ url_for('class.remove_student', id=class_.id, student_id=student.id) }}" 
+                                      method="post" 
+                                      onsubmit="return confirm('Are you sure you want to remove {{ student.username }} from this class?');"
+                                      class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-user-minus"></i> Remove
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
