@@ -15,7 +15,6 @@ logging.getLogger('flask_dance').setLevel(logging.DEBUG)
 print("=== OAuth Configuration ===")
 print("GOOGLE_CLIENT_ID:", os.environ.get("GOOGLE_CLIENT_ID", "Not set"))
 print("GOOGLE_CLIENT_SECRET:", "Present" if os.environ.get("GOOGLE_CLIENT_SECRET") else "Not set")
-print("Current URL:", request.url if 'request' in locals() else "Not in request context")
 print("=========================")
 
 # Create blueprint for Google OAuth
@@ -42,9 +41,9 @@ def oauth_debug():
         'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE', False),
         'server_name': current_app.config.get('SERVER_NAME'),
         'preferred_url_scheme': current_app.config.get('PREFERRED_URL_SCHEME', 'http'),
-        'request_url': request.url if request else 'No request context',
-        'request_base_url': request.base_url if request else 'No request context',
-        'request_host_url': request.host_url if request else 'No request context',
+        'request_url': request.url,
+        'request_base_url': request.base_url,
+        'request_host_url': request.host_url,
         'google_authorized': getattr(google, 'authorized', False),
         'render_enabled': bool(os.environ.get('RENDER')),
         'render_hostname': os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'Not set')
