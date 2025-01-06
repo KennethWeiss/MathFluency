@@ -12,7 +12,11 @@ from datetime import datetime, timedelta
 from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
-import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Configure Flask app
 app = Flask(__name__)
@@ -25,6 +29,19 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 if not app.debug:
     app.config['SESSION_COOKIE_SECURE'] = True
 
+# OAuth settings
+logger.debug("Configuring OAuth settings")
+client_id = os.environ.get("GOOGLE_CLIENT_ID")
+client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+logger.debug(f"GOOGLE_CLIENT_ID exists: {client_id is not None}")
+logger.debug(f"GOOGLE_CLIENT_SECRET exists: {client_secret is not None}")
+logger.debug(f"GOOGLE_CLIENT_ID length: {len(client_id) if client_id else 0}")
+logger.debug(f"GOOGLE_CLIENT_SECRET length: {len(client_secret) if client_secret else 0}")
+app.config.update(
+        GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
+        GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
+    )
+
 # Database configuration
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
@@ -36,23 +53,6 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# OAuth settings
-app.config.update(
-        GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
-        GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
-    )
-
-# Configure logging
-if app.debug:
-    import logging
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    logging.getLogger('flask_dance').setLevel(logging.DEBUG)
-    logging.getLogger('oauthlib').setLevel(logging.DEBUG)
-    logging.getLogger('requests_oauthlib').setLevel(logging.DEBUG)
 
 # Initialize extensions
 db = SQLAlchemy(app)

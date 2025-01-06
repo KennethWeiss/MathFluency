@@ -20,10 +20,20 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 # Create blueprint for OAuth routes
 oauth_bp = Blueprint('oauth', __name__, url_prefix='/oauth')
 
+# Get OAuth credentials
+client_id = os.environ.get("GOOGLE_CLIENT_ID")
+client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+
+logger.debug("OAuth Configuration:")
+logger.debug(f"GOOGLE_CLIENT_ID exists: {client_id is not None}")
+logger.debug(f"GOOGLE_CLIENT_SECRET exists: {client_secret is not None}")
+logger.debug(f"GOOGLE_CLIENT_ID length: {len(client_id) if client_id else 0}")
+logger.debug(f"GOOGLE_CLIENT_SECRET length: {len(client_secret) if client_secret else 0}")
+
 # Create blueprint for Google OAuth
 blueprint = make_google_blueprint(
-    client_id=os.environ.get("GOOGLE_OAUTH_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET"),
+    client_id=client_id,
+    client_secret=client_secret,
     scope=[
         "openid",
         "https://www.googleapis.com/auth/userinfo.profile",
@@ -42,12 +52,12 @@ blueprint = make_google_blueprint(
 @oauth_bp.route('/google/login')
 def google_login():
     """Initiate Google OAuth login"""
-
     logger.debug("Accessing /oauth/google/login route")
     logger.debug("Environment variables check:")
-    logger.debug(f"All environment variables: {list(os.environ.keys())}")
-    logger.debug(f"GOOGLE_CLIENT_ID value length: {len(os.environ.get('GOOGLE_CLIENT_ID', ''))}")
-    logger.debug(f"GOOGLE_CLIENT_SECRET value length: {len(os.environ.get('GOOGLE_CLIENT_SECRET', ''))}")
+    logger.debug(f"GOOGLE_CLIENT_ID exists: {os.environ.get('GOOGLE_CLIENT_ID') is not None}")
+    logger.debug(f"GOOGLE_CLIENT_SECRET exists: {os.environ.get('GOOGLE_CLIENT_SECRET') is not None}")
+    logger.debug(f"Blueprint client_id exists: {blueprint.client_id is not None}")
+    logger.debug(f"Blueprint client_secret exists: {blueprint.client_secret is not None}")
 
     if current_user.is_authenticated:
         logger.debug("User already authenticated, redirecting to welcome page")
