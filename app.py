@@ -38,9 +38,7 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # OAuth settings
-if app.debug:
-    # Removed OAUTHLIB_INSECURE_TRANSPORT setting from here
-    app.config.update(
+app.config.update(
         GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
         GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
     )
