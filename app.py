@@ -1,3 +1,8 @@
+import os
+
+# Allow OAuth over HTTP for local development
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 from flask import Flask, render_template, url_for, redirect, flash, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -9,50 +14,53 @@ from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
 import os
 
+# Configure Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Increase to 7 days
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 
-# OAuth configuration
-if os.environ.get('RENDER'):
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'  # Require HTTPS on production
+# Only use secure cookies in production
+if not app.debug:
     app.config['SESSION_COOKIE_SECURE'] = True
-else:
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # Allow HTTP for local development
-
-# Debug environment variables
-print("=== Environment Variables ===")
-for key, value in os.environ.items():
-    if 'SECRET' in key.upper() or 'PASSWORD' in key.upper() or 'KEY' in key.upper():
-        print(f"{key}: <hidden>")
-    else:
-        print(f"{key}: {value}")
-print("===========================")
 
 # Database configuration
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
-    print(f"Original DATABASE_URL: {database_url}")
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        print(f"Modified DATABASE_URL: {database_url}")
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print(f"Final SQLALCHEMY_DATABASE_URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 else:
-    print("WARNING: No DATABASE_URL found, using SQLite")
     # For local development, use SQLite
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-    print(f"Using SQLite in instance folder")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['DEBUG'] = os.environ.get('FLASK_ENV') != 'production'
+# OAuth settings
+if app.debug:
+    # Removed OAUTHLIB_INSECURE_TRANSPORT setting from here
+    app.config.update(
+        GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
+        GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
+    )
 
+# Configure logging
+if app.debug:
+    import logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logging.getLogger('flask_dance').setLevel(logging.DEBUG)
+    logging.getLogger('oauthlib').setLevel(logging.DEBUG)
+    logging.getLogger('requests_oauthlib').setLevel(logging.DEBUG)
+
+# Initialize extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+login_manager = LoginManager(app)
+login_manager.login_view = 'auth.login'
 
 # Ensure all tables exist
 with app.app_context():
@@ -61,9 +69,6 @@ with app.app_context():
         print("Database tables created successfully")
     except Exception as e:
         print(f"Error creating database tables: {e}")
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'auth.login'  # Updated to use blueprint route
 
 # Add this after app initialization but before routes
 @app.template_filter('unique')
@@ -78,25 +83,27 @@ from models.class_ import Class
 from models.practice_attempt import PracticeAttempt
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 
-# Import and register blueprints
+# Import blueprints
 from routes.auth_routes import auth_bp
 from routes.layout_routes import layout_bp
 from routes.main_routes import main_bp
 from routes.class_routes import class_bp
 from routes.assignment_routes import assignment_bp
 from routes.practice_routes import practice_bp
-from routes.google_auth import google_auth_bp
+from routes.oauth_routes import oauth_bp
 from routes.admin_routes import admin_bp
 from routes.teacher_routes import teacher_bp
+from routes.oauth_routes import blueprint as google_blueprint
 
 # Register blueprints
+app.register_blueprint(google_blueprint, url_prefix="/oauth/authorized")
+app.register_blueprint(oauth_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(layout_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(class_bp)
 app.register_blueprint(assignment_bp)
 app.register_blueprint(practice_bp)
-app.register_blueprint(google_auth_bp)  # The url_prefix is already set in the blueprint
 app.register_blueprint(admin_bp)
 app.register_blueprint(teacher_bp)
 
@@ -187,4 +194,4 @@ def record_attempt():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
