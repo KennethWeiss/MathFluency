@@ -42,10 +42,13 @@ blueprint = make_google_blueprint(
 @oauth_bp.route('/google/login')
 def google_login():
     """Initiate Google OAuth login"""
+
     logger.debug("Accessing /oauth/google/login route")
-    logger.debug(f"GOOGLE_CLIENT_ID present: {bool(os.environ.get('GOOGLE_CLIENT_ID'))}")
-    logger.debug(f"GOOGLE_CLIENT_SECRET present: {bool(os.environ.get('GOOGLE_CLIENT_SECRET'))}")
-    
+    logger.debug("Environment variables check:")
+    logger.debug(f"All environment variables: {list(os.environ.keys())}")
+    logger.debug(f"GOOGLE_CLIENT_ID value length: {len(os.environ.get('GOOGLE_CLIENT_ID', ''))}")
+    logger.debug(f"GOOGLE_CLIENT_SECRET value length: {len(os.environ.get('GOOGLE_CLIENT_SECRET', ''))}")
+
     if current_user.is_authenticated:
         logger.debug("User already authenticated, redirecting to welcome page")
         return redirect(url_for('main.welcome'))
