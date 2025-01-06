@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+import logging
 
 # Allow OAuth over HTTP for local development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -12,11 +14,32 @@ from datetime import datetime, timedelta
 from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Debug before loading .env
+logger.debug("Before load_dotenv:")
+logger.debug(f"GOOGLE_CLIENT_ID exists: {os.environ.get('GOOGLE_CLIENT_ID') is not None}")
+
+
+# Load .env file if it exists
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    logger.debug(f".env file found at {env_path}")
+    load_dotenv(env_path)
+else:
+    logger.debug("No .env file found, using system environment variables")
+
+# Debug after loading .env
+logger.debug("After load_dotenv:")
+logger.debug(f"GOOGLE_CLIENT_ID exists: {os.environ.get('GOOGLE_CLIENT_ID') is not None}")
+logger.debug(f"All environment variables: {list(os.environ.keys())}")
+
+# Allow OAuth over HTTP for local development
+if os.environ.get('FLASK_ENV') != 'production':
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Configure Flask app
 app = Flask(__name__)
