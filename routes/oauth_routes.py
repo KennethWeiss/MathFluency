@@ -6,13 +6,12 @@ from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError
 from models.user import User
 from models.oauth import OAuth
-from app import db
+from app import db, logger
 import os
 import logging
 
 # Enable Flask-Dance debug logging
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # Allow OAuth over HTTP for local development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -30,16 +29,28 @@ logger.debug(f"GOOGLE_CLIENT_SECRET exists: {client_secret is not None}")
 logger.debug(f"GOOGLE_CLIENT_ID length: {len(client_id) if client_id else 0}")
 logger.debug(f"GOOGLE_CLIENT_SECRET length: {len(client_secret) if client_secret else 0}")
 
+# Configure teacher domains - emails from these domains are considered teachers
+TEACHER_DOMAINS = [
+    'morongo.k12.ca.us',  # Regular staff domain
+    'teacher.morongo.k12.ca.us',  # Explicit teacher domain if it exists
+]
+
+def is_teacher_email(email):
+    """Check if email is from a teacher domain"""
+    if not email:
+        return False
+    domain = email.split('@')[-1]
+    # Check if domain ends with any teacher domain
+    return any(domain.endswith(teacher_domain) for teacher_domain in TEACHER_DOMAINS)
+
 # Create blueprint for Google OAuth
 blueprint = make_google_blueprint(
     client_id=client_id,
     client_secret=client_secret,
     scope=[
         "openid",
-        "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/classroom.profile.emails",
-        "https://www.googleapis.com/auth/classroom.rosters.readonly"
+        "https://www.googleapis.com/auth/userinfo.profile"
     ],
     storage=SQLAlchemyStorage(
         OAuth,
@@ -47,8 +58,8 @@ blueprint = make_google_blueprint(
         user=current_user,
         user_required=False
     ),
-    redirect_url=None,  # Let Flask-Dance handle the redirect URL
-    reprompt_consent=False  # Don't ask for consent again if already granted
+    redirect_url=None,
+    reprompt_consent=True  # Show consent screen to see what's blocked
 )
 
 @oauth_bp.route('/google/login')
@@ -83,72 +94,68 @@ def google_logged_in(blueprint, token):
         return False
 
     try:
-        logger.debug("Fetching user info")
+        # Log token information
+        logger.debug("Token received:")
+        logger.debug(f"Scopes granted: {token.get('scope', [])}")
+        
+        # Try to get user info
+        logger.debug("Attempting to fetch user info...")
         resp = blueprint.session.get("/oauth2/v2/userinfo")
+        logger.debug(f"User info response status: {resp.status_code}")
+        logger.debug(f"User info response: {resp.text if resp.ok else 'Failed'}")
+
         if not resp.ok:
             logger.error(f"Failed to fetch user info: {resp.text}")
             return False
 
         google_info = resp.json()
         google_user_id = google_info["id"]
-        logger.debug(f"Google user ID: {google_user_id}")
         
-        # Check if user is a verified teacher
-        logger.debug("Checking teacher status")
-        classroom_resp = blueprint.session.get(
-            "https://classroom.googleapis.com/v1/userProfiles/me"
-        )
-        is_teacher = False
-        if classroom_resp.ok:
-            classroom_data = classroom_resp.json()
-            is_teacher = classroom_data.get("verifiedTeacher", False)
-            logger.debug(f"Teacher verification status: {is_teacher}")
-        else:
-            logger.error(f"Failed to get classroom data: {classroom_resp.text}")
-        
-        # Find or create user
+        # Find or create user (without teacher check initially)
         user = User.query.filter_by(google_id=google_user_id).first()
         if user:
-            logger.debug(f"Found existing user by Google ID: {user.email}")
-            user.is_teacher = is_teacher
-            db.session.commit()
-            logger.debug(f"Updated teacher status for existing user: {user.email}")
+            logger.debug(f"Found existing user: {user.email}")
         else:
-            logger.debug(f"No user found with Google ID {google_user_id}, checking email {google_info['email']}")
-            user = User.query.filter_by(email=google_info['email']).first()
-            if user:
-                logger.debug("Found existing user with matching email, updating Google ID")
-                user.google_id = google_user_id
-                user.avatar_url = google_info.get("picture")
-                user.is_teacher = is_teacher
-            else:
-                logger.debug("Creating new user account")
-                user = User(
-                    username=google_info["name"],
-                    email=google_info["email"],
-                    google_id=google_user_id,
-                    avatar_url=google_info.get("picture"),
-                    is_teacher=is_teacher
-                )
-                db.session.add(user)
+            logger.debug("Creating new user")
+            user = User(
+                username=google_info.get("name", ""),
+                email=google_info["email"],
+                google_id=google_user_id,
+                avatar_url=google_info.get("picture"),
+                is_teacher=is_teacher_email(google_info["email"])  # Check if email is from teacher domain
+            )
+            db.session.add(user)
             db.session.commit()
-            logger.debug(f"Created/Updated user: {user.email} (Teacher: {is_teacher})")
-        
+
         # Log in the user
         login_user(user)
         flash("Successfully logged in with Google.", category="success")
-        logger.debug(f"Logged in user: {user.email}")
         
-        # Return False to let Flask-Dance handle the redirect
-        return False
+        # Try to check teacher status separately
+        try:
+            logger.debug("Attempting to check teacher status...")
+            classroom_resp = blueprint.session.get(
+                "https://classroom.googleapis.com/v1/userProfiles/me"
+            )
+            logger.debug(f"Classroom API response: {classroom_resp.status_code}")
+            logger.debug(f"Response headers: {dict(classroom_resp.headers)}")
+            logger.debug(f"Response body: {classroom_resp.text if classroom_resp.ok else 'Failed'}")
+            
+            if classroom_resp.ok:
+                classroom_data = classroom_resp.json()
+                user.is_teacher = classroom_data.get("verifiedTeacher", False)
+                db.session.commit()
+                logger.debug(f"Updated teacher status: {user.is_teacher}")
+            else:
+                logger.warning("Could not verify teacher status - keeping existing status")
+        except Exception as e:
+            logger.exception("Error checking teacher status")
+        
+        return False  # Let Flask-Dance handle redirect
 
-    except (InvalidGrantError, TokenExpiredError) as e:
-        logger.error(f"OAuth token error: {str(e)}")
-        flash("Your login session expired. Please try again.", category="error")
-        return False
     except Exception as e:
-        logger.exception("Error in google_logged_in")
-        flash("An error occurred during login. Please try again.", category="error")
+        logger.exception("Error in OAuth callback")
+        flash("An error occurred during login.", category="error")
         return False
 
 @oauth_bp.route('/authorized/google')
