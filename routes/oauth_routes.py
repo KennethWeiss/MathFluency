@@ -37,7 +37,9 @@ blueprint = make_google_blueprint(
     scope=[
         "openid",
         "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/userinfo.email"
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/classroom.profile.emails",
+        "https://www.googleapis.com/auth/classroom.rosters.readonly"
     ],
     storage=SQLAlchemyStorage(
         OAuth,
@@ -81,6 +83,7 @@ def google_logged_in(blueprint, token):
         return False
 
     try:
+        logger.debug("Fetching user info")
         resp = blueprint.session.get("/oauth2/v2/userinfo")
         if not resp.ok:
             logger.error(f"Failed to fetch user info: {resp.text}")
@@ -88,27 +91,48 @@ def google_logged_in(blueprint, token):
 
         google_info = resp.json()
         google_user_id = google_info["id"]
+        logger.debug(f"Google user ID: {google_user_id}")
+        
+        # Check if user is a verified teacher
+        logger.debug("Checking teacher status")
+        classroom_resp = blueprint.session.get(
+            "https://classroom.googleapis.com/v1/userProfiles/me"
+        )
+        is_teacher = False
+        if classroom_resp.ok:
+            classroom_data = classroom_resp.json()
+            is_teacher = classroom_data.get("verifiedTeacher", False)
+            logger.debug(f"Teacher verification status: {is_teacher}")
+        else:
+            logger.error(f"Failed to get classroom data: {classroom_resp.text}")
         
         # Find or create user
         user = User.query.filter_by(google_id=google_user_id).first()
-        if not user:
+        if user:
+            logger.debug(f"Found existing user by Google ID: {user.email}")
+            user.is_teacher = is_teacher
+            db.session.commit()
+            logger.debug(f"Updated teacher status for existing user: {user.email}")
+        else:
             logger.debug(f"No user found with Google ID {google_user_id}, checking email {google_info['email']}")
             user = User.query.filter_by(email=google_info['email']).first()
             if user:
                 logger.debug("Found existing user with matching email, updating Google ID")
                 user.google_id = google_user_id
                 user.avatar_url = google_info.get("picture")
+                user.is_teacher = is_teacher
             else:
                 logger.debug("Creating new user account")
                 user = User(
                     username=google_info["name"],
                     email=google_info["email"],
                     google_id=google_user_id,
-                    avatar_url=google_info.get("picture")
+                    avatar_url=google_info.get("picture"),
+                    is_teacher=is_teacher
                 )
                 db.session.add(user)
             db.session.commit()
-            logger.debug(f"Created new user: {user.email}")
+            logger.debug(f"Created/Updated user: {user.email} (Teacher: {is_teacher})")
         
         # Log in the user
         login_user(user)
