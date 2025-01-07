@@ -31,7 +31,10 @@
                                 <small class="text-muted ms-2">{{ student.email }}</small>
                             </div>
                             <div class="btn-group">
-                                <a href="#" class="btn btn-outline-primary btn-sm">View Progress</a>
+                                <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-chart-line"></i> View Progress
+                                </a>
                                 <form action="{{ url_for('class.remove_student', id=class_.id) }}" method="POST" class="d-inline">
                                     <input type="hidden" name="student_id" value="{{ student.id }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" 
