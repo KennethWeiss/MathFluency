@@ -20,7 +20,7 @@ def list_classes():
 def create_class():
     if not current_user.is_teacher:
         flash('Only teachers can create classes.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     if request.method == 'POST':
         name = request.form.get('name')
@@ -53,10 +53,10 @@ def view_class(id):
     # Check if user has access to this class
     if current_user.is_teacher and current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     elif not current_user.is_teacher and current_user not in class_.students:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     student_count = class_.students.count()
     primary_teacher = class_.get_primary_teacher()
@@ -72,7 +72,7 @@ def edit_class(id):
     class_ = Class.query.get_or_404(id)
     if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     if request.method == 'POST':
         name = request.form.get('name')
@@ -97,7 +97,7 @@ def manage_students(id):
     class_ = Class.query.get_or_404(id)
     if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     # Get all non-teacher users who aren't in this class
     available_students = User.query.filter_by(is_teacher=False)\
@@ -114,7 +114,7 @@ def add_student(id):
     class_ = Class.query.get_or_404(id)
     if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     student_id = request.form.get('student_id')
     if not student_id:
@@ -140,7 +140,7 @@ def remove_student(id):
     class_ = Class.query.get_or_404(id)
     if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     student_id = request.form.get('student_id')
     if not student_id:
@@ -161,7 +161,7 @@ def remove_student(id):
 def join_class():
     if current_user.is_teacher:
         flash('Teachers cannot join classes as students.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
     
     if request.method == 'POST':
         code = request.form.get('class_code')

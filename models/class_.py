@@ -64,6 +64,7 @@ class Class(db.Model):
                     is_primary=is_primary
                 )
             )
+            db.session.commit()
     
     def remove_teacher(self, teacher):
         """Remove a teacher from the class."""
@@ -74,6 +75,7 @@ class Class(db.Model):
                     (teacher_class.c.teacher_id == teacher.id)
                 )
             )
+            db.session.commit()
     
     def add_student(self, student):
         """Add a student to the class."""
@@ -84,6 +86,7 @@ class Class(db.Model):
                     student_id=student.id
                 )
             )
+            db.session.commit()
     
     def remove_student(self, student):
         """Remove a student from the class."""
@@ -94,6 +97,7 @@ class Class(db.Model):
                     (student_class.c.student_id == student.id)
                 )
             )
+            db.session.commit()
     
     def get_primary_teacher(self):
         """Get the primary teacher for this class."""
