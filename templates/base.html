@@ -26,6 +26,9 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint.startswith('class.') %}active{% endif %}" href="{{ url_for('class.list_classes') }}">Classes</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('teacher.dashboard') }}">Teacher Dashboard</a>
+                            </li>
                         {% else %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'class.list_classes' %}active{% endif %}" href="{{ url_for('class.list_classes') }}">My Classes</a>
