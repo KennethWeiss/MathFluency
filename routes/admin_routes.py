@@ -5,6 +5,7 @@ from app import db
 from models.user import User
 from models.class_ import Class
 from models.assignment import Assignment
+from models.active_session import ActiveSession
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -73,8 +74,22 @@ def delete_user(user_id):
     if current_user.id == user_id:
         flash('Cannot delete your own account!', 'error')
         return redirect(url_for('admin.admin_dashboard'))
+    
     user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    flash(f'Deleted user {user.email}.', 'success')
+    
+    try:
+        # Delete active session first
+        active_session = ActiveSession.query.filter_by(user_id=user_id).first()
+        if active_session:
+            db.session.delete(active_session)
+            db.session.commit()
+        
+        # Delete the user
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'Deleted user {user.email}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting user: {str(e)}', 'error')
+    
     return redirect(url_for('admin.admin_dashboard'))
