@@ -29,20 +29,6 @@ logger.debug(f"GOOGLE_CLIENT_SECRET exists: {client_secret is not None}")
 logger.debug(f"GOOGLE_CLIENT_ID length: {len(client_id) if client_id else 0}")
 logger.debug(f"GOOGLE_CLIENT_SECRET length: {len(client_secret) if client_secret else 0}")
 
-# Configure teacher domains - emails from these domains are considered teachers
-TEACHER_DOMAINS = [
-    'morongo.k12.ca.us',  # Regular staff domain
-    'teacher.morongo.k12.ca.us',  # Explicit teacher domain if it exists
-]
-
-def is_teacher_email(email):
-    """Check if email is from a teacher domain"""
-    if not email:
-        return False
-    domain = email.split('@')[-1]
-    # Check if domain ends with any teacher domain
-    return any(domain.endswith(teacher_domain) for teacher_domain in TEACHER_DOMAINS)
-
 # Create blueprint for Google OAuth
 blueprint = make_google_blueprint(
     client_id=client_id,
@@ -111,7 +97,7 @@ def google_logged_in(blueprint, token):
         google_info = resp.json()
         google_user_id = google_info["id"]
         
-        # Find or create user (without teacher check initially)
+        # Find or create user
         user = User.query.filter_by(google_id=google_user_id).first()
         if user:
             logger.debug(f"Found existing user: {user.email}")
@@ -124,7 +110,7 @@ def google_logged_in(blueprint, token):
                 avatar_url=google_info.get("picture"),
                 first_name=google_info.get("given_name"),
                 last_name=google_info.get("family_name"),
-                is_teacher=is_teacher_email(google_info["email"])  # Check if email is from teacher domain
+                is_teacher=False  # All new users start as students
             )
             db.session.add(user)
             db.session.commit()
@@ -132,26 +118,6 @@ def google_logged_in(blueprint, token):
         # Log in the user
         login_user(user)
         flash("Successfully logged in with Google.", category="success")
-        
-        # Try to check teacher status separately
-        try:
-            logger.debug("Attempting to check teacher status...")
-            classroom_resp = blueprint.session.get(
-                "https://classroom.googleapis.com/v1/userProfiles/me"
-            )
-            logger.debug(f"Classroom API response: {classroom_resp.status_code}")
-            logger.debug(f"Response headers: {dict(classroom_resp.headers)}")
-            logger.debug(f"Response body: {classroom_resp.text if classroom_resp.ok else 'Failed'}")
-            
-            if classroom_resp.ok:
-                classroom_data = classroom_resp.json()
-                user.is_teacher = classroom_data.get("verifiedTeacher", False)
-                db.session.commit()
-                logger.debug(f"Updated teacher status: {user.is_teacher}")
-            else:
-                logger.warning("Could not verify teacher status - keeping existing status")
-        except Exception as e:
-            logger.exception("Error checking teacher status")
         
         return False  # Let Flask-Dance handle redirect
 
