@@ -103,11 +103,13 @@ def google_logged_in(blueprint, token):
         user = User.query.filter_by(google_id=google_user_id).first() or User.query.filter_by(email=email).first()
         if user:
             logger.debug(f"Found existing user: {user.email}")
+            logger.debug(f"User admin status before update: {user.is_admin}")
             user.google_id = google_user_id
             user.avatar_url = google_info.get("picture")
             user.first_name = google_info.get("given_name")
             user.last_name = google_info.get("family_name")
             db.session.commit()
+            logger.debug(f"User admin status after update: {user.is_admin}")
         else:
             logger.debug(f"Creating new user with email: {google_info['email']}")
             # Use email prefix as username to ensure uniqueness
@@ -131,6 +133,7 @@ def google_logged_in(blueprint, token):
         login_user(user)
         logger.debug(f"User logged in successfully: {user.email}")
         logger.debug(f"Current user authenticated after login: {current_user.is_authenticated}")
+        logger.debug(f"Current user admin status after login: {current_user.is_admin}")
         flash("Successfully logged in with Google.", category="success")
         
         # Check where we should redirect after login
