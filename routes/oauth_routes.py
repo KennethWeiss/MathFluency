@@ -109,10 +109,12 @@ def google_logged_in(blueprint, token):
             user.avatar_url = google_info.get("picture")
             user.first_name = google_info.get("given_name")
             user.last_name = google_info.get("family_name")
-            db.session.commit()
-            logger.debug(f"User admin status after update: {user.is_admin}")
             if user.email == "kennethgweiss@gmail.com":
-                user.is_admin=1
+                user.is_admin = True
+                db.session.commit()
+                # Refresh the user session to pick up the admin change
+                login_user(user)  # This will refresh the session with the latest user data
+            logger.debug(f"User admin status after update: {user.is_admin}")
         else:
             logger.debug(f"Creating new user with email: {google_info['email']}")
             # Use email prefix as username to ensure uniqueness

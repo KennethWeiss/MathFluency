@@ -39,9 +39,7 @@
                         </li>
                         {% if current_user.is_admin %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}">
-                                    <i class="fas fa-cog"></i> Admin
-                                </a>
+                                <a class="nav-link {% if request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}">Admin</a>
                             </li>
                         {% endif %}
                     {% else %}
