@@ -151,8 +151,11 @@ def handle_submit_answer(data):
             logger.warning(f"Unsupported operation: {quiz.operation}")
             return
         
+        # Check if answer is correct
+        is_correct = int(answer) == correct
+        
         # Update score if correct
-        if int(answer) == correct:
+        if is_correct:
             participant.score += 1
             # Increment level if adaptive mode is on and they've gotten several correct
             if quiz.adaptive and hasattr(participant, 'current_level'):
@@ -171,6 +174,12 @@ def handle_submit_answer(data):
             # Reset consecutive correct counter on wrong answer
             participant.consecutive_correct = 0
             db.session.commit()
+        
+        # Send feedback to student
+        emit('answer_feedback', {
+            'correct': is_correct,
+            'quiz_id': quiz_id
+        })
         
         # Send new problem
         emit('new_problem', {

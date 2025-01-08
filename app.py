@@ -120,18 +120,22 @@ from routes.progress_routes import progress_bp
 from routes.quiz_routes import quiz_bp
 
 # Register blueprints
-app.register_blueprint(google_blueprint, url_prefix="/oauth/authorized")
-app.register_blueprint(oauth_bp)
-app.register_blueprint(auth_bp)
-app.register_blueprint(layout_bp)
+from routes.main_routes import main_bp
+from routes.auth_routes import auth_bp
+from routes.class_routes import class_bp
+from routes.quiz_routes import quiz_bp
+from routes.teacher_routes import teacher_bp
+from routes.practice_routes import practice_bp
+from routes.oauth_routes import oauth_bp, blueprint as google_blueprint
+
 app.register_blueprint(main_bp)
+app.register_blueprint(auth_bp)
 app.register_blueprint(class_bp)
-app.register_blueprint(assignment_bp)
-app.register_blueprint(practice_bp)
-app.register_blueprint(admin_bp)
+app.register_blueprint(quiz_bp)
 app.register_blueprint(teacher_bp)
-app.register_blueprint(progress_bp)
-app.register_blueprint(quiz_bp, url_prefix='/quiz')
+app.register_blueprint(practice_bp)
+app.register_blueprint(oauth_bp)
+app.register_blueprint(google_blueprint, url_prefix="/oauth")
 
 @login_manager.user_loader
 def load_user(user_id):

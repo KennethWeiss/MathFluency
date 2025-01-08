@@ -18,8 +18,12 @@
 
                     <div id="quiz-screen" class="{% if quiz.status != 'active' %}d-none{% endif %}">
                         <div class="mb-4">
-                            <h3>Current Problem:</h3>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h3>Current Problem:</h3>
+                                <div class="h4">Score: <span id="current-score">{{ participant.score if participant else 0 }}</span></div>
+                            </div>
                             <div id="problem-display" class="h4 text-center py-3"></div>
+                            <div id="feedback" class="alert d-none mb-3"></div>
                             <div class="form-group">
                                 <label for="answer">Your Answer:</label>
                                 <input type="number" class="form-control" id="answer" placeholder="Enter your answer">
@@ -66,6 +70,7 @@
         const socket = io();
         const quizId = {{ quiz.id }};
         let currentProblem = null;
+        let currentScore = {{ participant.score if participant else 0 }};
         
         // Debug: Log socket connection status
         socket.on('connect', function() {
@@ -81,6 +86,24 @@
         socket.emit('join_quiz', {
             quiz_id: quizId
         });
+        
+        function showFeedback(isCorrect, message) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `alert ${isCorrect ? 'alert-success' : 'alert-danger'}`;
+            feedback.classList.remove('d-none');
+            
+            // Update score display if correct
+            if (isCorrect) {
+                currentScore++;
+                document.getElementById('current-score').textContent = currentScore;
+            }
+            
+            // Hide feedback after 3 seconds
+            setTimeout(() => {
+                feedback.classList.add('d-none');
+            }, 3000);
+        }
         
         // Make functions globally available
         window.submitAnswer = function() {
@@ -114,6 +137,14 @@
                 document.getElementById('problem-display').textContent = data.problem;
                 document.getElementById('answer').value = '';
                 document.getElementById('answer').focus();
+            }
+        });
+        
+        // Listen for answer feedback
+        socket.on('answer_feedback', function(data) {
+            console.log('Answer feedback received:', data);
+            if (data.quiz_id === quizId) {
+                showFeedback(data.correct, data.correct ? 'Correct! 🎉' : 'Incorrect. Keep trying!');
             }
         });
         
@@ -163,13 +194,6 @@
                 submitAnswer();
             }
         });
-        
-        // Debug: Log all socket events
-        const originalEmit = socket.emit;
-        socket.emit = function() {
-            console.log('Emitting event:', arguments);
-            return originalEmit.apply(this, arguments);
-        };
     });
 </script>
 {% endblock %}

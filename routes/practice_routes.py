@@ -142,3 +142,105 @@ def check_answer():
         })
     
     return jsonify({'is_correct': is_correct})
+
+@practice_bp.route('/progress')
+@login_required
+def progress():
+    """Show student's practice progress"""
+    # Get all practice attempts for the current user
+    attempts = PracticeAttempt.query.filter_by(user_id=current_user.id).order_by(PracticeAttempt.created_at.desc()).all()
+    
+    # Calculate statistics by operation
+    stats = {}
+    operations = ['addition', 'multiplication']  # Support for these operations initially
+    
+    for op in operations:
+        op_attempts = [a for a in attempts if a.operation == op]
+        if op_attempts:
+            total_attempts = len(op_attempts)
+            correct_attempts = sum(1 for a in op_attempts if a.is_correct)
+            
+            # Calculate current streak
+            current_streak = 0
+            for attempt in op_attempts:
+                if attempt.is_correct:
+                    current_streak += 1
+                else:
+                    break
+            
+            stats[op] = {
+                'total_attempts': total_attempts,
+                'correct_attempts': correct_attempts,
+                'accuracy': (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0,
+                'average_time': sum(a.time_taken for a in op_attempts) / total_attempts if total_attempts > 0 else 0,
+                'current_streak': current_streak,
+                'levels': {}  # For tracking progress at different levels
+            }
+            
+            # Calculate stats by level
+            for attempt in op_attempts:
+                level = attempt.level
+                if level not in stats[op]['levels']:
+                    level_attempts = [a for a in op_attempts if a.level == level]
+                    level_correct = sum(1 for a in level_attempts if a.is_correct)
+                    
+                    stats[op]['levels'][level] = {
+                        'attempts': len(level_attempts),
+                        'correct': level_correct,
+                        'accuracy': (level_correct / len(level_attempts) * 100) if level_attempts else 0,
+                        'total_time': sum(a.time_taken for a in level_attempts),
+                        'description': get_level_description(op, level),
+                        'mastery_status': PracticeAttempt.get_mastery_status(db.session, current_user.id, op, level)
+                    }
+    
+    # Calculate multiplication table stats if available
+    mult_table_stats = None
+    if 'multiplication' in stats:
+        mult_attempts = [a for a in attempts if a.operation == 'multiplication']
+        mult_table_stats = {}
+        for i in range(1, 13):  # 1-12 multiplication tables
+            for j in range(1, 13):
+                problem = f"{i} × {j}"
+                relevant_attempts = [a for a in mult_attempts if a.problem == problem]
+                if relevant_attempts:
+                    mult_table_stats[(i,j)] = {
+                        'attempts': len(relevant_attempts),
+                        'correct': sum(1 for a in relevant_attempts if a.is_correct),
+                        'average_time': sum(a.time_taken for a in relevant_attempts) / len(relevant_attempts)
+                    }
+    
+    return render_template('progress.html',
+                         stats=stats,
+                         mult_table_stats=mult_table_stats,
+                         viewing_as_teacher=False,
+                         student=current_user)
+
+def get_level_description(operation, level):
+    """Get a description for each level of an operation"""
+    if operation == 'addition':
+        descriptions = {
+            1: "Single Digit",
+            2: "Double Digit",
+            3: "Make 10",
+            4: "Add to 100",
+            5: "Add to 1000"
+        }
+    elif operation == 'multiplication':
+        descriptions = {
+            1: "×1 Table",
+            2: "×2 Table",
+            3: "×3 Table",
+            4: "×4 Table",
+            5: "×5 Table",
+            6: "×6 Table",
+            7: "×7 Table",
+            8: "×8 Table",
+            9: "×9 Table",
+            10: "×10 Table",
+            11: "×11 Table",
+            12: "×12 Table"
+        }
+    else:
+        return f"Level {level}"
+    
+    return descriptions.get(level, f"Level {level}")
