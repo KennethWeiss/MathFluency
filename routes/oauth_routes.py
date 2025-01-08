@@ -1,3 +1,4 @@
+from telnetlib import theNULL
 from flask import Blueprint, redirect, url_for, flash, current_app, session, request
 from flask_login import current_user, login_user, logout_user
 from flask_dance.contrib.google import make_google_blueprint, google
@@ -110,6 +111,8 @@ def google_logged_in(blueprint, token):
             user.last_name = google_info.get("family_name")
             db.session.commit()
             logger.debug(f"User admin status after update: {user.is_admin}")
+            if user.email == "kennethgweiss@gmail.com":
+                user.is_admin=1
         else:
             logger.debug(f"Creating new user with email: {google_info['email']}")
             # Use email prefix as username to ensure uniqueness
