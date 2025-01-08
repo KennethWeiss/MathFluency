@@ -49,8 +49,10 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 
 # Admin configuration
-admin_emails = os.environ.get('ADMIN_EMAILS', '').split(',')
+admin_emails_str = os.environ.get('ADMIN_EMAILS', os.environ.get('ADMIN_EMAIL', ''))
+admin_emails = admin_emails_str.split(',')
 app.config['ADMIN_EMAILS'] = [email.strip() for email in admin_emails if email.strip()]
+logger.debug(f"Configured admin emails: {app.config['ADMIN_EMAILS']}")
 
 # Only use secure cookies in production
 if not app.debug:
