@@ -105,9 +105,13 @@ def google_logged_in(blueprint, token):
             logger.debug(f"Found existing user: {user.email}")
         else:
             logger.debug(f"Creating new user with email: {google_info['email']}")
+            # Use email prefix as username to ensure uniqueness
+            email = google_info["email"]
+            username = email.split('@')[0]  # Get the part before @ as username
+            
             user = User(
-                username=google_info.get("name", ""),
-                email=google_info["email"],
+                username=username,  # Use email prefix instead of full name
+                email=email,
                 google_id=google_user_id,
                 avatar_url=google_info.get("picture"),
                 first_name=google_info.get("given_name"),
