@@ -122,6 +122,8 @@ def google_logged_in(blueprint, token):
                 email=google_info["email"],
                 google_id=google_user_id,
                 avatar_url=google_info.get("picture"),
+                first_name=google_info.get("given_name"),
+                last_name=google_info.get("family_name"),
                 is_teacher=is_teacher_email(google_info["email"])  # Check if email is from teacher domain
             )
             db.session.add(user)

@@ -16,6 +16,10 @@ class User(UserMixin, db.Model):
     google_id = db.Column(db.String(256), nullable=True, unique=True)
     avatar_url = db.Column(db.String(256), nullable=True)
     
+    # User name fields
+    first_name = db.Column(db.String(64), nullable=True)
+    last_name = db.Column(db.String(64), nullable=True)
+    
     # Note: relationships are defined via backref in the Class model
     # teacher_classes - classes where user is a teacher
     # enrolled_classes - classes where user is a student
@@ -38,12 +42,16 @@ class User(UserMixin, db.Model):
 
     @property
     def full_name(self):
-        return self.username  # You can modify this if you add first_name/last_name fields
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
 
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
             'email': self.email,
             'is_teacher': self.is_teacher,
             'is_admin': self.is_admin,
