@@ -1,24 +1,19 @@
-from telnetlib import theNULL
-from flask import Blueprint, redirect, url_for, flash, current_app, session, request
+from flask import Blueprint, redirect, url_for, flash, current_app, session
 from flask_login import current_user, login_user, logout_user
 from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.consumer import oauth_authorized
-from flask_dance.consumer.storage.sqla import SQLAlchemyStorage
-from oauthlib.oauth2.rfc6749.errors import InvalidGrantError, TokenExpiredError
+from oauthlib.oauth2.rfc6749.errors import TokenExpiredError, InvalidGrantError
 from models.user import User
-from models.oauth import OAuth
-from app import db, logger
-import os
+from app import db
 import logging
+
+logger = logging.getLogger(__name__)
+oauth_bp = Blueprint('oauth', __name__)
 
 # Enable Flask-Dance debug logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Allow OAuth over HTTP for local development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
-# Create blueprint for OAuth routes
-oauth_bp = Blueprint('oauth', __name__, url_prefix='/oauth')
 
 # Get OAuth credentials
 client_id = os.environ.get("GOOGLE_CLIENT_ID")
@@ -39,139 +34,81 @@ blueprint = make_google_blueprint(
         "https://www.googleapis.com/auth/userinfo.email",
         "https://www.googleapis.com/auth/userinfo.profile"
     ],
-    storage=SQLAlchemyStorage(
-        OAuth,
-        db.session,
-        user=current_user,
-        user_required=False
-    ),
+    storage=None,
     redirect_url=None,
     reprompt_consent=True  # Show consent screen to see what's blocked
 )
 
-@oauth_bp.route('/google/login')
-def google_login():
-    """Initiate Google OAuth login"""
-    logger.debug("=== Starting /oauth/google/login route ===")
-    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
-    logger.debug(f"Session contents: {dict(session)}")
-
-    if current_user.is_authenticated:
-        logger.debug("User already authenticated, redirecting to welcome page")
-        return redirect(url_for('main.welcome'))
-    
-    # Store the next URL in session if provided
-    next_url = request.args.get('next')
-    if next_url:
-        logger.debug(f"Storing next_url in session: {next_url}")
-        session['next_url'] = next_url
-    
-    logger.debug("Starting Google OAuth flow")
-    return redirect(url_for('google.login'))
-
-@oauth_authorized.connect_via(blueprint)
-def google_logged_in(blueprint, token):
-    """Handle successful OAuth login"""
-    logger.debug("=== Starting OAuth callback ===")
-    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
-    logger.debug(f"Session contents: {dict(session)}")
-    
-    if not token:
-        logger.warning("Failed to log in with Google: no token received")
-        flash("Failed to log in with Google.", category="error")
-        return False
-
+def get_google_user_info():
+    """Get user info from Google OAuth."""
     try:
-        # Log token information
-        logger.debug("Token received:")
-        logger.debug(f"Scopes granted: {token.get('scope', [])}")
-        
-        # Try to get user info
-        logger.debug("Attempting to fetch user info...")
-        resp = blueprint.session.get("/oauth2/v2/userinfo")
-        logger.debug(f"User info response status: {resp.status_code}")
-        logger.debug(f"User info response: {resp.text if resp.ok else 'Failed'}")
-
+        resp = google.get("/oauth2/v2/userinfo")
         if not resp.ok:
-            logger.error(f"Failed to fetch user info: {resp.text}")
-            return False
+            logger.error("Failed to get user info from Google")
+            return None
+        return resp.json()
+    except (TokenExpiredError, InvalidGrantError) as e:
+        logger.error(f"OAuth error: {str(e)}")
+        return None
 
-        google_info = resp.json()
-        google_user_id = google_info["id"]
-        logger.debug(f"Google user info received for ID: {google_user_id}")
-        
-        # Find or create user
-        user = User.query.filter_by(google_id=google_user_id).first() or User.query.filter_by(email=email).first()
-        if user:
-            logger.debug(f"Found existing user: {user.email}")
-            logger.debug(f"User admin status before update: {user.is_admin}")
-            user.google_id = google_user_id
-            user.avatar_url = google_info.get("picture")
-            user.first_name = google_info.get("given_name")
-            user.last_name = google_info.get("family_name")
-            if user.email == "kennethgweiss@gmail.com":
-                user.is_admin = True
-                db.session.commit()
-                # Refresh the user session to pick up the admin change
-                login_user(user)  # This will refresh the session with the latest user data
-            logger.debug(f"User admin status after update: {user.is_admin}")
-        else:
-            logger.debug(f"Creating new user with email: {google_info['email']}")
-            # Use email prefix as username to ensure uniqueness
-            email = google_info["email"]
-            username = email.split('@')[0]  # Get the part before @ as username
-            
-            user = User(
-                username=username,  # Use email prefix instead of full name
-                email=email,
-                google_id=google_user_id,
-                avatar_url=google_info.get("picture"),
-                first_name=google_info.get("given_name"),
-                last_name=google_info.get("family_name"),
-                is_teacher=False  # All new users start as students
-            )
-            db.session.add(user)
-            db.session.commit()
-            logger.debug(f"New user created with ID: {user.id}")
+@oauth_bp.route("/oauth/google")
+def google_login():
+    """Initiate Google OAuth login."""
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+    return redirect(url_for("oauth.google_authorized"))
 
-        # Log in the user
-        login_user(user)
-        logger.debug(f"User logged in successfully: {user.email}")
-        logger.debug(f"Current user authenticated after login: {current_user.is_authenticated}")
-        logger.debug(f"Current user admin status after login: {current_user.is_admin}")
-        flash("Successfully logged in with Google.", category="success")
-        
-        # Check where we should redirect after login
-        next_url = session.get('next_url')
-        logger.debug(f"Next URL from session: {next_url}")
-        
-        return False  # Let Flask-Dance handle redirect
-
-    except Exception as e:
-        logger.exception("Error in OAuth callback")
-        flash("An error occurred during login.", category="error")
-        return False
-
-@oauth_bp.route('/authorized/google')
+@oauth_bp.route("/oauth/authorized/google/authorized")
 def google_authorized():
-    logger.debug("=== Starting /authorized/google route ===")
-    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
-    logger.debug(f"Request args: {dict(request.args)}")
-    logger.debug(f"Session contents: {dict(session)}")
-    
-    if current_user.is_authenticated:
-        next_url = session.pop('next_url', None)
-        logger.debug(f"User authenticated, redirecting to: {next_url or url_for('main.welcome')}")
-        return redirect(next_url or url_for('main.welcome'))
-        
-    return redirect(url_for('main.welcome'))
+    """Handle Google OAuth callback."""
+    if not google.authorized:
+        flash("Failed to log in with Google.", "error")
+        return redirect(url_for("auth.login"))
 
-@oauth_bp.route('/logout')
+    google_info = get_google_user_info()
+    if not google_info:
+        flash("Failed to get Google user info.", "error")
+        return redirect(url_for("auth.login"))
+
+    google_user_id = google_info["id"]
+    email = google_info["email"]
+    
+    # Find or create user
+    user = User.query.filter_by(google_id=google_user_id).first()
+    if user:
+        # Update existing user
+        user.avatar_url = google_info.get("picture")
+        user.first_name = google_info.get("given_name")
+        user.last_name = google_info.get("family_name")
+        
+        # Check if user should be admin (based on email)
+        admin_emails = current_app.config.get('ADMIN_EMAILS', [])
+        if email in admin_emails and not user.is_admin:
+            user.is_admin = True
+            db.session.commit()
+            login_user(user)  # Refresh session with admin status
+    else:
+        # Create new user
+        username = email.split('@')[0]  # Use email prefix as username
+        user = User(
+            username=username,
+            email=email,
+            google_id=google_user_id,
+            avatar_url=google_info.get("picture"),
+            first_name=google_info.get("given_name"),
+            last_name=google_info.get("family_name")
+        )
+        if email in current_app.config.get('ADMIN_EMAILS', []):
+            user.is_admin = True
+        db.session.add(user)
+        db.session.commit()
+
+    login_user(user)
+    next_url = session.pop('next', None)
+    return redirect(next_url or url_for('main.welcome'))
+
+@oauth_bp.route("/oauth/logout")
 def logout():
-    """Log out the user"""
+    """Handle logout."""
     logout_user()
-    # Clear the OAuth token
-    token = blueprint.token
-    if token:
-        del blueprint.token
     return redirect(url_for('auth.login'))
