@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>My Active Quizzes</h2>
+    
+    {% if quizzes %}
+    <div class="row">
+        {% for quiz in quizzes %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ quiz.title }}</h5>
+                    <p class="card-text">
+                        <strong>Operation:</strong> {{ quiz.operation }}<br>
+                        <strong>Status:</strong> 
+                        <span class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' }}">
+                            {{ quiz.status }}
+                        </span>
+                    </p>
+                    <a href="{{ url_for('quiz.join_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">
+                        {% if quiz.status == 'active' %}
+                        Continue Quiz
+                        {% else %}
+                        Join Quiz
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>You don't have any active quizzes right now.</p>
+        <p>When a teacher shares a quiz link with you, click it to join the quiz!</p>
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

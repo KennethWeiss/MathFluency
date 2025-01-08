@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ quiz.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <div id="waiting-screen" class="text-center {% if quiz.status != 'waiting' %}d-none{% endif %}">
+                        <h3>Waiting for teacher to start the quiz...</h3>
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div id="quiz-screen" class="{% if quiz.status != 'active' %}d-none{% endif %}">
+                        <div class="mb-4">
+                            <h3>Current Problem:</h3>
+                            <div id="problem-display" class="h4 text-center py-3"></div>
+                            <div class="form-group">
+                                <label for="answer">Your Answer:</label>
+                                <input type="number" class="form-control" id="answer" placeholder="Enter your answer">
+                            </div>
+                            <button onclick="submitAnswer()" class="btn btn-primary mt-3">Submit Answer</button>
+                        </div>
+                    </div>
+
+                    <div id="finished-screen" class="text-center {% if quiz.status != 'finished' %}d-none{% endif %}">
+                        <h3>Quiz Finished!</h3>
+                        <div class="h4">Your Final Score: <span id="final-score">{{ participant.score if participant else 0 }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Leaderboard</h4>
+                </div>
+                <div class="card-body">
+                    <div id="leaderboard" class="list-group">
+                        {% for participant in participants|sort(attribute='score', reverse=true) %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ participant.user.username }}
+                            <span class="badge bg-primary rounded-pill">{{ participant.score }}</span>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item">No scores yet</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    window.addEventListener('load', function() {
+        const socket = io();
+        const quizId = {{ quiz.id }};
+        let currentProblem = null;
+        
+        // Debug: Log socket connection status
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket server');
+            console.log('Socket ID:', socket.id);
+        });
+        
+        socket.on('connect_error', function(error) {
+            console.error('WebSocket connection error:', error);
+        });
+        
+        // Join the quiz room
+        socket.emit('join_quiz', {
+            quiz_id: quizId
+        });
+        
+        // Make functions globally available
+        window.submitAnswer = function() {
+            const answer = parseInt(document.getElementById('answer').value);
+            if (isNaN(answer)) {
+                alert('Please enter a valid number');
+                return;
+            }
+            
+            console.log('Submitting answer:', answer, 'for problem:', currentProblem);
+            socket.emit('submit_answer', {
+                quiz_id: quizId,
+                answer: answer,
+                problem: currentProblem
+            });
+            
+            // Clear the input field
+            document.getElementById('answer').value = '';
+        };
+        
+        // Listen for quiz start
+        socket.on('quiz_started', function(data) {
+            console.log('Quiz started event received:', data);
+            if (data.quiz_id === quizId) {
+                document.getElementById('waiting-screen').classList.add('d-none');
+                document.getElementById('quiz-screen').classList.remove('d-none');
+                document.getElementById('finished-screen').classList.add('d-none');
+                
+                // Display the first problem
+                currentProblem = data.problem;
+                document.getElementById('problem-display').textContent = data.problem;
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+            }
+        });
+        
+        // Listen for new problems
+        socket.on('new_problem', function(data) {
+            console.log('New problem received:', data);
+            if (data.quiz_id === quizId) {
+                currentProblem = data.problem;
+                document.getElementById('problem-display').textContent = data.problem;
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+            }
+        });
+        
+        // Listen for quiz end
+        socket.on('quiz_ended', function(data) {
+            console.log('Quiz ended event received:', data);
+            if (data.quiz_id === quizId) {
+                document.getElementById('waiting-screen').classList.add('d-none');
+                document.getElementById('quiz-screen').classList.add('d-none');
+                document.getElementById('finished-screen').classList.remove('d-none');
+                document.getElementById('final-score').textContent = data.score;
+            }
+        });
+        
+        // Listen for leaderboard updates
+        socket.on('leaderboard_update', function(data) {
+            console.log('Leaderboard update received:', data);
+            if (data.quiz_id === quizId) {
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = '';
+                data.leaderboard.forEach(function(entry) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        ${entry.username}
+                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
+                    `;
+                    leaderboard.appendChild(item);
+                });
+            }
+        });
+        
+        // Allow Enter key to submit answer
+        document.getElementById('answer').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                submitAnswer();
+            }
+        });
+        
+        // Debug: Log all socket events
+        const originalEmit = socket.emit;
+        socket.emit = function() {
+            console.log('Emitting event:', arguments);
+            return originalEmit.apply(this, arguments);
+        };
+    });
+</script>
+{% endblock %}

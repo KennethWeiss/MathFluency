@@ -52,6 +52,24 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
 if not app.debug:
     app.config['SESSION_COOKIE_SECURE'] = True
 
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///fluency.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions
+from models import db, init_db
+db.init_app(app)
+migrate = Migrate(app, db)
+login_manager = LoginManager(app)
+login_manager.login_view = 'auth.login'
+
+# Import and initialize SocketIO
+from extensions import socketio
+socketio.init_app(app, cors_allowed_origins="*")
+
+# Import WebSocket handlers after SocketIO initialization
+from websockets.quiz import *
+
 # OAuth settings
 logger.debug("Configuring OAuth settings")
 client_id = os.environ.get("GOOGLE_CLIENT_ID")
@@ -64,24 +82,6 @@ app.config.update(
         GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
         GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
     )
-
-# Database configuration
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # For local development, use SQLite
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize extensions
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-login_manager = LoginManager(app)
-login_manager.login_view = 'auth.login'
 
 # Ensure all tables exist
 with app.app_context():
@@ -103,6 +103,7 @@ from models.user import User
 from models.class_ import Class
 from models.practice_attempt import PracticeAttempt
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
+from models.quiz import Quiz, QuizParticipant, QuizQuestion
 
 # Import blueprints
 from routes.auth_routes import auth_bp
@@ -116,6 +117,7 @@ from routes.admin_routes import admin_bp
 from routes.teacher_routes import teacher_bp
 from routes.oauth_routes import blueprint as google_blueprint
 from routes.progress_routes import progress_bp
+from routes.quiz_routes import quiz_bp
 
 # Register blueprints
 app.register_blueprint(google_blueprint, url_prefix="/oauth/authorized")
@@ -129,6 +131,7 @@ app.register_blueprint(practice_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(teacher_bp)
 app.register_blueprint(progress_bp)
+app.register_blueprint(quiz_bp, url_prefix='/quiz')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -217,4 +220,4 @@ def record_attempt():
     return jsonify({'success': True})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    socketio.run(app, debug=True, port=5001)

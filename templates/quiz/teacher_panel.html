@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Panel - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ quiz.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h4>Quiz Details</h4>
+                        <p>
+                            <strong>Operation:</strong> {{ quiz.operation }}<br>
+                            <strong>Duration:</strong> {{ quiz.duration }} minutes<br>
+                            <strong>Adaptive:</strong> {{ 'Yes' if quiz.adaptive else 'No' }}<br>
+                            <strong>Status:</strong> 
+                            <span id="quiz-status" class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' }}">
+                                {{ quiz.status }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Quiz Link: <strong id="quiz-link">{{ url_for('quiz.join_quiz', quiz_id=quiz.id, _external=True) }}</strong></span>
+                            <button onclick="copyQuizLink()" class="btn btn-outline-primary btn-sm">Copy Link</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4>Participants</h4>
+                        <div id="participants-list" class="list-group">
+                            {% for participant in participants %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ participant.user.username }}
+                                <span class="badge bg-primary rounded-pill">{{ participant.score }}</span>
+                            </div>
+                            {% else %}
+                            <div class="list-group-item">
+                                No participants yet
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        {% if quiz.status == 'waiting' %}
+                        <button onclick="startQuiz()" class="btn btn-success">Start Quiz</button>
+                        {% elif quiz.status == 'active' %}
+                        <button onclick="endQuiz()" class="btn btn-danger">End Quiz</button>
+                        {% else %}
+                        <button disabled class="btn btn-secondary">Quiz Finished</button>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-outline-primary">Back to My Quizzes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Leaderboard</h4>
+                </div>
+                <div class="card-body">
+                    <div id="leaderboard" class="list-group">
+                        {% for participant in participants|sort(attribute='score', reverse=true) %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ participant.user.username }}
+                            <span class="badge bg-primary rounded-pill">{{ participant.score }}</span>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item">
+                            No scores yet
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    window.addEventListener('load', function() {
+        const socket = io();
+        const quizId = {{ quiz.id }};
+        
+        // Debug: Log socket connection status
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket server');
+            console.log('Socket ID:', socket.id);
+        });
+        
+        socket.on('connect_error', function(error) {
+            console.error('WebSocket connection error:', error);
+        });
+        
+        // Join the quiz room
+        socket.emit('join_quiz', {
+            quiz_id: quizId
+        });
+        
+        // Make functions globally available
+        window.copyQuizLink = function() {
+            const link = document.getElementById('quiz-link').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Quiz link copied to clipboard!');
+            });
+        };
+        
+        window.startQuiz = function() {
+            console.log('Attempting to start quiz...', {
+                quiz_id: quizId,
+                socket_id: socket.id,
+                connected: socket.connected
+            });
+            
+            if (!socket.connected) {
+                console.error('Socket not connected! Attempting to reconnect...');
+                socket.connect();
+                return;
+            }
+            
+            socket.emit('start_quiz', {
+                quiz_id: quizId
+            }, (response) => {
+                console.log('Start quiz event sent, response:', response);
+            });
+        };
+        
+        window.endQuiz = function() {
+            console.log('Attempting to end quiz...', {
+                quiz_id: quizId,
+                socket_id: socket.id,
+                connected: socket.connected
+            });
+            
+            if (!socket.connected) {
+                console.error('Socket not connected! Attempting to reconnect...');
+                socket.connect();
+                return;
+            }
+            
+            socket.emit('end_quiz', {
+                quiz_id: quizId
+            }, (response) => {
+                console.log('End quiz event sent, response:', response);
+            });
+        };
+        
+        // Listen for new participants
+        socket.on('user_joined', function(data) {
+            console.log('User joined event received:', data);
+            if (data.quiz_id === quizId) {
+                const participantsList = document.getElementById('participants-list');
+                // Check if we have the "No participants yet" message
+                if (participantsList.children.length === 1 && 
+                    participantsList.children[0].textContent.trim() === 'No participants yet') {
+                    participantsList.innerHTML = '';
+                }
+                const participantItem = document.createElement('div');
+                participantItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                participantItem.innerHTML = `
+                    ${data.user}
+                    <span class="badge bg-primary rounded-pill">0</span>
+                `;
+                participantsList.appendChild(participantItem);
+            }
+        });
+        
+        // Listen for leaderboard updates
+        socket.on('leaderboard_update', function(data) {
+            console.log('Leaderboard update received:', data);
+            if (data.quiz_id === quizId) {
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = '';
+                data.leaderboard.forEach(function(entry) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        ${entry.username}
+                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
+                    `;
+                    leaderboard.appendChild(item);
+                });
+            }
+        });
+        
+        // Listen for quiz status changes
+        socket.on('quiz_status_changed', function(data) {
+            console.log('Quiz status change received:', data);
+            if (data.quiz_id === quizId) {
+                const statusBadge = document.getElementById('quiz-status');
+                statusBadge.textContent = data.status;
+                statusBadge.className = `badge bg-${data.status === 'active' ? 'success' : 'secondary'}`;
+                
+                // Reload the page to update the buttons
+                console.log('Reloading page to update UI...');
+                location.reload();
+            }
+        });
+        
+        // Debug: Log all socket events
+        const originalEmit = socket.emit;
+        socket.emit = function() {
+            console.log('Emitting event:', arguments);
+            return originalEmit.apply(this, arguments);
+        };
+    });
+</script>
+{% endblock %}

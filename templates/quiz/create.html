@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Create Quiz{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create New Quiz</h2>
+    <form method="POST" class="mt-4">
+        <div class="mb-3">
+            <label for="title" class="form-label">Quiz Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="operation" class="form-label">Operation</label>
+            <select class="form-select" id="operation" name="operation" required>
+                <option value="multiplication">Multiplication</option>
+                <option value="addition">Addition</option>
+                <option value="subtraction">Subtraction</option>
+                <option value="division">Division</option>
+            </select>
+        </div>
+        
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="adaptive" name="adaptive">
+            <label class="form-check-label" for="adaptive">Use Adaptive Mode (adjusts to student level)</label>
+        </div>
+        
+        <div class="mb-3">
+            <label for="duration" class="form-label">Duration (seconds)</label>
+            <input type="number" class="form-control" id="duration" name="duration" min="30" max="3600" value="300" required>
+            <div class="form-text">Quiz duration in seconds (minimum 30s, maximum 1 hour)</div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Create Quiz</button>
+        <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

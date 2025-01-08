@@ -101,6 +101,7 @@ def google_logged_in(blueprint, token):
         logger.debug(f"Google user info received for ID: {google_user_id}")
         
         # Find or create user
+        email = google_info["email"]
         user = User.query.filter_by(google_id=google_user_id).first() or User.query.filter_by(email=email).first()
         if user:
             logger.debug(f"Found existing user: {user.email}")
@@ -116,9 +117,8 @@ def google_logged_in(blueprint, token):
                 login_user(user)  # This will refresh the session with the latest user data
             logger.debug(f"User admin status after update: {user.is_admin}")
         else:
-            logger.debug(f"Creating new user with email: {google_info['email']}")
+            logger.debug(f"Creating new user with email: {email}")
             # Use email prefix as username to ensure uniqueness
-            email = google_info["email"]
             username = email.split('@')[0]  # Get the part before @ as username
             
             user = User(
