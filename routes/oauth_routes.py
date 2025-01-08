@@ -51,12 +51,9 @@ blueprint = make_google_blueprint(
 @oauth_bp.route('/google/login')
 def google_login():
     """Initiate Google OAuth login"""
-    logger.debug("Accessing /oauth/google/login route")
-    logger.debug("Environment variables check:")
-    logger.debug(f"GOOGLE_CLIENT_ID exists: {os.environ.get('GOOGLE_CLIENT_ID') is not None}")
-    logger.debug(f"GOOGLE_CLIENT_SECRET exists: {os.environ.get('GOOGLE_CLIENT_SECRET') is not None}")
-    logger.debug(f"Blueprint client_id exists: {blueprint.client_id is not None}")
-    logger.debug(f"Blueprint client_secret exists: {blueprint.client_secret is not None}")
+    logger.debug("=== Starting /oauth/google/login route ===")
+    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
+    logger.debug(f"Session contents: {dict(session)}")
 
     if current_user.is_authenticated:
         logger.debug("User already authenticated, redirecting to welcome page")
@@ -65,6 +62,7 @@ def google_login():
     # Store the next URL in session if provided
     next_url = request.args.get('next')
     if next_url:
+        logger.debug(f"Storing next_url in session: {next_url}")
         session['next_url'] = next_url
     
     logger.debug("Starting Google OAuth flow")
@@ -73,7 +71,10 @@ def google_login():
 @oauth_authorized.connect_via(blueprint)
 def google_logged_in(blueprint, token):
     """Handle successful OAuth login"""
-    logger.debug("OAuth authorized callback triggered")
+    logger.debug("=== Starting OAuth callback ===")
+    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
+    logger.debug(f"Session contents: {dict(session)}")
+    
     if not token:
         logger.warning("Failed to log in with Google: no token received")
         flash("Failed to log in with Google.", category="error")
@@ -96,13 +97,14 @@ def google_logged_in(blueprint, token):
 
         google_info = resp.json()
         google_user_id = google_info["id"]
+        logger.debug(f"Google user info received for ID: {google_user_id}")
         
         # Find or create user
         user = User.query.filter_by(google_id=google_user_id).first()
         if user:
             logger.debug(f"Found existing user: {user.email}")
         else:
-            logger.debug("Creating new user")
+            logger.debug(f"Creating new user with email: {google_info['email']}")
             user = User(
                 username=google_info.get("name", ""),
                 email=google_info["email"],
@@ -114,10 +116,17 @@ def google_logged_in(blueprint, token):
             )
             db.session.add(user)
             db.session.commit()
+            logger.debug(f"New user created with ID: {user.id}")
 
         # Log in the user
         login_user(user)
+        logger.debug(f"User logged in successfully: {user.email}")
+        logger.debug(f"Current user authenticated after login: {current_user.is_authenticated}")
         flash("Successfully logged in with Google.", category="success")
+        
+        # Check where we should redirect after login
+        next_url = session.get('next_url')
+        logger.debug(f"Next URL from session: {next_url}")
         
         return False  # Let Flask-Dance handle redirect
 
@@ -128,33 +137,17 @@ def google_logged_in(blueprint, token):
 
 @oauth_bp.route('/authorized/google')
 def google_authorized():
-    """Handle the Google OAuth callback"""
-    if not google.authorized:
-        logger.warning("Google OAuth not authorized in callback")
-        flash("Failed to log in with Google.", category="error")
-        return redirect(url_for('auth.login'))
-
-    try:
-        # Get user info to confirm authorization worked
-        resp = google.get("/oauth2/v2/userinfo")
-        if not resp.ok:
-            logger.error(f"Failed to get user info in callback: {resp.text}")
-            flash("Failed to get user info from Google.", category="error")
-            return redirect(url_for('auth.login'))
-        
-        # Get the next URL from session if it exists
+    logger.debug("=== Starting /authorized/google route ===")
+    logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
+    logger.debug(f"Request args: {dict(request.args)}")
+    logger.debug(f"Session contents: {dict(session)}")
+    
+    if current_user.is_authenticated:
         next_url = session.pop('next_url', None)
-        if next_url:
-            logger.debug(f"Redirecting to next_url: {next_url}")
-            return redirect(next_url)
+        logger.debug(f"User authenticated, redirecting to: {next_url or url_for('main.welcome')}")
+        return redirect(next_url or url_for('main.welcome'))
         
-        logger.debug("Redirecting to welcome page")
-        return redirect(url_for('main.welcome'))
-
-    except Exception as e:
-        logger.exception("Error in google_authorized callback")
-        flash("An error occurred during login. Please try again.", category="error")
-        return redirect(url_for('auth.login'))
+    return redirect(url_for('main.welcome'))
 
 @oauth_bp.route('/logout')
 def logout():
