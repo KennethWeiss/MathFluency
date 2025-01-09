@@ -29,12 +29,18 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint.startswith('quiz.') %}active{% endif %}" href="{{ url_for('quiz.teacher_quizzes') }}">Quizzes</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint.startswith('assignment.') %}active{% endif %}" href="{{ url_for('assignment.list_assignments') }}">Assignments</a>
+                            </li>
                         {% else %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'class.list_classes' %}active{% endif %}" href="{{ url_for('class.list_classes') }}">My Classes</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'practice.practice' %}active{% endif %}" href="{{ url_for('practice.practice') }}">Practice</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'assignment.student_assignments' %}active{% endif %}" href="{{ url_for('assignment.student_assignments') }}">My Assignments</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'practice.progress' %}active{% endif %}" href="{{ url_for('practice.progress') }}">My Progress</a>

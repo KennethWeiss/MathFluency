@@ -153,6 +153,7 @@ def create_app(test_config=None):
     app.register_blueprint(oauth_bp)
     app.register_blueprint(google_blueprint, url_prefix="/oauth")
     app.register_blueprint(progress_bp)
+    app.register_blueprint(assignment_bp)
     
     @login_manager.user_loader
     def load_user(user_id):
