@@ -3,6 +3,10 @@ from flask_login import login_required, current_user
 from models.class_ import Class
 from models.user import User
 from app import db
+import io
+import csv
+import random
+import string
 
 class_bp = Blueprint('class', __name__)
 
@@ -183,3 +187,95 @@ def join_class():
         return redirect(url_for('class.view_class', id=class_.id))
     
     return render_template('classes/join.html')
+
+@class_bp.route('/upload_students', methods=['POST'])
+@login_required
+def upload_students():
+    if 'file' not in request.files:
+        flash('No file uploaded', 'error')
+        return redirect(url_for('class.list_classes'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('No file selected', 'error')
+        return redirect(url_for('class.list_classes'))
+    
+    if not file.filename.endswith('.csv'):
+        flash('Please upload a CSV file', 'error')
+        return redirect(url_for('class.list_classes'))
+    
+    class_id = request.form.get('class_id')
+    if not class_id:
+        flash('Please select a class', 'error')
+        return redirect(url_for('class.list_classes'))
+    
+    class_ = Class.query.get_or_404(class_id)
+    
+    # Verify the teacher owns this class
+    if class_.teacher_id != current_user.id:
+        flash('You do not have permission to add students to this class', 'error')
+        return redirect(url_for('class.list_classes'))
+    
+    try:
+        # Read and decode the CSV file
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_reader = csv.reader(stream)
+        
+        success_count = 0
+        error_count = 0
+        error_messages = []
+        
+        for row in csv_reader:
+            try:
+                if len(row) != 3:
+                    error_count += 1
+                    error_messages.append(f"Invalid row format: {','.join(row)}")
+                    continue
+                
+                first_name, last_name, email = row
+                
+                # Check if user already exists
+                user = User.query.filter_by(email=email).first()
+                if not user:
+                    # Create new user with random password
+                    password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+                    user = User(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        username=email.split('@')[0],
+                        role='student'
+                    )
+                    user.set_password(password)
+                    db.session.add(user)
+                    
+                    # TODO: Send email with login credentials
+                    # send_welcome_email(email, password)
+                
+                # Add user to class if not already enrolled
+                if user not in class_.students:
+                    class_.students.append(user)
+                    success_count += 1
+                else:
+                    error_count += 1
+                    error_messages.append(f"Student {email} already in class")
+            
+            except Exception as e:
+                error_count += 1
+                error_messages.append(f"Error processing row: {','.join(row)} - {str(e)}")
+        
+        db.session.commit()
+        
+        # Flash summary message
+        if success_count > 0:
+            flash(f'Successfully added {success_count} student(s) to the class', 'success')
+        if error_count > 0:
+            flash(f'Failed to add {error_count} student(s). Check the error log for details', 'warning')
+            for msg in error_messages:
+                flash(msg, 'error')
+                
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error processing CSV file: {str(e)}', 'error')
+    
+    return redirect(url_for('class.list_classes'))
