@@ -36,7 +36,7 @@ def progress():
     except Exception as e:
         print(f"Error in progress route: {str(e)}")
         flash('An error occurred while loading progress data.', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
 
 @progress_bp.route('/student_progress/<int:student_id>')
 @login_required
@@ -45,7 +45,7 @@ def student_progress(student_id):
     try:
         if not current_user.is_teacher:
             flash('Access denied. Teachers only.', 'error')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.home'))
 
         student = User.query.get_or_404(student_id)
         
@@ -55,7 +55,7 @@ def student_progress(student_id):
         
         if not student_in_class:
             flash('Access denied. Student not in your classes.', 'error')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.home'))
 
         # Get stats for each operation
         operations = ['addition', 'subtraction', 'multiplication', 'division']
@@ -71,14 +71,14 @@ def student_progress(student_id):
         if 'multiplication' in stats:
             multiplication_stats = ProgressService.get_multiplication_table_stats(student_id)
 
-        return render_template('student_progress.html',
+        return render_template('progress.html',
                             student=student,
                             stats=stats,
                             multiplication_stats=multiplication_stats)
     except Exception as e:
         print(f"Error in student_progress route: {str(e)}")
         flash('An error occurred while loading student progress data.', 'error')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.home'))
 
 @progress_bp.route('/analyze_level/<operation>/<int:level>')
 @progress_bp.route('/analyze_level/<operation>/<int:level>/<int:student_id>')
@@ -88,7 +88,7 @@ def analyze_level(operation, level, student_id=None):
     try:
         if student_id and not current_user.is_teacher:
             flash('Access denied. Teachers only.', 'error')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.home'))
 
         target_id = student_id if student_id else current_user.id
         
