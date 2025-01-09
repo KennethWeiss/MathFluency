@@ -198,14 +198,26 @@ def progress():
     if 'multiplication' in stats:
         mult_attempts = [a for a in attempts if a.operation == 'multiplication']
         mult_table_stats = {}
+        for i in range(13):
+            mult_table_stats[i] = {}
+            for j in range(13):
+                mult_table_stats[i][j] = {
+                    'attempts': 0,
+                    'correct': 0,
+                    'accuracy': 0,
+                    'average_time': 0
+                }
+        
         for i in range(1, 13):  # 1-12 multiplication tables
             for j in range(1, 13):
                 problem = f"{i} × {j}"
                 relevant_attempts = [a for a in mult_attempts if a.problem == problem]
                 if relevant_attempts:
-                    mult_table_stats[(i,j)] = {
+                    correct_count = sum(1 for a in relevant_attempts if a.is_correct)
+                    mult_table_stats[i][j] = {
                         'attempts': len(relevant_attempts),
-                        'correct': sum(1 for a in relevant_attempts if a.is_correct),
+                        'correct': correct_count,
+                        'accuracy': (correct_count / len(relevant_attempts)) * 100,
                         'average_time': sum(a.time_taken for a in relevant_attempts) / len(relevant_attempts)
                     }
     

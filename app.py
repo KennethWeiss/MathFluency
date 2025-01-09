@@ -126,7 +126,8 @@ from routes.class_routes import class_bp
 from routes.quiz_routes import quiz_bp
 from routes.teacher_routes import teacher_bp
 from routes.practice_routes import practice_bp
-from routes.oauth_routes import oauth_bp, blueprint as google_blueprint
+from routes.oauth_routes import oauth_bp
+from routes.progress_routes import progress_bp
 
 app.register_blueprint(main_bp)
 app.register_blueprint(auth_bp)
@@ -136,6 +137,7 @@ app.register_blueprint(teacher_bp)
 app.register_blueprint(practice_bp)
 app.register_blueprint(oauth_bp)
 app.register_blueprint(google_blueprint, url_prefix="/oauth")
+app.register_blueprint(progress_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
