@@ -157,7 +157,7 @@ class ProgressService:
                         'attempts': len(relevant_attempts),
                         'correct': correct_count,
                         'accuracy': (correct_count / len(relevant_attempts)) * 100,
-                        'average_time': sum(a.time_taken for a in relevant_attempts) / len(relevant_attempts)
+                        'average_time': sum(a.time_taken for a in relevant_attempts if a.time_taken is not None) / sum(1 for a in relevant_attempts if a.time_taken is not None) if relevant_attempts else 0
                     }
 
         return table_stats

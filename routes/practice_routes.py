@@ -240,7 +240,7 @@ def progress():
                 'total_attempts': total_attempts,
                 'correct_attempts': correct_attempts,
                 'accuracy': (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0,
-                'average_time': sum(a.time_taken for a in op_attempts) / total_attempts if total_attempts > 0 else 0,
+                'average_time': sum(a.time_taken for a in op_attempts if a.time_taken is not None) / sum(1 for a in op_attempts if a.time_taken is not None) if total_attempts > 0 else 0,
                 'current_streak': current_streak,
                 'levels': {}  # For tracking progress at different levels
             }
@@ -256,20 +256,20 @@ def progress():
                         'attempts': len(level_attempts),
                         'correct': level_correct,
                         'accuracy': (level_correct / len(level_attempts) * 100) if level_attempts else 0,
-                        'total_time': sum(a.time_taken for a in level_attempts),
+                        'total_time': sum(a.time_taken for a in level_attempts if a.time_taken is not None),
                         'description': get_level_description(op, level),
                         'mastery_status': PracticeAttempt.get_mastery_status(db.session, current_user.id, op, level)
                     }
     
     # Calculate multiplication table stats if available
-    mult_table_stats = None
+    multiplication_stats = None
     if 'multiplication' in stats:
         mult_attempts = [a for a in attempts if a.operation == 'multiplication']
-        mult_table_stats = {}
+        multiplication_stats = {}
         for i in range(13):
-            mult_table_stats[i] = {}
+            multiplication_stats[i] = {}
             for j in range(13):
-                mult_table_stats[i][j] = {
+                multiplication_stats[i][j] = {
                     'attempts': 0,
                     'correct': 0,
                     'accuracy': 0,
@@ -282,16 +282,16 @@ def progress():
                 relevant_attempts = [a for a in mult_attempts if a.problem == problem]
                 if relevant_attempts:
                     correct_count = sum(1 for a in relevant_attempts if a.is_correct)
-                    mult_table_stats[i][j] = {
+                    multiplication_stats[i][j] = {
                         'attempts': len(relevant_attempts),
                         'correct': correct_count,
                         'accuracy': (correct_count / len(relevant_attempts)) * 100,
-                        'average_time': sum(a.time_taken for a in relevant_attempts) / len(relevant_attempts)
+                        'average_time': sum(a.time_taken for a in relevant_attempts if a.time_taken is not None) / sum(1 for a in relevant_attempts if a.time_taken is not None)
                     }
     
     return render_template('progress.html',
                          stats=stats,
-                         mult_table_stats=mult_table_stats,
+                         multiplication_stats=multiplication_stats,
                          viewing_as_teacher=False,
                          student=current_user)
 
