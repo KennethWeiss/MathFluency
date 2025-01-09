@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from app import db
+from database import db
 
 class PracticeAttempt(db.Model):
     __tablename__ = 'practice_attempt'

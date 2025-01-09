@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col">
             <h1 class="mb-4">
-                {% if viewing_as_teacher %}
+                {% if student %}
                     {{ student.username }}'s Progress
                 {% else %}
                     My Progress
@@ -19,12 +19,22 @@
     </div>
 
     {% if 'multiplication' in stats %}
-        {{ multiplication_table(mult_table_stats) }}
-        {{ stats_card('multiplication', stats['multiplication'], 'bg-primary text-white', viewing_as_teacher, student) }}
+        {% if multiplication_stats %}
+            {{ multiplication_table(multiplication_stats) }}
+        {% endif %}
+        {{ stats_card('multiplication', stats['multiplication'], 'bg-primary text-white', student is not none, student) }}
     {% endif %}
 
     {% if 'addition' in stats %}
-        {{ stats_card('addition', stats['addition'], 'bg-success text-white', viewing_as_teacher, student) }}
+        {{ stats_card('addition', stats['addition'], 'bg-success text-white', student is not none, student) }}
+    {% endif %}
+
+    {% if 'subtraction' in stats %}
+        {{ stats_card('subtraction', stats['subtraction'], 'bg-info text-white', student is not none, student) }}
+    {% endif %}
+
+    {% if 'division' in stats %}
+        {{ stats_card('division', stats['division'], 'bg-warning text-white', student is not none, student) }}
     {% endif %}
 </div>
 {% endblock %}

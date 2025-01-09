@@ -28,7 +28,11 @@
         <div class="col">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('progress.progress') }}">Progress</a></li>
+                    {% if student %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('progress.student_progress', student_id=student.id) }}">{{ student.username }}'s Progress</a></li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('progress.progress') }}">Progress</a></li>
+                    {% endif %}
                     <li class="breadcrumb-item active">Level {{ level }} {{ operation|title }}</li>
                 </ol>
             </nav>
@@ -38,40 +42,56 @@
     <!-- Overall Stats Card -->
     <div class="card mb-4 shadow">
         <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Level {{ level }} {{ operation|title }} Statistics</h3>
+            <h3 class="mb-0">{{ stats.description }}</h3>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3 text-center mb-3">
                     <h4>Total Attempts</h4>
-                    <div class="display-4">{{ total_attempts }}</div>
+                    <div class="display-4">{{ stats.attempts }}</div>
                 </div>
                 <div class="col-md-3 text-center mb-3">
                     <h4>Correct</h4>
-                    <div class="display-4">{{ correct_count }}</div>
+                    <div class="display-4">{{ stats.correct }}</div>
                 </div>
                 <div class="col-md-3 text-center mb-3">
                     <h4>Accuracy</h4>
-                    <div class="display-4">{{ "%.1f"|format(accuracy) }}%</div>
+                    <div class="display-4">{{ "%.1f"|format(stats.accuracy) }}%</div>
                 </div>
                 <div class="col-md-3 text-center mb-3">
-                    <h4>Mastery Status</h4>
-                    <div class="display-4">
-                        {% if stats.mastery_status == 'mastered' %}
-                            <span class="badge rounded-pill text-bg-success">Mastered</span>
-                        {% elif stats.mastery_status == 'learning' %}
-                            <span class="badge rounded-pill text-bg-warning">Learning</span>
-                        {% else %}
-                            <span class="badge rounded-pill text-bg-danger">Needs Practice</span>
-                        {% endif %}
+                    <h4>Average Time</h4>
+                    <div class="display-4">{{ "%.1f"|format(stats.avg_time) }}s</div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="progress-container">
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar {% if stats.accuracy >= 80 %}bg-success{% elif stats.accuracy >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ stats.accuracy }}%">
+                            </div>
+                        </div>
+                        <div class="progress-text">{{ "%.1f"|format(stats.accuracy) }}% Accuracy</div>
                     </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col text-center">
+                    <h4>Mastery Status</h4>
+                    {% if stats.mastery_status == 'mastered' %}
+                        <span class="badge rounded-pill text-bg-success">Mastered</span>
+                    {% elif stats.mastery_status == 'learning' %}
+                        <span class="badge rounded-pill text-bg-warning">Learning</span>
+                    {% else %}
+                        <span class="badge rounded-pill text-bg-danger">Needs Practice</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Problem Analysis -->
-    {% if problems %}
+    <!-- Problem Analysis Card -->
     <div class="card mb-4 shadow">
         <div class="card-header bg-info text-white">
             <h3 class="mb-0">Problem Analysis</h3>
@@ -82,62 +102,32 @@
                     <thead>
                         <tr>
                             <th>Problem</th>
-                            <th>Mastery</th>
                             <th>Attempts</th>
                             <th>Accuracy</th>
-                            <th>Recent Performance</th>
+                            <th>Average Time</th>
+                            <th>Fastest Time</th>
+                            <th>Slowest Time</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for problem in problems %}
+                        {% for problem, stats in problems.items() %}
                         <tr>
-                            <td>{{ problem.problem }} = {{ problem.correct_answer }}</td>
+                            <td>{{ problem }}</td>
+                            <td>{{ stats.attempts }}</td>
                             <td>
-                                {% if problem.mastery_status == 'mastered' %}
-                                    <span class="badge rounded-pill text-bg-success">Mastered</span>
-                                {% elif problem.mastery_status == 'learning' %}
-                                    <span class="badge rounded-pill text-bg-warning">Learning</span>
-                                {% else %}
-                                    <span class="badge rounded-pill text-bg-secondary">Practice Needed</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {{ problem.correct_count }}/{{ problem.total_attempts }}
-                                <br>
-                                
-                            </td>
-                            <td>
-                                <div class="progress progress-container {% if problem['accuracy'] >= 80 %}bg-success-light{% elif problem['accuracy'] >= 60 %}bg-warning-light{% else %}bg-danger-light{% endif %}">
-                                    <div class="progress-bar {% if problem['accuracy'] >= 80 %}bg-success{% elif problem['accuracy'] >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                        role="progressbar" 
-                                        data-width="{{ problem['accuracy'] }}"
-                                        aria-valuenow="{{ problem['accuracy'] }}" 
-                                        aria-valuemin="0" 
-                                        aria-valuemax="100">
+                                <div class="progress-container">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if stats.accuracy >= 80 %}bg-success-light{% elif stats.accuracy >= 60 %}bg-warning-light{% else %}bg-danger-light{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ stats.accuracy }}%">
+                                        </div>
                                     </div>
-                                    <div class="progress-text">
-                                        {{ "%.1f"|format(problem['accuracy']) }}%
-                                    </div>
+                                    <div class="progress-text">{{ "%.1f"|format(stats.accuracy) }}%</div>
                                 </div>
                             </td>
-                            <td>
-                                {% for attempt in problem.recent_attempts %}
-                                    {% if attempt.is_correct %}
-                                        <span class="badge rounded-pill text-bg-success">✓</span>
-                                    {% else %}
-                                        <span class="badge rounded-pill text-bg-danger">✗</span>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if problem['incorrect_count'] > 0 and problem['user_answers']|length > 0 %}
-                                <br>
-                                <small class="text-muted">
-                                    Common mistakes:
-                                    {% for answer in problem['user_answers'] %}
-                                    <span class="badge text-bg-light">{{ answer }}</span>
-                                    {% endfor %}
-                                </small>
-                                {% endif %}
-                            </td>
+                            <td>{{ "%.1f"|format(stats.avg_time) }}s</td>
+                            <td>{{ "%.1f"|format(stats.fastest_time) }}s</td>
+                            <td>{{ "%.1f"|format(stats.slowest_time) }}s</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -145,12 +135,6 @@
             </div>
         </div>
     </div>
-    {% else %}
-    <div class="alert alert-success" role="alert">
-        <h4 class="alert-heading">No attempts yet!</h4>
-        <p>Start practicing this level to see your progress.</p>
-    </div>
-    {% endif %}
 
     <!-- Return Buttons -->
     <div class="text-center mb-4">
@@ -172,10 +156,12 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.progress-bar').forEach(function(bar) {
-        bar.style.width = bar.dataset.width + '%';
-    });
+$(document).ready(function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 });
 </script>
 {% endblock %}
