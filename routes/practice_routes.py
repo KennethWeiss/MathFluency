@@ -7,6 +7,7 @@ from models.active_session import ActiveSession
 from utils.math_problems import get_problem, generate_custom_multiplication
 from services.progress_service import ProgressService
 from datetime import datetime
+from utils.practice_tracker import PracticeTracker
 
 practice_bp = Blueprint('practice', __name__)
 
@@ -53,36 +54,64 @@ def practice():
 @practice_bp.route('/get_problem', methods=['POST'])
 @login_required
 def get_problem_route():
-    data = request.json
+    data = request.get_json()
+    operation = data.get('operation')
+    level = data.get('level', 1)
     assignment_id = data.get('assignment_id')
-    
+
+    # Validate operation and level
+    if not operation or not isinstance(level, (int, str)):
+        return jsonify({'error': 'Invalid operation or level'})
+    try:
+        level = int(level)
+    except ValueError:
+        return jsonify({'error': 'Invalid level format'})
+
+    # If in assignment mode, validate and get settings
     if assignment_id:
-        # Get problem based on assignment settings
-        assignment = Assignment.query.get_or_404(assignment_id)
-        if assignment.operation == 'multiplication' and assignment.custom_number1 and assignment.custom_number2:
-            number1_spec = {'type': 'single', 'value': assignment.custom_number1}
-            number2_spec = {'type': 'single', 'value': assignment.custom_number2}
-            problem = generate_custom_multiplication(number1_spec, number2_spec)
-        else:
-            problem = get_problem(
-                operation=assignment.operation,
-                level=assignment.level
-            )
-    else:
-        # Free practice - use provided settings
-        operation = data.get('operation', 'addition')
-        level = data.get('level', 1)
-        
-        if operation == 'multiplication' and level == 99:
-            custom_numbers = data.get('customNumbers', {})
-            number1_spec = {'type': 'single', 'value': custom_numbers.get('number1')}
-            number2_spec = {'type': 'single', 'value': custom_numbers.get('number2')}
-            problem = generate_custom_multiplication(number1_spec, number2_spec)
-        else:
-            problem = get_problem(operation=operation, level=level)
-    
+        assignment = Assignment.query.get(assignment_id)
+        if not assignment:
+            return jsonify({'error': 'Invalid assignment'})
+
+        # Get progress to check if assignment is complete
+        progress = AssignmentProgress.query.filter_by(
+            assignment_id=assignment_id,
+            student_id=current_user.id
+        ).first()
+
+        if not progress:
+            return jsonify({'error': 'No progress record found'})
+
+        if progress.is_complete:
+            return jsonify({
+                'complete': True,
+                'message': 'Assignment complete!'
+            })
+
+        # Use assignment settings
+        operation = assignment.operation
+        level = assignment.level
+
+    # Get problem using PracticeTracker
+    problem = PracticeTracker.get_problem(
+        operation=operation,
+        level=level,
+        user_id=current_user.id,
+        db=db
+    )
+
     if not problem:
         return jsonify({'error': 'Invalid operation or level'})
+    
+    # Check if this is a level up response
+    if problem.get('level_up'):
+        return jsonify({
+            'level_up': True,
+            'new_level': problem['new_level'],
+            'message': f'Congratulations! You have mastered level {level}!\n'
+                      f'Accuracy: {problem["accuracy"]:.1f}%\n'
+                      f'Average Time: {problem["avg_time"]:.1f}s'
+        })
     
     return jsonify(problem)
 
