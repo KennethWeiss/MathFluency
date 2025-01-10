@@ -1,6 +1,6 @@
 """Safe create all tables
 
-Revision ID: safe_create_all_tables
+Revision ID: ccfec45f97e7
 Revises: 
 Create Date: 2025-01-09 22:05:00.000000
 
@@ -11,7 +11,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 
 # revision identifiers, used by Alembic.
-revision = 'safe_create_all_tables'
+revision = 'ccfec45f97e7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -33,7 +33,7 @@ def upgrade():
         sa.Column('version_num', sa.String(length=32), nullable=False),
         sa.PrimaryKeyConstraint('version_num')
     )
-    op.execute("INSERT INTO alembic_version (version_num) VALUES ('safe_create_all_tables')")
+    op.execute("INSERT INTO alembic_version (version_num) VALUES ('ccfec45f97e7')")
 
     # Create active_session table if it doesn't exist
     if 'active_session' not in existing_tables:
