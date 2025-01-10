@@ -58,6 +58,33 @@ async function getNewProblem() {
         if (problemData.error) {
             throw new Error(problemData.error);
         }
+
+        // Check for level up
+        if (problemData.level_up) {
+            // Show mastery message
+            const masteryMessage = `
+                <div class="alert alert-success">
+                    <h4 class="alert-heading">Level Mastered! 🎉</h4>
+                    <p>${problemData.message}</p>
+                    <hr>
+                    <p class="mb-0">Moving to level ${problemData.new_level}...</p>
+                </div>`;
+            document.getElementById('feedback').innerHTML = masteryMessage;
+
+            // Update level selector if in free practice mode
+            if (typeof assignmentId === 'undefined') {
+                const select = document.querySelector('.level-select:not([style*="display: none"])');
+                if (select) {
+                    select.value = problemData.new_level;
+                }
+            }
+
+            // Get a new problem after a short delay to show the message
+            setTimeout(() => {
+                getNewProblem();
+            }, 3000);
+            return;
+        }
         
         displayProblem(problemData);
         document.getElementById('correct-answer-hidden').value = problemData.answer;
