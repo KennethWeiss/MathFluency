@@ -136,16 +136,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    {% if mode == 'assignment' %}
-    // Set initial operation and level from assignment
-    currentOperation = '{{ assignment.operation }}';
-    const assignmentId = {{ assignment.id }};
-    const assignmentLevel = {{ assignment.level }};
-    {% else %}
-    // Set default operation and level for free practice
-    currentOperation = 'addition';
-    {% endif %}
-</script>
 <script src="{{ url_for('static', filename='js/practice.js') }}"></script>
 {% endblock %}
