@@ -74,6 +74,89 @@
     <div class="row mt-5">
         <div class="col-12">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">All Students</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <div class="mb-4">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="studentSearch" class="form-control" placeholder="Search by name or email" onkeyup="filterStudents()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <select id="classFilter" class="form-select" onchange="filterStudents()">
+                            <option value="">All Classes</option>
+                            {% for class in classes %}
+                            <option value="{{ class.id }}">{{ class.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                    <!-- End Filters -->
+                
+                    <!-- Student List -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Class</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            {% for class in classes %}
+                                {% for student in class.students %}
+                                <tr class="student-row"
+                                    data-student-name="{{ student.full_name.lower() }}"
+                                    data-student-email="{{ student.email.lower() }}"
+                                    data-class-id="{{ class.id }}">
+                                    <td>{{ student.name }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>{{ class.name }}</td>
+                                    <td>
+                                        <a href="{{ url_for('progress.student_progress', student_id=student.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-chart-line"></i> View Progress
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                                <!-- Add filtering script -->
+                                <script>
+                                    function filterStudents() {
+                                        const searchText = document.getElementById('studentSearch').value.toLowerCase();
+                                        const selectedClass = document.getElementById('classFilter').value;
+                                        const rows = document.getElementsByClassName('student-row');
+                    
+                                        for (let row of rows) {
+                                            const studentName = row.dataset.studentName;
+                                            const studentEmail = row.dataset.studentEmail;
+                                            const classId = row.dataset.classId;
+                                            
+                                            const matchesSearch = searchText === '' || 
+                                                studentName.includes(searchText) || 
+                                                studentEmail.includes(searchText);
+                                            const matchesClass = selectedClass === '' || classId === selectedClass;
+                                            
+                                            row.style.display = matchesSearch && matchesClass ? '' : 'none';
+                                        }
+                                    }
+                                    </script>
+                    
+                                    <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#bulkUploadSection" aria-expanded="false" aria-controls="bulkUploadSection">
+                    
                 <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#bulkUploadSection" aria-expanded="false" aria-controls="bulkUploadSection">
                     <h5 class="mb-0">Bulk Upload Students</h5>
                     <i class="fas fa-chevron-down transition-transform"></i>
