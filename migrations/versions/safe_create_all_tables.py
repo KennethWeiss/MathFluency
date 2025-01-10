@@ -1,7 +1,7 @@
 """Safe create all tables
 
 Revision ID: safe_create_all_tables
-Revises: 
+Revises: reset_alembic_version
 Create Date: 2025-01-09 22:05:00.000000
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision = 'safe_create_all_tables'
-down_revision = None
+down_revision = 'reset_alembic_version'
 branch_labels = None
 depends_on = None
 
