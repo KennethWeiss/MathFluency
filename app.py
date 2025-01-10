@@ -247,3 +247,5 @@ def create_app(test_config=None):
 if __name__ == '__main__':
     app = create_app()
     socketio.run(app, debug=True, port=5001)
+else:
+    app = create_app()
