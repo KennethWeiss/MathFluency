@@ -1,8 +1,8 @@
 from app import app, db
 from models.user import User
-from models.class_ import Class
+from models.class_ import Class, teacher_class
 from sqlalchemy import text
-
+from datetime import datetime
 
 def create_test_users():
     with app.app_context():
@@ -68,23 +68,25 @@ def create_test_users():
         
         created_classes = []
         for class_data in classes:
+            print(f"Creating class: {class_data['name']}")
             class_ = Class(
                 name=class_data['name'],
                 description=class_data['description']
             )
+            print("\n Add class to session...")
             db.session.add(class_)
             db.session.commit()  # Commit to get the class ID
             
             # Add primary teacher
+            print("Add primary teacher...")
             class_.add_teacher(class_data['primary_teacher'])
-            db.session.commit()
+            print("Commit primary teacher...")
             
             # For Math Club, add all teachers
             if class_data['name'] == 'Math Club':
                 for teacher in created_teachers:
                     if teacher != class_data['primary_teacher']:
                         class_.add_teacher(teacher)
-                db.session.commit()
             
             created_classes.append(class_)
             print(f"Class created: {class_.name}")

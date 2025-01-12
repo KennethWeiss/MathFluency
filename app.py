@@ -65,6 +65,16 @@ def create_app(test_config=None):
     login_manager = LoginManager(app)
     login_manager.login_view = 'auth.login'
     
+    # Import models
+    from models.user import User
+    from models.class_ import Class
+    from models.practice_attempt import PracticeAttempt
+    from models.assignment import Assignment, AssignmentProgress, AttemptHistory
+    from models.quiz import Quiz, QuizParticipant, QuizQuestion
+    
+    with app.app_context():
+        db.create_all()  # This will create any missing tables
+        
     # Import and initialize SocketIO
     from extensions import socketio
     socketio.init_app(app, cors_allowed_origins="*")
@@ -107,20 +117,6 @@ def create_app(test_config=None):
             GOOGLE_OAUTH_CLIENT_ID=os.environ.get("GOOGLE_CLIENT_ID"),
             GOOGLE_OAUTH_CLIENT_SECRET=os.environ.get("GOOGLE_CLIENT_SECRET")
         )
-    
-    with app.app_context():
-        try:
-            db.create_all()
-            print("Database tables created successfully")
-        except Exception as e:
-            print(f"Error creating database tables: {e}")
-    
-    # Import models
-    from models.user import User
-    from models.class_ import Class
-    from models.practice_attempt import PracticeAttempt
-    from models.assignment import Assignment, AssignmentProgress, AttemptHistory
-    from models.quiz import Quiz, QuizParticipant, QuizQuestion
     
     # Add this after app initialization but before routes
     @app.template_filter('unique')
