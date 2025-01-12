@@ -47,11 +47,6 @@ class PracticeTracker:
         problems = {}
         for attempt in attempts:
             prob = attempt.problem
-            if operation == 'multiplication':
-                # Normalize multiplication problem format (always put smaller number first)
-                n1, n2 = map(int, prob.split(' × '))
-                prob = f"{min(n1, n2)} × {max(n1, n2)}"
-            
             if prob not in problems:
                 problems[prob] = {
                     'attempts': 0,
@@ -133,7 +128,7 @@ class PracticeTracker:
         if operation == 'multiplication':
             required_problems = set()
             for i in range(0, 13):  # 0-12 for each level
-                problem = f"{min(i, level)} × {max(i, level)}"
+                problem = f"{level} × {i}"  # Only check problems at this level
                 required_problems.add(problem)
             
             logging.info(f"Required problems for multiplication level {level}: {required_problems}")
@@ -208,11 +203,6 @@ class PracticeTracker:
         for _ in range(10):
             problem = get_math_problem(operation, level)
             prob_str = problem['problem']
-            
-            # If multiplication, normalize the format
-            if operation == 'multiplication':
-                n1, n2 = map(int, prob_str.split(' × '))
-                prob_str = f"{min(n1, n2)} × {max(n1, n2)}"
             
             # Check if this problem has been mastered
             if prob_str in problem_stats:

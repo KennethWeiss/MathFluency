@@ -54,6 +54,8 @@ def practice():
 @practice_bp.route('/get_problem', methods=['POST'])
 @login_required
 def get_problem_route():
+    print("Get problem route")
+    print(f"Received data: {request.get_json()}")
     data = request.get_json()
     operation = data.get('operation')
     level = data.get('level', 1)
@@ -181,6 +183,25 @@ def check_answer():
             time_taken=time_taken
         )
         db.session.add(attempt)
+        
+        # For multiplication, add a second attempt record for the commutative case
+        if operation == 'multiplication':
+            num1, num2 = map(int, problem.split('×'))
+            if num1 != num2:  # Only if numbers are different
+                # Create commutative attempt with swapped numbers
+                commutative_problem = f"{num2} × {num1}"
+                commutative_attempt = PracticeAttempt(
+                    user_id=current_user.id,
+                    operation=operation,
+                    level=max(num1, num2),  # Use larger number as level
+                    problem=commutative_problem,
+                    user_answer=user_answer,
+                    correct_answer=correct_answer,
+                    is_correct=is_correct,
+                    time_taken=time_taken
+                )
+                db.session.add(commutative_attempt)
+                print(f"Added commutative attempt: {commutative_problem} at level {max(num1, num2)}")  # Debug log
         
         # Update assignment progress if in assignment mode
         progress = None
