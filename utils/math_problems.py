@@ -4,119 +4,103 @@ from typing import Dict, Union, Optional, Tuple, List
 # Type hint for a problem
 Problem = Dict[str, Union[str, int, float]]
 
-def generate_addition_level1() -> Problem:
-    """Adding 1 to single digit"""
-    num = random.randint(1, 9)
-    return {
-        'problem': f"{num} + 1",
-        'answer': num + 1,
+# Define level configurations for each operation
+ADDITION_LEVELS = {
+    1: {
         'description': "Adding 1 to single digit",
-        'operation': 'addition',
-        'level': 1
-    }
-
-def generate_addition_level2() -> Problem:
-    """Adding 2 to single digit"""
-    num = random.randint(1, 9)
-    return {
-        'problem': f"{num} + 2",
-        'answer': num + 2,
+        'num1': {'type': 'range', 'value': (1, 9)},
+        'num2': {'type': 'single', 'value': [1]}
+    },
+    2: {
         'description': "Adding 2 to single digit",
-        'operation': 'addition',
-        'level': 2
-    }
-
-def generate_addition_level3() -> Problem:
-    """Make 10 problems"""
-    num1 = random.randint(1, 9)
-    num2 = 10 - num1  # This makes the sum equal to 10
-    return {
-        'problem': f"{num1} + {num2}",
-        'answer': 10,
+        'num1': {'type': 'range', 'value': (1, 9)},
+        'num2': {'type': 'single', 'value': [2]}
+    },
+    3: {
         'description': "Make 10",
-        'operation': 'addition',
-        'level': 3
-    }
-
-def generate_addition_level4() -> Problem:
-    """Add single digit to double digit"""
-    num1 = random.randint(10, 99)  # Double digit
-    num2 = random.randint(1, 9)    # Single digit
-    return {
-        'problem': f"{num1} + {num2}",
-        'answer': num1 + num2,
+        'custom_generator': lambda: (random.randint(1, 9), lambda x: 10 - x)
+    },
+    4: {
         'description': "Add single digit to double digit",
-        'operation': 'addition',
-        'level': 4
-    }
-
-def generate_addition_level5() -> Problem:
-    """Add double digit to double digit"""
-    num1 = random.randint(10, 99)
-    num2 = random.randint(10, 99)
-    return {
-        'problem': f"{num1} + {num2}",
-        'answer': num1 + num2,
+        'num1': {'type': 'range', 'value': (10, 99)},
+        'num2': {'type': 'range', 'value': (1, 9)}
+    },
+    5: {
         'description': "Add double digit to double digit",
-        'operation': 'addition',
-        'level': 5
+        'num1': {'type': 'range', 'value': (10, 99)},
+        'num2': {'type': 'range', 'value': (10, 99)}
     }
+}
 
-def generate_subtraction_level1() -> Problem:
-    """Subtracting 1 from single digit"""
-    num = random.randint(2, 10)  # Start from 2 to avoid negative numbers
-    return {
-        'problem': f"{num} - 1",
-        'answer': num - 1,
+SUBTRACTION_LEVELS = {
+    1: {
         'description': "Subtracting 1 from single digit",
-        'operation': 'subtraction',
-        'level': 1
-    }
-
-def generate_subtraction_level2() -> Problem:
-    """Subtracting 2 from single digit"""
-    num = random.randint(3, 10)  # Start from 3 to avoid negative numbers
-    return {
-        'problem': f"{num} - 2",
-        'answer': num - 2,
+        'num1': {'type': 'range', 'value': (2, 10)},
+        'num2': {'type': 'single', 'value': [1]}
+    },
+    2: {
         'description': "Subtracting 2 from single digit",
-        'operation': 'subtraction',
-        'level': 2
-    }
-
-def generate_subtraction_level3() -> Problem:
-    """Subtract from 10"""
-    num2 = random.randint(1, 9)
-    return {
-        'problem': f"10 - {num2}",
-        'answer': 10 - num2,
+        'num1': {'type': 'range', 'value': (3, 10)},
+        'num2': {'type': 'single', 'value': [2]}
+    },
+    3: {
         'description': "Subtract from 10",
-        'operation': 'subtraction',
-        'level': 3
-    }
-
-def generate_subtraction_level4() -> Problem:
-    """Subtract single digit from double digit"""
-    num1 = random.randint(11, 99)  # Double digit
-    num2 = random.randint(1, 9)    # Single digit
-    return {
-        'problem': f"{num1} - {num2}",
-        'answer': num1 - num2,
+        'num1': {'type': 'single', 'value': [10]},
+        'num2': {'type': 'range', 'value': (1, 9)}
+    },
+    4: {
         'description': "Subtract single digit from double digit",
-        'operation': 'subtraction',
-        'level': 4
-    }
-
-def generate_subtraction_level5() -> Problem:
-    """Subtract double digit from double digit"""
-    num1 = random.randint(20, 99)  # First double digit
-    num2 = random.randint(10, num1 - 1)  # Second double digit, smaller than first
-    return {
-        'problem': f"{num1} - {num2}",
-        'answer': num1 - num2,
+        'num1': {'type': 'range', 'value': (11, 99)},
+        'num2': {'type': 'range', 'value': (1, 9)}
+    },
+    5: {
         'description': "Subtract double digit from double digit",
-        'operation': 'subtraction',
-        'level': 5
+        'num1': {'type': 'range', 'value': (11, 99)},
+        'custom_generator': lambda num1: (num1, lambda x: random.randint(1, x-1))
+    }
+}
+
+def get_random_number(number_spec):
+    """Get a random number based on range, set, or single number specification"""
+    if number_spec['type'] == 'range':
+        min_val, max_val = number_spec['value']
+        return random.randint(min_val, max_val)
+    elif number_spec['type'] == 'single':
+        return number_spec['value'][0]
+    else:  # type == 'set'
+        return random.choice(number_spec['value'])
+
+def generate_problem(operation: str, level: int, level_config: dict) -> Problem:
+    """Generate a problem based on operation and level configuration"""
+    if 'custom_generator' in level_config:
+        if callable(level_config['custom_generator']):
+            # For simple custom generators (like Make 10)
+            num1, num2_func = level_config['custom_generator']()
+            num2 = num2_func(num1) if callable(num2_func) else num2_func
+        else:
+            # For more complex custom generators
+            num1 = get_random_number(level_config['num1'])
+            num2_func = level_config['custom_generator'](num1)
+            num2 = num2_func(num1) if callable(num2_func) else num2_func
+    else:
+        num1 = get_random_number(level_config['num1'])
+        num2 = get_random_number(level_config['num2'])
+
+    # Define operation symbols and functions
+    operations = {
+        'addition': ('+', lambda x, y: x + y),
+        'subtraction': ('-', lambda x, y: x - y),
+        'multiplication': ('×', lambda x, y: x * y)
+    }
+    
+    symbol, operation_func = operations[operation]
+    
+    return {
+        'problem': f"{num1} {symbol} {num2}",
+        'answer': operation_func(num1, num2),
+        'description': level_config['description'],
+        'operation': operation,
+        'level': level
     }
 
 def generate_multiplication_problem(table: int) -> Problem:
@@ -167,34 +151,11 @@ def generate_custom_multiplication(number1_spec, number2_spec) -> Problem:
 
 def get_problem(operation: str, level: int) -> Optional[Problem]:
     """Get a problem based on operation and level"""
-    if operation == 'addition':
-        if level == 1:
-            return generate_addition_level1()
-        elif level == 2:
-            return generate_addition_level2()
-        elif level == 3:
-            return generate_addition_level3()
-        elif level == 4:
-            return generate_addition_level4()
-        elif level == 5:
-            return generate_addition_level5()
-    elif operation == 'subtraction':
-        if level == 1:
-            return generate_subtraction_level1()
-        elif level == 2:
-            return generate_subtraction_level2()
-        elif level == 3:
-            return generate_subtraction_level3()
-        elif level == 4:
-            return generate_subtraction_level4()
-        elif level == 5:
-            return generate_subtraction_level5()
-    elif operation == 'multiplication':
-        if level == 99:  # Special level for custom problems
-            number1_spec = {'type': 'range', 'value': (2, 6)}
-            number2_spec = {'type': 'set', 'value': [2, 7, 8]}
-            return generate_custom_multiplication(number1_spec, number2_spec)
-        elif 0 <= level <= 12:  # Regular multiplication tables 0-12
-            return generate_multiplication_problem(level)
+    if operation == 'addition' and level in ADDITION_LEVELS:
+        return generate_problem(operation, level, ADDITION_LEVELS[level])
+    elif operation == 'subtraction' and level in SUBTRACTION_LEVELS:
+        return generate_problem(operation, level, SUBTRACTION_LEVELS[level])
+    elif operation == 'multiplication' and 0 <= level <= 12:
+        return generate_multiplication_problem(level)
     
     return None  # Invalid operation or level
