@@ -18,30 +18,58 @@
         .component-details {
             margin-top: 40px;
         }
-        details {
-            margin: 10px 0;
-            padding: 10px;
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .component-card {
             border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-            transition: background-color 0.3s ease;
-        }
-        summary {
-            font-weight: bold;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+            transition: all 0.2s ease;
             cursor: pointer;
-            padding: 5px;
-            outline: none;
         }
-        summary:hover {
-            background-color: #f0f0f0;
+        
+        .component-card[data-layer="ui"] {
+            background: #a6cee3;
         }
-        details[open] {
-            background-color: #f5f5f5;
+        
+        .component-card[data-layer="app"] {
+            background: #b2df8a;
         }
-        details p {
-            margin: 10px;
-            padding: 10px;
+        
+        .component-card[data-layer="service"] {
+            background: #fdbf6f;
+        }
+        
+        .component-card[data-layer="data"] {
+            background: #fb9a99;
+        }
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .component-card summary {
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .component-card[open] {
+            background: #f8f9fa;
+        }
+        .component-card ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+            font-size: 0.85em;
             line-height: 1.4;
+        }
+        .component-card li {
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -96,11 +124,15 @@
             PracticeRoutes -->|Get Problems| PracticeTracker
             PracticeRoutes -->|Check Progress| ProgressService
             PracticeRoutes -->|Authentication| AuthSystem
+            PracticeRoutes -->|Quiz Management| QuizRoutes
+            PracticeRoutes -->|OAuth Integration| OAuthRoutes
             
             PracticeTracker -->|Store Attempts| Database
             ProgressService -->|Query Stats| Database
             MathProblems -->|Generate Problems| PracticeTracker
             UserModel -->|ORM Mapping| Database
+            QuizModel -->|Quiz Data| Database
+            OAuthModel -->|OAuth Tokens| Database
             
             %% Styling
             classDef uiLayer fill:#a6cee3,stroke:#333,stroke-width:2px
@@ -109,15 +141,13 @@
             classDef dataLayer fill:#fb9a99,stroke:#333,stroke-width:2px
             
             class PracticeUI,Templates,StaticAssets uiLayer
-            class PracticeRoutes,AuthSystem,WebSockets appLayer
+            class PracticeRoutes,AuthSystem,WebSockets,QuizRoutes,OAuthRoutes appLayer
             class PracticeTracker,ProgressService,MathProblems serviceLayer
-            class Database,UserModel dataLayer
+            class Database,UserModel,QuizModel,OAuthModel dataLayer
     </div>
     
-    <div class="component-details">
-        <h2>Component Details</h2>
-        
-        <details>
+    <div class="component-grid">
+        <details class="component-card" data-layer="ui">
             <summary>Practice UI (HTML/JS Templates)</summary>
             <p>Handles user interface rendering and interactions. Includes HTML templates and JavaScript for dynamic behavior. Key components:</p>
             <ul>
@@ -135,7 +165,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="ui">
             <summary>Templates (templates/practice/)</summary>
             <p>Contains Jinja2 templates for rendering practice-related views and components. Key templates:</p>
             <ul>
@@ -153,7 +183,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="ui">
             <summary>Static Assets (static/js/practice.js)</summary>
             <p>JavaScript files containing client-side logic for practice functionality and UI interactions. Key functions:</p>
             <ul>
@@ -163,7 +193,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="app">
         <summary>Practice Routes (Flask Blueprint)</summary>
         <p>Defines API endpoints and routes for practice-related functionality. Key routes:</p>
         <ul>
@@ -182,7 +212,7 @@
         </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="app">
             <summary>Auth System (routes/auth_routes.py)</summary>
             <p>Handles user authentication and authorization for practice features. Key routes:</p>
             <ul>
@@ -209,7 +239,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="app">
             <summary>Real-time (websockets/quiz.py)</summary>
             <p>Manages real-time communication for practice sessions and updates using WebSockets. Key features:</p>
             <ul>
@@ -235,7 +265,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="service">
             <summary>Practice Tracker (utils/practice_tracker.py)</summary>
             <p>Core component for tracking and managing practice sessions. Key responsibilities:</p>
             <ul>
@@ -261,7 +291,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="service">
             <summary>Progress Service (services/progress_service.py)</summary>
             <p>Calculates and tracks user progress, generates reports, and manages mastery levels. Key routes:</p>
             <ul>
@@ -279,7 +309,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="service">
             <summary>Math Problems (utils/math_problems.py)</summary>
             <p>Core component for generating and managing math problems. Key responsibilities:</p>
             <ul>
@@ -313,7 +343,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="data">
             <summary>Database (SQLAlchemy Models)</summary>
             <p>Central data storage and management system using SQLAlchemy ORM. Key responsibilities:</p>
             <ul>
@@ -348,7 +378,7 @@
             </ul>
         </details>
         
-        <details>
+        <details class="component-card" data-layer="data">
             <summary>User Model (models/user.py)</summary>
             <p>Core component representing users and their relationships in the system. Key responsibilities:</p>
             <ul>
@@ -387,6 +417,67 @@
                 <li><code>has_role()</code> - Checks user permissions</li>
                 <li><code>is_active()</code> - Checks account status</li>
                 <li><code>get_progress()</code> - Retrieves user progress</li>
+            </ul>
+        </details>
+
+        <details class="component-card" data-layer="app">
+            <summary>Quiz System (routes/quiz_routes.py)</summary>
+            <p>Handles quiz creation, management, and gameplay. Key routes:</p>
+            <ul>
+                <li><code>/quiz/create</code> - Quiz creation interface</li>
+                <li><code>/quiz/play</code> - Main quiz gameplay interface</li>
+                <li><code>/quiz/teacher_panel</code> - Teacher quiz management</li>
+                <li><code>/quiz/student_quizzes</code> - Student quiz dashboard</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Quiz creation wizard</li>
+                <li>Real-time multiplayer support</li>
+                <li>Score tracking and leaderboards</li>
+                <li>Question randomization</li>
+                <li>Time-limited challenges</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>create_quiz()</code> - Handles quiz creation</li>
+                <li><code>start_quiz()</code> - Initializes quiz session</li>
+                <li><code>submit_answer()</code> - Processes quiz answers</li>
+                <li><code>get_results()</code> - Calculates quiz results</li>
+                <li><code>get_leaderboard()</code> - Generates quiz rankings</li>
+            </ul>
+        </details>
+
+        <details class="component-card" data-layer="app">
+            <summary>OAuth Integration (routes/oauth_routes.py)</summary>
+            <p>Manages third-party authentication and API integrations. Key routes:</p>
+            <ul>
+                <li><code>/oauth/authorize</code> - OAuth authorization endpoint</li>
+                <li><code>/oauth/callback</code> - OAuth callback handler</li>
+                <li><code>/oauth/token</code> - Token management</li>
+                <li><code>/oauth/revoke</code> - Token revocation</li>
+            </ul>
+            <p>Supported providers:</p>
+            <ul>
+                <li>Google</li>
+                <li>Microsoft</li>
+                <li>Apple</li>
+                <li>GitHub</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Secure token storage</li>
+                <li>Token refresh handling</li>
+                <li>Scope management</li>
+                <li>Error handling and logging</li>
+                <li>Rate limiting protection</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>authorize()</code> - Handles OAuth authorization flow</li>
+                <li><code>callback()</code> - Processes OAuth callback</li>
+                <li><code>refresh_token()</code> - Manages token refresh</li>
+                <li><code>revoke_token()</code> - Handles token revocation</li>
+                <li><code>get_user_info()</code> - Retrieves user profile data</li>
             </ul>
         </details>
     </div>
