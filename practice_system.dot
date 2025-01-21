@@ -1,0 +1,51 @@
+digraph PracticeSystem {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    
+    // Main Components
+    PracticeUI [label="Practice UI\n(HTML/JS)"];
+    PracticeRoutes [label="Practice Routes\n(Flask)"];
+    PracticeTracker [label="Practice Tracker"];
+    ProgressService [label="Progress Service"];
+    Database [label="Database\n(SQLAlchemy)"];
+    
+    // Data Models
+    PracticeAttempt [label="PracticeAttempt\nModel"];
+    AssignmentProgress [label="AssignmentProgress\nModel"];
+    AttemptHistory [label="AttemptHistory\nModel"];
+    
+    // Relationships
+    PracticeUI -> PracticeRoutes [label="HTTP Requests"];
+    PracticeRoutes -> PracticeTracker [label="Get Problems"];
+    PracticeRoutes -> ProgressService [label="Check Progress"];
+    PracticeTracker -> Database [label="Store Attempts"];
+    ProgressService -> Database [label="Query Stats"];
+    
+    Database -> PracticeAttempt;
+    Database -> AssignmentProgress;
+    Database -> AttemptHistory;
+    
+    // Key Processes
+    subgraph cluster_processes {
+        label = "Key Processes";
+        style = dashed;
+        
+        ProblemGeneration [label="Problem Generation"];
+        AnswerValidation [label="Answer Validation"];
+        ProgressTracking [label="Progress Tracking"];
+        LevelAdjustment [label="Level Adjustment"];
+        
+        ProblemGeneration -> AnswerValidation -> ProgressTracking -> LevelAdjustment;
+    }
+    
+    // Connections to Processes
+    PracticeTracker -> ProblemGeneration;
+    PracticeRoutes -> AnswerValidation;
+    ProgressService -> ProgressTracking;
+    ProgressService -> LevelAdjustment;
+    
+    // Layout Improvements
+    {rank=same; PracticeUI; PracticeRoutes}
+    {rank=same; PracticeTracker; ProgressService}
+    {rank=same; Database; PracticeAttempt; AssignmentProgress; AttemptHistory}
+}

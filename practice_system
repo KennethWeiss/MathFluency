@@ -1,0 +1,40 @@
+// Practice System
+digraph {
+	rankdir=LR
+	PracticeUI [label="Practice UI
+(HTML/JS)"]
+	PracticeRoutes [label="Practice Routes
+(Flask)"]
+	PracticeTracker [label="Practice Tracker"]
+	ProgressService [label="Progress Service"]
+	Database [label="Database
+(SQLAlchemy)"]
+	PracticeAttempt [label="PracticeAttempt
+Model"]
+	AssignmentProgress [label="AssignmentProgress
+Model"]
+	AttemptHistory [label="AttemptHistory
+Model"]
+	PracticeUI -> PracticeRoutes [label="HTTP Requests"]
+	PracticeRoutes -> PracticeTracker [label="Get Problems"]
+	PracticeRoutes -> ProgressService [label="Check Progress"]
+	PracticeTracker -> Database [label="Store Attempts"]
+	ProgressService -> Database [label="Query Stats"]
+	Database -> PracticeAttempt
+	Database -> AssignmentProgress
+	Database -> AttemptHistory
+	subgraph cluster_processes {
+		label="Key Processes" style=dashed
+		ProblemGeneration [label="Problem Generation"]
+		AnswerValidation [label="Answer Validation"]
+		ProgressTracking [label="Progress Tracking"]
+		LevelAdjustment [label="Level Adjustment"]
+		ProblemGeneration -> AnswerValidation
+		AnswerValidation -> ProgressTracking
+		ProgressTracking -> LevelAdjustment
+	}
+	PracticeTracker -> ProblemGeneration
+	PracticeRoutes -> AnswerValidation
+	ProgressService -> ProgressTracking
+	ProgressService -> LevelAdjustment
+}
