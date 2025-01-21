@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Practice System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding-bottom: 40px;
+        }
+        .mermaid {
+            width: 100%;
+            height: auto;
+            min-height: 400px;
+            margin-bottom: 30px;
+        }
+        .component-details {
+            margin-top: 40px;
+        }
+        details {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            transition: background-color 0.3s ease;
+        }
+        summary {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px;
+            outline: none;
+        }
+        summary:hover {
+            background-color: #f0f0f0;
+        }
+        details[open] {
+            background-color: #f5f5f5;
+        }
+        details p {
+            margin: 10px;
+            padding: 10px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Practice System Architecture</h1>
+    <div class="mermaid">
+        %% Practice System Architecture Diagram
+        flowchart TD
+            %% UI Layer
+            PracticeUI["Practice UI
+            (HTML/JS Templates)"]
+            
+            Templates["Templates
+            (templates/practice/)"]
+            
+            StaticAssets["Static Assets
+            (static/js/practice.js)"]
+            
+            %% Application Layer
+            PracticeRoutes["Practice Routes
+            (Flask Blueprint)"]
+            
+            AuthSystem["Auth System
+            (routes/auth_routes.py)"]
+            
+            WebSockets["Real-time
+            (websockets/quiz.py)"]
+            
+            %% Service Layer
+            PracticeTracker["Practice Tracker
+            (utils/practice_tracker.py)"]
+            
+            ProgressService["Progress Service
+            (services/progress_service.py)"]
+            
+            MathProblems["Math Problems
+            (utils/math_problems.py)"]
+            
+            %% Data Layer
+            Database["Database
+            (SQLAlchemy Models)"]
+            
+            UserModel["User Model
+            (models/user.py)"]
+            
+            %% Relationships
+            PracticeUI -->|AJAX/HTTP Requests| PracticeRoutes
+            Templates -->|Render Views| PracticeUI
+            StaticAssets -->|Client Logic| PracticeUI
+            WebSockets -->|Real-time Updates| PracticeUI
+            
+            PracticeRoutes -->|Get Problems| PracticeTracker
+            PracticeRoutes -->|Check Progress| ProgressService
+            PracticeRoutes -->|Authentication| AuthSystem
+            
+            PracticeTracker -->|Store Attempts| Database
+            ProgressService -->|Query Stats| Database
+            MathProblems -->|Generate Problems| PracticeTracker
+            UserModel -->|ORM Mapping| Database
+            
+            %% Styling
+            classDef uiLayer fill:#a6cee3,stroke:#333,stroke-width:2px
+            classDef appLayer fill:#b2df8a,stroke:#333,stroke-width:2px
+            classDef serviceLayer fill:#fdbf6f,stroke:#333,stroke-width:2px
+            classDef dataLayer fill:#fb9a99,stroke:#333,stroke-width:2px
+            
+            class PracticeUI,Templates,StaticAssets uiLayer
+            class PracticeRoutes,AuthSystem,WebSockets appLayer
+            class PracticeTracker,ProgressService,MathProblems serviceLayer
+            class Database,UserModel dataLayer
+    </div>
+    
+    <div class="component-details">
+        <h2>Component Details</h2>
+        
+        <details>
+            <summary>Practice UI (HTML/JS Templates)</summary>
+            <p>Handles user interface rendering and interactions. Includes HTML templates and JavaScript for dynamic behavior. Key components:</p>
+            <ul>
+                <li><code>practice.html</code> - Main practice interface template</li>
+                <li><code>_problem_table.html</code> - Problem display component</li>
+                <li><code>_stats_card.html</code> - Progress statistics display</li>
+                <li><code>_multiplication_table.html</code> - Multiplication table visualization</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Dynamic problem loading via AJAX</li>
+                <li>Real-time progress updates</li>
+                <li>Interactive multiplication table</li>
+                <li>Keyboard input handling</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Templates (templates/practice/)</summary>
+            <p>Contains Jinja2 templates for rendering practice-related views and components. Key templates:</p>
+            <ul>
+                <li><code>practice.html</code> - Main practice interface with problem display and controls</li>
+                <li><code>_problem_table.html</code> - Reusable component for displaying math problems</li>
+                <li><code>_stats_card.html</code> - Progress statistics visualization component</li>
+                <li><code>_multiplication_table.html</code> - Interactive multiplication table component</li>
+            </ul>
+            <p>Template features:</p>
+            <ul>
+                <li>Dynamic content rendering with Jinja2</li>
+                <li>Component-based architecture for reusability</li>
+                <li>Responsive design for multiple devices</li>
+                <li>Template inheritance from base.html</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Static Assets (static/js/practice.js)</summary>
+            <p>JavaScript files containing client-side logic for practice functionality and UI interactions. Key functions:</p>
+            <ul>
+                <li><code>getNewProblem()</code> - Fetches new math problems from server, handles level progression</li>
+                <li><code>displayProblem()</code> - Renders the current problem in the UI with answer hints</li>
+                <li><code>Event Listeners</code> - Handles operation selection, answer checking, and keyboard input</li>
+            </ul>
+        </details>
+        
+        <details>
+        <summary>Practice Routes (Flask Blueprint)</summary>
+        <p>Defines API endpoints and routes for practice-related functionality. Key routes:</p>
+        <ul>
+            <li><code>/practice</code> - Main practice interface (assignment and free modes)</li>
+            <li><code>/get_problem</code> - API endpoint to fetch practice problems</li>
+            <li><code>/check_answer</code> - API endpoint to validate user answers</li>
+            <li><code>/progress</code> - Shows student's practice progress and stats</li>
+        </ul>
+        <p>Key functions:</p>
+        <ul>
+            <li><code>practice()</code> - Renders practice interface</li>
+            <li><code>get_problem_route()</code> - Handles problem generation</li>
+            <li><code>check_answer()</code> - Validates answers and tracks progress</li>
+            <li><code>progress()</code> - Shows detailed practice statistics</li>
+            <li><code>get_level_description()</code> - Provides level descriptions</li>
+        </ul>
+        </details>
+        
+        <details>
+            <summary>Auth System (routes/auth_routes.py)</summary>
+            <p>Handles user authentication and authorization for practice features. Key routes:</p>
+            <ul>
+                <li><code>/login</code> - User login endpoint with session management</li>
+                <li><code>/register</code> - New user registration</li>
+                <li><code>/logout</code> - Session termination</li>
+                <li><code>/reset_password</code> - Password reset functionality</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Session-based authentication</li>
+                <li>Password hashing with bcrypt</li>
+                <li>Role-based access control</li>
+                <li>CSRF protection</li>
+                <li>Login rate limiting</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>login()</code> - Handles user authentication</li>
+                <li><code>register()</code> - Processes new user registration</li>
+                <li><code>logout()</code> - Clears user session</li>
+                <li><code>reset_password()</code> - Manages password reset flow</li>
+                <li><code>require_login()</code> - Decorator for protected routes</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Real-time (websockets/quiz.py)</summary>
+            <p>Manages real-time communication for practice sessions and updates using WebSockets. Key features:</p>
+            <ul>
+                <li>Real-time problem updates</li>
+                <li>Live progress tracking</li>
+                <li>Instant feedback on answers</li>
+                <li>Multiplayer practice sessions</li>
+            </ul>
+            <p>Key WebSocket events:</p>
+            <ul>
+                <li><code>problem_update</code> - Sends new problems to clients</li>
+                <li><code>answer_result</code> - Provides immediate feedback on answers</li>
+                <li><code>progress_update</code> - Updates client progress in real-time</li>
+                <li><code>session_state</code> - Maintains synchronized session state</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>handle_connect()</code> - Manages new WebSocket connections</li>
+                <li><code>handle_disconnect()</code> - Cleans up disconnected clients</li>
+                <li><code>broadcast_problem()</code> - Sends problems to all connected clients</li>
+                <li><code>send_progress()</code> - Updates client progress stats</li>
+                <li><code>validate_answer()</code> - Processes and validates answers in real-time</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Practice Tracker (utils/practice_tracker.py)</summary>
+            <p>Core component for tracking and managing practice sessions. Key responsibilities:</p>
+            <ul>
+                <li>Problem generation and sequencing</li>
+                <li>Answer validation and scoring</li>
+                <li>Level progression tracking</li>
+                <li>Session state management</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Adaptive problem difficulty</li>
+                <li>Operation-specific tracking</li>
+                <li>Time-based performance metrics</li>
+                <li>Error pattern analysis</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>generate_problem()</code> - Creates new math problems based on current level</li>
+                <li><code>validate_answer()</code> - Checks correctness and updates stats</li>
+                <li><code>update_level()</code> - Handles level progression logic</li>
+                <li><code>get_session_stats()</code> - Provides current session metrics</li>
+                <li><code>reset_session()</code> - Clears current practice session data</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Progress Service (services/progress_service.py)</summary>
+            <p>Calculates and tracks user progress, generates reports, and manages mastery levels. Key routes:</p>
+            <ul>
+                <li><code>/progress</code> - Main progress dashboard showing stats across all operations</li>
+                <li><code>/student_progress/<int:student_id></code> - Teacher view of individual student progress</li>
+                <li><code>/analyze_level/<operation>/<int:level></code> - Detailed analysis of performance at specific levels</li>
+                <li><code>/incorrect_problems</code> - Shows problems the user has answered incorrectly</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>get_student_stats()</code> - Calculates overall progress statistics</li>
+                <li><code>get_multiplication_table_stats()</code> - Tracks multiplication table mastery</li>
+                <li><code>calculate_level_stats()</code> - Analyzes performance at specific levels</li>
+                <li><code>analyze_missed_problems()</code> - Identifies frequently missed problems</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Math Problems (utils/math_problems.py)</summary>
+            <p>Core component for generating and managing math problems. Key responsibilities:</p>
+            <ul>
+                <li>Problem generation across operations</li>
+                <li>Solution validation</li>
+                <li>Difficulty level management</li>
+                <li>Problem type configuration</li>
+            </ul>
+            <p>Supported operations:</p>
+            <ul>
+                <li>Addition</li>
+                <li>Subtraction</li>
+                <li>Multiplication</li>
+                <li>Division</li>
+                <li>Mixed operations</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Customizable difficulty levels</li>
+                <li>Operation-specific problem types</li>
+                <li>Randomized problem generation</li>
+                <li>Step-by-step solution validation</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>generate_problem()</code> - Creates math problems based on parameters</li>
+                <li><code>validate_answer()</code> - Checks correctness of solutions</li>
+                <li><code>get_problem_types()</code> - Returns available problem types</li>
+                <li><code>get_difficulty_levels()</code> - Returns configured difficulty levels</li>
+                <li><code>get_hints()</code> - Provides problem-solving hints</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>Database (SQLAlchemy Models)</summary>
+            <p>Central data storage and management system using SQLAlchemy ORM. Key responsibilities:</p>
+            <ul>
+                <li>Data persistence and retrieval</li>
+                <li>Relationship management</li>
+                <li>Schema versioning and migrations</li>
+                <li>Query optimization</li>
+            </ul>
+            <p>Key tables:</p>
+            <ul>
+                <li><code>users</code> - Stores user accounts and credentials</li>
+                <li><code>practice_attempts</code> - Tracks all practice attempts</li>
+                <li><code>progress</code> - Maintains user progress records</li>
+                <li><code>assignments</code> - Manages teacher-assigned practice</li>
+                <li><code>classes</code> - Organizes users into classes</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>SQLAlchemy ORM for database abstraction</li>
+                <li>Alembic for schema migrations</li>
+                <li>Connection pooling for performance</li>
+                <li>Transaction management</li>
+                <li>Query optimization with indexes</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>create_all()</code> - Initializes database schema</li>
+                <li><code>session.add()</code> - Adds new records</li>
+                <li><code>session.query()</code> - Executes queries</li>
+                <li><code>session.commit()</code> - Saves changes</li>
+                <li><code>session.rollback()</code> - Reverts failed transactions</li>
+            </ul>
+        </details>
+        
+        <details>
+            <summary>User Model (models/user.py)</summary>
+            <p>Core component representing users and their relationships in the system. Key responsibilities:</p>
+            <ul>
+                <li>User authentication and authorization</li>
+                <li>Profile management</li>
+                <li>Role-based access control</li>
+                <li>Relationship management</li>
+            </ul>
+            <p>Key attributes:</p>
+            <ul>
+                <li><code>id</code> - Unique user identifier</li>
+                <li><code>email</code> - User's email address</li>
+                <li><code>password_hash</code> - Hashed password for security</li>
+                <li><code>role</code> - User role (student, teacher, admin)</li>
+                <li><code>active</code> - Account activation status</li>
+            </ul>
+            <p>Key relationships:</p>
+            <ul>
+                <li><code>practice_attempts</code> - One-to-many with practice attempts</li>
+                <li><code>classes</code> - Many-to-many with classes</li>
+                <li><code>assignments</code> - One-to-many with assignments</li>
+                <li><code>progress</code> - One-to-one with progress records</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Password hashing with bcrypt</li>
+                <li>Role-based permissions</li>
+                <li>Account activation system</li>
+                <li>Profile management</li>
+                <li>Activity tracking</li>
+            </ul>
+            <p>Key methods:</p>
+            <ul>
+                <li><code>set_password()</code> - Securely sets user password</li>
+                <li><code>check_password()</code> - Verifies password</li>
+                <li><code>has_role()</code> - Checks user permissions</li>
+                <li><code>is_active()</code> - Checks account status</li>
+                <li><code>get_progress()</code> - Retrieves user progress</li>
+            </ul>
+        </details>
+    </div>
+    
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#fff',
+                primaryTextColor: '#000',
+                primaryBorderColor: '#000',
+                lineColor: '#000',
+                secondaryColor: '#fff',
+                tertiaryColor: '#fff'
+            }
+        });
+    </script>
+</body>
+</html>
