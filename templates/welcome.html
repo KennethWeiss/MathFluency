@@ -8,16 +8,80 @@
         <div class="col-md-8">
             <h1>Welcome, {{ current_user.username }}!</h1>
             {% if current_user.is_teacher %}
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
-                        <h5 class="card-title">Manage Classes</h5>
-                        <p class="card-text">Create and manage your classes, track student progress, and assign work.</p>
-                        <a href="{{ url_for('class.list_classes') }}" class="btn btn-primary">View Classes</a>
+                <p class="lead">Teacher Dashboard</p>
+                
+                <!-- Teacher Classes -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">My Classes</h5>
+                        <a href="{{ url_for('class.create_class') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Create Class
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if teacher_classes %}
+                            <div class="list-group">
+                            {% for class in teacher_classes %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ class.name }}</h6>
+                                            <p class="mb-1 text-muted">{{ class.description }}</p>
+                                            <small class="text-muted">Students: {{ class.students_count }}</small>
+                                        </div>
+                                        <div>
+                                            <a href="{{ url_for('class.view_class', id=class.id) }}" 
+                                               class="btn btn-outline-primary btn-sm me-2">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <a href="{{ url_for('class.edit_class', id=class.id) }}" 
+                                               class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">You haven't created any classes yet.</p>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chalkboard-teacher fa-3x mb-3"></i>
+                                <h5 class="card-title">Manage Classes</h5>
+                                <p class="card-text">Create and manage your classes, track student progress, and assign work.</p>
+                                <a href="{{ url_for('class.list_classes') }}" class="btn btn-primary">View All Classes</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-tasks fa-3x mb-3"></i>
+                                <h5 class="card-title">Create Assignments</h5>
+                                <p class="card-text">Design and assign practice problems to your students.</p>
+                                <a href="{{ url_for('assignment.create_assignment') }}" class="btn btn-primary">Create Assignment</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                <h5 class="card-title">View Progress</h5>
+                                <p class="card-text">Track student performance and identify areas for improvement.</p>
+                                <a href="{{ url_for('progress.progress') }}" class="btn btn-primary">View Progress</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% else %}
                 <p class="lead">Student Dashboard</p>
                 
