@@ -18,16 +18,12 @@ def welcome():
         # Get all classes where this teacher is teaching
         classes = Class.query.join(Class.teachers).filter(Class.teachers.contains(current_user)).all()
         
-        # Get all students from these classes
-        students = set()
+        # Force load and count students for each class
         for class_ in classes:
-            # Force load and count students
             class_.students_count = class_.students.count()
-            students.update(class_.students.all())
         
         return render_template('welcome.html', 
                             is_teacher=True,
-                            students=list(students),
                             teacher_classes=classes)
     else:
         # Get all classes where this student is enrolled
