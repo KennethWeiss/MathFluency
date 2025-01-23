@@ -34,12 +34,13 @@ class Class(db.Model):
                             backref=db.backref('enrolled_classes', lazy='dynamic'),
                             lazy='dynamic')
     
-    def __init__(self, name, description=None):
+    def __init__(self, name, description=None, class_code=None):
         self.name = name
         self.description = description
-        self.generate_class_code()
+        self.class_code = class_code if class_code else self.generate_class_code()
     
-    def generate_class_code(self):
+    @classmethod
+    def generate_class_code(cls):
         """Generate a unique 7-character class code."""
         import random
         import string
@@ -47,9 +48,8 @@ class Class(db.Model):
             # Generate a random 7-character code with uppercase letters and numbers
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
             # Check if this code is already in use
-            if not Class.query.filter_by(class_code=code).first():
-                self.class_code = code
-                break
+            if not cls.query.filter_by(class_code=code).first():
+                return code
     
     def add_teacher(self, teacher):
         """Add a teacher to the class."""
