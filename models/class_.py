@@ -6,7 +6,8 @@ from models.user import User
 # Association tables for many-to-many relationships
 teacher_class = db.Table('teacher_class',
     db.Column('class_id', db.Integer, db.ForeignKey('class.id'), primary_key=True),
-    db.Column('teacher_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    db.Column('teacher_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('is_primary', db.Boolean, default=False)
 )
 
 student_class = db.Table('student_class',
@@ -51,13 +52,19 @@ class Class(db.Model):
             if not cls.query.filter_by(class_code=code).first():
                 return code
     
-    def add_teacher(self, teacher):
-        """Add a teacher to the class."""
+    def add_teacher(self, teacher, is_primary=False):
+        """Add a teacher to the class.
+        
+        Args:
+            teacher: User instance to add as teacher
+            is_primary: If True, marks this teacher as primary
+        """
         if not self.teachers.filter_by(id=teacher.id).first():
             db.session.execute(
                 teacher_class.insert().values(
                     class_id=self.id,
-                    teacher_id=teacher.id
+                    teacher_id=teacher.id,
+                    is_primary=is_primary
                 )
             )
             db.session.commit()
@@ -95,14 +102,14 @@ class Class(db.Model):
             )
             db.session.commit()
     
-    # def get_primary_teacher(self):
-    #     """Get the primary teacher for this class."""
-    #     stmt = select(User).join(teacher_class).where(
-    #         (teacher_class.c.class_id == self.id) &
-    #         (teacher_class.c.is_primary == True)
-    #     )
-    #     result = db.session.execute(stmt).scalar()
-    #     return result if result else self.teachers.first()
+    def get_primary_teacher(self):
+        """Get the primary teacher for this class."""
+        stmt = select(User).join(teacher_class).where(
+            (teacher_class.c.class_id == self.id) &
+            (teacher_class.c.is_primary == True)
+        )
+        result = db.session.execute(stmt).scalar()
+        return result if result else self.teachers.first()
     
     def __repr__(self):
         return f'<Class {self.name}>'
