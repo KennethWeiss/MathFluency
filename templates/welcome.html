@@ -12,22 +12,21 @@
                 
                 <!-- Teacher Classes -->
                 <div class="card mt-4">
-<!-- -->
-<div class="card-header d-flex justify-content-between align-items-center" 
-    type="button" 
-    data-bs-toggle="collapse" 
-    data-bs-target="#classesCollapse" 
-    aria-expanded="false" 
-    aria-controls="classesCollapse">
+                    <div class="card-header d-flex justify-content-between align-items-center" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#classesCollapse" 
+                        aria-expanded="false" 
+                        aria-controls="classesCollapse">
                         <h5 class="card-title mb-0">My Classes</h5>
+                    </div>
+                    <div class="card card-body collapse" id="classesCollapse">
                         <div>
                             <a href="{{ url_for('class.create_class') }}" class="btn btn-primary btn-sm me-2">
                                 <i class="fas fa-plus"></i> Create Class
                             </a>
                             <i class="fas fa-chevron-down"></i>
                         </div>
-                    </div>
-                    <div class="card card-body collapse" id="classesCollapse">
                         {% if teacher_classes %}
                             <div class="list-group">
                             {% for class in teacher_classes %}
@@ -135,4 +134,11 @@
         </div>
     </div>
 </div>
+{% block extra_css %}
+<style>
+    .collapse {
+        transition: height 0.2s ease-out;
+    }
+</style>
+{% endblock %}
 {% endblock %}
