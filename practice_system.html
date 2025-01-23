@@ -147,9 +147,46 @@
     </div>
     
     <div class="component-grid">
+
+        <details class="component-card" data-layer="data">
+            <summary>Database (SQLAlchemy Models)</summary>
+            <p>Central data storage and management system using SQLAlchemy ORM. Key responsibilities:</p>
+            <ul>
+                <li>Data persistence and retrieval</li>
+                <li>Relationship management</li>
+                <li>Schema versioning and migrations</li>
+                <li>Query optimization</li>
+            </ul>
+            <p>Key tables:</p>
+            <ul>
+                <li><code>users</code> - Stores user accounts and credentials</li>
+                <li><code>practice_attempts</code> - Tracks all practice attempts</li>
+                <li><code>progress</code> - Maintains user progress records</li>
+                <li><code>assignments</code> - Manages teacher-assigned practice</li>
+                <li><code>classes</code> - Organizes users into classes</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>SQLAlchemy ORM for database abstraction</li>
+                <li>Alembic for schema migrations</li>
+                <li>Connection pooling for performance</li>
+                <li>Transaction management</li>
+                <li>Query optimization with indexes</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>create_all()</code> - Initializes database schema</li>
+                <li><code>session.add()</code> - Adds new records</li>
+                <li><code>session.query()</code> - Executes queries</li>
+                <li><code>session.commit()</code> - Saves changes</li>
+                <li><code>session.rollback()</code> - Reverts failed transactions</li>
+            </ul>
+        </details>
+
+
         <details class="component-card" data-layer="ui">
-            <summary>Practice UI (HTML/JS Templates)</summary>
-            <p>Handles user interface rendering and interactions. Includes HTML templates and JavaScript for dynamic behavior. Key components:</p>
+            <summary>Practice UI (templates/practice/)</summary>
+            <p>Handles user interface rendering and interactions for practice sessions. Key components:</p>
             <ul>
                 <li><code>practice.html</code> - Main practice interface template</li>
                 <li><code>_problem_table.html</code> - Problem display component</li>
@@ -162,6 +199,27 @@
                 <li>Real-time progress updates</li>
                 <li>Interactive multiplication table</li>
                 <li>Keyboard input handling</li>
+                <li>Responsive design for multiple devices</li>
+                <li>Theme support through layout integration</li>
+            </ul>
+        </details>
+
+        <details class="component-card" data-layer="ui">
+            <summary>Layouts (templates/layouts/)</summary>
+            <p>Manages UI structure and theme rendering across the application. Key components:</p>
+            <ul>
+                <li><code>deltamath_style.html</code> - DeltaMath style layout</li>
+                <li><code>99math_style.html</code> - 99Math style layout</li>
+                <li><code>learning_path.html</code> - Learning path view</li>
+                <li><code>dashboard_style.html</code> - Dashboard layout</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Theme management and switching</li>
+                <li>Consistent UI structure across views</li>
+                <li>Responsive design templates</li>
+                <li>Customizable layout components</li>
+                <li>Template inheritance support</li>
             </ul>
         </details>
         
@@ -194,22 +252,43 @@
         </details>
         
         <details class="component-card" data-layer="app">
-        <summary>Practice Routes (Flask Blueprint)</summary>
-        <p>Defines API endpoints and routes for practice-related functionality. Key routes:</p>
-        <ul>
-            <li><code>/practice</code> - Main practice interface (assignment and free modes)</li>
-            <li><code>/get_problem</code> - API endpoint to fetch practice problems</li>
-            <li><code>/check_answer</code> - API endpoint to validate user answers</li>
-            <li><code>/progress</code> - Shows student's practice progress and stats</li>
-        </ul>
-        <p>Key functions:</p>
-        <ul>
-            <li><code>practice()</code> - Renders practice interface</li>
-            <li><code>get_problem_route()</code> - Handles problem generation</li>
-            <li><code>check_answer()</code> - Validates answers and tracks progress</li>
-            <li><code>progress()</code> - Shows detailed practice statistics</li>
-            <li><code>get_level_description()</code> - Provides level descriptions</li>
-        </ul>
+            <summary>Practice Routes (routes/practice_routes.py)</summary>
+            <p>Defines API endpoints and routes for practice-related functionality. Key routes:</p>
+            <ul>
+                <li><code>/practice</code> - Main practice interface (assignment and free modes)</li>
+                <li><code>/get_problem</code> - API endpoint to fetch practice problems</li>
+                <li><code>/check_answer</code> - API endpoint to validate user answers</li>
+                <li><code>/progress</code> - Shows student's practice progress and stats</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>practice()</code> - Renders practice interface</li>
+                <li><code>get_problem_route()</code> - Handles problem generation</li>
+                <li><code>check_answer()</code> - Validates answers and tracks progress</li>
+                <li><code>progress()</code> - Shows detailed practice statistics</li>
+                <li><code>get_level_description()</code> - Provides level descriptions</li>
+                <li><code>track_attempt()</code> - Records practice attempts</li>
+                <li><code>update_level()</code> - Handles level progression</li>
+            </ul>
+        </details>
+
+        <details class="component-card" data-layer="app">
+            <summary>Progress Routes (routes/progress_routes.py)</summary>
+            <p>Handles student progress tracking and analytics. Key routes:</p>
+            <ul>
+                <li><code>/progress</code> - Overall progress dashboard</li>
+                <li><code>/student_progress</code> - Individual student progress</li>
+                <li><code>/analyze_level</code> - Level-specific analysis</li>
+                <li><code>/incorrect_problems</code> - Incorrect problem tracking</li>
+            </ul>
+            <p>Key functions:</p>
+            <ul>
+                <li><code>get_overall_progress()</code> - Calculates overall stats</li>
+                <li><code>get_student_progress()</code> - Individual student analytics</li>
+                <li><code>analyze_level()</code> - Level-specific performance</li>
+                <li><code>get_incorrect_problems()</code> - Tracks problem weaknesses</li>
+                <li><code>generate_progress_report()</code> - Creates detailed reports</li>
+            </ul>
         </details>
         
         <details class="component-card" data-layer="app">
@@ -317,6 +396,7 @@
                 <li>Solution validation</li>
                 <li>Difficulty level management</li>
                 <li>Problem type configuration</li>
+                <li>Standards alignment</li>
             </ul>
             <p>Supported operations:</p>
             <ul>
@@ -332,6 +412,7 @@
                 <li>Operation-specific problem types</li>
                 <li>Randomized problem generation</li>
                 <li>Step-by-step solution validation</li>
+                <li>Common Core standards alignment</li>
             </ul>
             <p>Key functions:</p>
             <ul>
@@ -340,43 +421,35 @@
                 <li><code>get_problem_types()</code> - Returns available problem types</li>
                 <li><code>get_difficulty_levels()</code> - Returns configured difficulty levels</li>
                 <li><code>get_hints()</code> - Provides problem-solving hints</li>
+                <li><code>align_with_standards()</code> - Ensures standards compliance</li>
             </ul>
         </details>
-        
-        <details class="component-card" data-layer="data">
-            <summary>Database (SQLAlchemy Models)</summary>
-            <p>Central data storage and management system using SQLAlchemy ORM. Key responsibilities:</p>
+
+        <details class="component-card" data-layer="service">
+            <summary>Math Standards (standards/standard.py)</summary>
+            <p>Manages curriculum standards and alignment for math problems. Key responsibilities:</p>
             <ul>
-                <li>Data persistence and retrieval</li>
-                <li>Relationship management</li>
-                <li>Schema versioning and migrations</li>
-                <li>Query optimization</li>
-            </ul>
-            <p>Key tables:</p>
-            <ul>
-                <li><code>users</code> - Stores user accounts and credentials</li>
-                <li><code>practice_attempts</code> - Tracks all practice attempts</li>
-                <li><code>progress</code> - Maintains user progress records</li>
-                <li><code>assignments</code> - Manages teacher-assigned practice</li>
-                <li><code>classes</code> - Organizes users into classes</li>
+                <li>Common Core standards implementation</li>
+                <li>Problem alignment with curriculum</li>
+                <li>Level progression tracking</li>
+                <li>Standards-based reporting</li>
             </ul>
             <p>Key features:</p>
             <ul>
-                <li>SQLAlchemy ORM for database abstraction</li>
-                <li>Alembic for schema migrations</li>
-                <li>Connection pooling for performance</li>
-                <li>Transaction management</li>
-                <li>Query optimization with indexes</li>
+                <li>Common Core math standards integration</li>
+                <li>Standards-based problem tagging</li>
+                <li>Curriculum alignment tracking</li>
+                <li>Standards progress reporting</li>
             </ul>
             <p>Key functions:</p>
             <ul>
-                <li><code>create_all()</code> - Initializes database schema</li>
-                <li><code>session.add()</code> - Adds new records</li>
-                <li><code>session.query()</code> - Executes queries</li>
-                <li><code>session.commit()</code> - Saves changes</li>
-                <li><code>session.rollback()</code> - Reverts failed transactions</li>
+                <li><code>get_standards()</code> - Retrieves applicable standards</li>
+                <li><code>align_problem()</code> - Tags problems with standards</li>
+                <li><code>track_progress()</code> - Tracks standards mastery</li>
+                <li><code>generate_standards_report()</code> - Creates standards-based reports</li>
             </ul>
         </details>
+        
         
         <details class="component-card" data-layer="data">
             <summary>User Model (models/user.py)</summary>
@@ -417,6 +490,45 @@
                 <li><code>has_role()</code> - Checks user permissions</li>
                 <li><code>is_active()</code> - Checks account status</li>
                 <li><code>get_progress()</code> - Retrieves user progress</li>
+            </ul>
+        </details>
+
+        <details class="component-card" data-layer="data">
+            <summary>Practice Model (models/practice_attempt.py)</summary>
+            <p>Manages practice session data and problem attempts. Key responsibilities:</p>
+            <ul>
+                <li>Tracking practice attempts</li>
+                <li>Storing problem history</li>
+                <li>Managing session data</li>
+                <li>Recording performance metrics</li>
+            </ul>
+            <p>Key attributes:</p>
+            <ul>
+                <li><code>id</code> - Unique attempt identifier</li>
+                <li><code>problem_data</code> - Problem details and parameters</li>
+                <li><code>user_response</code> - User's submitted answer</li>
+                <li><code>correct</code> - Answer correctness</li>
+                <li><code>time_taken</code> - Response time</li>
+            </ul>
+            <p>Key relationships:</p>
+            <ul>
+                <li><code>user</code> - Many-to-one with User model</li>
+                <li><code>session</code> - Many-to-one with PracticeSession</li>
+                <li><code>problem_type</code> - Many-to-one with ProblemType</li>
+            </ul>
+            <p>Key features:</p>
+            <ul>
+                <li>Detailed attempt tracking</li>
+                <li>Performance analytics</li>
+                <li>Session continuity</li>
+                <li>Problem history storage</li>
+            </ul>
+            <p>Key methods:</p>
+            <ul>
+                <li><code>record_attempt()</code> - Stores attempt data</li>
+                <li><code>get_session_stats()</code> - Calculates session metrics</li>
+                <li><code>get_problem_history()</code> - Retrieves problem attempts</li>
+                <li><code>calculate_accuracy()</code> - Determines success rate</li>
             </ul>
         </details>
 

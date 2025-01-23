@@ -2,16 +2,10 @@
 flowchart TD
     %% UI Layer
     PracticeUI["Practice UI
-    (HTML/JS Templates)
+    (templates/practice/)
     - Renders practice interface
     - Handles user interactions
     - Manages client-side state"]
-    
-    Templates["Templates
-    (templates/practice/)
-    - Contains HTML templates
-    - Defines UI structure
-    - Handles view rendering"]
     
     StaticAssets["Static Assets
     (static/js/practice.js)
@@ -19,9 +13,15 @@ flowchart TD
     - Manages client-side logic
     - Handles UI interactions"]
     
+    Layouts["Layouts
+    (templates/layouts/)
+    - Defines UI structure
+    - Handles view rendering
+    - Manages theme styles"]
+    
     %% Application Layer
     PracticeRoutes["Practice Routes
-    (Flask Blueprint)
+    (routes/practice_routes.py)
     - Handles HTTP requests
     - Routes to appropriate services
     - Manages API endpoints"]
@@ -37,6 +37,12 @@ flowchart TD
     - Handles real-time updates
     - Manages WebSocket connections
     - Pushes notifications"]
+    
+    ProgressRoutes["Progress Routes
+    (routes/progress_routes.py)
+    - Tracks student progress
+    - Generates analytics
+    - Manages performance data"]
     
     %% Service Layer
     PracticeTracker["Practice Tracker
@@ -57,6 +63,12 @@ flowchart TD
     - Validates problem solutions
     - Manages problem difficulty"]
     
+    Standards["Math Standards
+    (standards/standard.py)
+    - Manages curriculum standards
+    - Aligns problems with levels
+    - Tracks Common Core alignment"]
+    
     %% Data Layer
     Database["Database
     (SQLAlchemy Models)
@@ -70,20 +82,29 @@ flowchart TD
     - Manages user relationships
     - Handles user data operations"]
     
+    PracticeModel["Practice Model
+    (models/practice_attempt.py)
+    - Tracks practice attempts
+    - Manages session data
+    - Stores problem history"]
+    
     %% Relationships
     PracticeUI -->|AJAX/HTTP Requests| PracticeRoutes
-    Templates -->|Render Views| PracticeUI
+    Layouts -->|Render Views| PracticeUI
     StaticAssets -->|Client Logic| PracticeUI
     WebSockets -->|Real-time Updates| PracticeUI
     
     PracticeRoutes -->|Get Problems| PracticeTracker
     PracticeRoutes -->|Check Progress| ProgressService
     PracticeRoutes -->|Authentication| AuthSystem
+    PracticeRoutes -->|Track Progress| ProgressRoutes
     
     PracticeTracker -->|Store Attempts| Database
     ProgressService -->|Query Stats| Database
     MathProblems -->|Generate Problems| PracticeTracker
+    Standards -->|Align Problems| MathProblems
     UserModel -->|ORM Mapping| Database
+    PracticeModel -->|Store Attempts| Database
     
     %% Styling
     classDef uiLayer fill:#a6cee3,stroke:#333,stroke-width:2px
