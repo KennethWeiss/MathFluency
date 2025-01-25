@@ -66,9 +66,9 @@ def view_class(id):
     primary_teacher = class_.get_primary_teacher()
     
     return render_template('classes/view.html', 
-                         class_=class_, 
-                         student_count=student_count,
-                         primary_teacher=primary_teacher)
+                        class_=class_, 
+                        student_count=student_count,
+                        primary_teacher=primary_teacher)
 
 @class_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -105,12 +105,12 @@ def manage_students(id):
     
     # Get all non-teacher users who aren't in this class
     available_students = User.query.filter_by(is_teacher=False)\
-                                 .filter(~User.enrolled_classes.any(Class.id == id))\
-                                 .all()
+                                .filter(~User.enrolled_classes.any(Class.id == id))\
+                                .all()
     
     return render_template('classes/manage_students.html', 
-                         class_=class_,
-                         available_students=available_students)
+                        class_=class_,
+                        available_students=available_students)
 
 @class_bp.route('/classes/<int:id>/add_student', methods=['POST'])
 @login_required
@@ -191,15 +191,6 @@ def join_class():
 @class_bp.route('/upload_students', methods=['POST'])
 @login_required
 def upload_students():
-    if 'file' not in request.files or not request.files['file']:
-        flash('No file uploaded', 'error')
-        return redirect(url_for('class.list_classes'))
-    
-    file = request.files['file']
-    if not file.filename.lower().endswith('.csv'):
-        flash('Please upload a valid CSV file', 'error')
-        return redirect(url_for('class.list_classes'))
-    
     class_id = request.form.get('class_id')
     if not class_id:
         flash('Please select a class', 'error')
@@ -215,24 +206,91 @@ def upload_students():
     try:
         from flask import current_app
         current_app.logger.info(f"Starting student upload for class {class_id}")
-        # Read file content
-        file_content = file.stream.read().decode("UTF8")
-        
-        # Validate header
+        # Read from test_students.csv
+        with open('test_students.csv', 'r', encoding='utf-8') as f:
+            file_content = f.read()
+            current_app.logger.info(f"File content:\n{file_content}")
+        # Handle BOM character if present
+        if file_content.startswith('\ufeff'):
+            file_content = file_content[1:]
+            current_app.logger.info("Removed BOM character from file content")
+
+        # Get first line and normalize headers
         first_line = file_content.split('\n')[0].strip()
-        expected_headers = ['First Name', 'Last Name', 'Email']
-        if first_line.split(',') != expected_headers:
-            flash(f'Invalid CSV format. First row must be: {", ".join(expected_headers)}', 'error')
+        actual_headers = [h.strip().lower() for h in first_line.split(',')]
+        # Create mapping from actual headers to required names
+        header_map = {}
+        for idx, header in enumerate(actual_headers):
+            header_lower = header.strip().lower()
+            if 'first' in header_lower and 'name' in header_lower:
+                header_map['first_name'] = idx
+            elif 'last' in header_lower and 'name' in header_lower:
+                header_map['last_name'] = idx
+            elif 'email' in header_lower:
+                header_map['email'] = idx
+            elif 'password' in header_lower:
+                header_map['password'] = idx
+        
+        # Generate email and password if not in CSV
+        if 'Email' not in header_map:
+            header_map['email'] = 'generated'
+        if 'Password' not in header_map:
+            header_map['password'] = 'generated'
+        
+        # Define minimum required columns
+        required_columns = {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+        }
+        
+        # Check for required columns
+        missing_columns = []
+        for col_name, display_name in required_columns.items():
+            if col_name not in actual_headers:
+                print(f"Missing column: {display_name}")
+                missing_columns.append(display_name)
+        
+        if missing_columns:
+            flash(
+                f'CSV is missing required columns: {", ".join(missing_columns)}. '
+                f'Found columns: {first_line}. '
+                f'Required columns: First Name, Last Name',
+                'error'
+            )
             return redirect(url_for('class.list_classes'))
+        
+        # Create mapping from actual headers to required names
+        header_map = {}
+        for idx, header in enumerate(actual_headers):
+            if header in required_columns:
+                header_map[required_columns[header]] = idx
             
-        stream = io.StringIO(file_content, newline=None)
-        csv_reader = csv.reader(stream)
-        
-        # Read all rows into memory
-        rows = list(csv_reader)
-        
+        # Split file content into lines and parse each row
+        rows = []
+        for line in file_content.splitlines():
+            if line.strip():  # Skip empty lines
+                rows.append([field.strip() for field in line.split(',')])
+        current_app.logger.info(f"Read {len(rows)} rows from CSV")
+        print("Rows:")
+        print(rows)
+        print("Rows[0]:")
+        print(rows[0])   
         # Create list of emails for duplicate checking
-        emails = [row[2].strip().lower() for row in rows if len(row) == 3]
+        emails = []
+        for row in rows[1:]:  # Skip header row
+            if 'email' in header_map:
+                email_index = header_map['email']
+                print("Email index:", email_index)
+                if len(row) > email_index:
+                    email = row[email_index].strip().lower()
+                    emails.append(email)
+            else:
+                # Generate email if not in CSV
+                first_name = row[header_map['first_name']].strip()
+                last_name = row[header_map['last_name']].strip()
+                email = f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
+                emails.append(email)
+        current_app.logger.info(f"Extracted {len(emails)} emails from CSV")
         
         success_count = 0
         error_count = 0
@@ -240,21 +298,31 @@ def upload_students():
         
         for row in rows:
             try:
-                if len(row) != 3:
-                    error_count += 1
-                    error_messages.append(f"Invalid row format: {','.join(row)}")
+                # Skip empty rows
+                if not any(row):
                     continue
+                    
+                # Get values using header mapping
+                first_name = row[header_map['first_name']].strip()
+                last_name = row[header_map['last_name']].strip()
                 
-                first_name, last_name, email = row
+                # Generate email if not in CSV
+                if header_map['email'] == 'generated':
+                    email = f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
+                else:
+                    email = row[header_map['email']].strip().lower()
+                
+                # Generate password if not in CSV
+                if header_map['password'] == 'generated':
+                    password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+                else:
+                    password = row[header_map['password']].strip()
                 
                 # Validate email format
                 if '@' not in email or '.' not in email.split('@')[1]:
                     error_count += 1
                     error_messages.append(f"Invalid email format: {email}")
                     continue
-                    
-                # Normalize email
-                email = email.strip().lower()
                 
                 # Check for duplicate email in current CSV
                 if emails.count(email) > 1:
@@ -262,22 +330,21 @@ def upload_students():
                     error_messages.append(f"Duplicate email in CSV: {email}")
                     continue
                     
-                current_app.logger.info(f"Processing row: {first_name} {last_name} <{email}>")
+                current_app.logger.info(f"Processing row {rows.index(row)+1}: {first_name} {last_name} <{email}>")
+                current_app.logger.debug(f"Full row data: {row}")
                 
                 # Check if user already exists
                 user = User.query.filter_by(email=email).first()
                 current_app.logger.info(f"User lookup result: {'Found' if user else 'Not found'}")
+                if user:
+                    current_app.logger.debug(f"Existing user details: {user.id} {user.email}")
                 if not user:
-                    # Create new user with random password
-                    # Generate password with complexity requirements
-                    password_chars = (
-                        string.ascii_uppercase + 
-                        string.ascii_lowercase + 
-                        string.digits + 
-                        '!@#$%^&*'
-                    )
-                    password = ''.join(random.choices(password_chars, k=12))
-                    
+                    # Validate password
+                    if len(password) < 4:
+                        error_count += 1
+                        error_messages.append(f"Password must be at least 4 characters for {email}")
+                        continue
+                        
                     # Generate unique username
                     base_username = email.split('@')[0]
                     username = base_username
@@ -334,8 +401,12 @@ def upload_students():
         if error_count > 0:
             flash(f'Failed to add {error_count} student(s). Check the error log for details', 'warning')
             for msg in error_messages:
-                flash(msg, 'error')
-                current_app.logger.error(f"Error: {msg}")
+                if isinstance(msg, list):
+                    flash(', '.join(msg), 'error')
+                    current_app.logger.error(f"Error: {', '.join(msg)}")
+                else:
+                    flash(str(msg), 'error')
+                    current_app.logger.error(f"Error: {str(msg)}")
                 
     except Exception as e:
         db.session.rollback()

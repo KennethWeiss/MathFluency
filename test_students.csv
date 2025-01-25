@@ -1,5 +1,18 @@
-First Name,Last Name,Email
-John,Doe,john.doe@example.com
-Jane,Smith,jane.smith@example.com
-Michael,Johnson,michael.j@example.com
-Sarah,Williams,sarah.w@example.com
+first_name,last_name,email,password
+Gabriel,Alcaraz,Gabriel.Alcaraz@stu.morongo.k12.ca.us,3765
+Vanessa,Arredondo,Vanessa.Arredondo@stu.morongo.k12.ca.us,3820
+Brett,Bradshaw,Brett.Bradshaw@stu.morongo.k12.ca.us,3889
+David,Bravo,David.Bravo@stu.morongo.k12.ca.us,4113
+Nevaeh,Bryant,Nevaeh.Bryant@stu.morongo.k12.ca.us,3092
+Aribella,Camacho,Aribella.Camacho@stu.morongo.k12.ca.us,2531
+Isabella,Clancy,Isabella.Clancy@stu.morongo.k12.ca.us,3886
+Pricilla,Crumley,Pricilla.Crumley@stu.morongo.k12.ca.us,4516
+Samuel,Crutcher,Samuel.Crutcher@stu.morongo.k12.ca.us,7604
+Valina,Flores,Valina.Flores@stu.morongo.k12.ca.us,5447
+Jesus,Jimenez,Jesus.Jimenez@stu.morongo.k12.ca.us,4594
+Daimien,Lutzker,Daimien.Lutzker@stu.morongo.k12.ca.us,4489
+Zander,Miller,Zander.Miller@stu.morongo.k12.ca.us,5440
+Alexis,Myers,Alexis.Myers@stu.morongo.k12.ca.us,4534
+Xander,Parrett,Xander.Parrett@stu.morongo.k12.ca.us,4257
+Anabelle,Saucedo,Anabelle.Saucedo@stu.morongo.k12.ca.us,2036
+Aaron,Trofler,Aaron.Trofler@stu.morongo.k12.ca.us,4467
