@@ -8,6 +8,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 from flask import Flask, render_template, url_for, redirect, flash, request, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 from forms import LoginForm, RegistrationForm
 from datetime import datetime, timedelta
 from utils.practice_tracker import PracticeTracker
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    
+    # Initialize CSRF protection
+    csrf = CSRFProtect(app)
     
     # Load default configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
