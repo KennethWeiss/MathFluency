@@ -191,17 +191,13 @@ def join_class():
 @class_bp.route('/upload_students', methods=['POST'])
 @login_required
 def upload_students():
-    if 'file' not in request.files:
+    if 'file' not in request.files or not request.files['file']:
         flash('No file uploaded', 'error')
         return redirect(url_for('class.list_classes'))
     
     file = request.files['file']
-    if file.filename == '':
-        flash('No file selected', 'error')
-        return redirect(url_for('class.list_classes'))
-    
-    if not file.filename.endswith('.csv'):
-        flash('Please upload a CSV file', 'error')
+    if not file.filename.lower().endswith('.csv'):
+        flash('Please upload a valid CSV file', 'error')
         return redirect(url_for('class.list_classes'))
     
     class_id = request.form.get('class_id')
@@ -211,21 +207,38 @@ def upload_students():
     
     class_ = Class.query.get_or_404(class_id)
     
-    # Verify the teacher owns this class
-    if class_.teacher_id != current_user.id:
+    # Verify the current user is a teacher of this class
+    if current_user not in class_.teachers:
         flash('You do not have permission to add students to this class', 'error')
         return redirect(url_for('class.list_classes'))
     
     try:
-        # Read and decode the CSV file
-        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        from flask import current_app
+        current_app.logger.info(f"Starting student upload for class {class_id}")
+        # Read file content
+        file_content = file.stream.read().decode("UTF8")
+        
+        # Validate header
+        first_line = file_content.split('\n')[0].strip()
+        expected_headers = ['First Name', 'Last Name', 'Email']
+        if first_line.split(',') != expected_headers:
+            flash(f'Invalid CSV format. First row must be: {", ".join(expected_headers)}', 'error')
+            return redirect(url_for('class.list_classes'))
+            
+        stream = io.StringIO(file_content, newline=None)
         csv_reader = csv.reader(stream)
+        
+        # Read all rows into memory
+        rows = list(csv_reader)
+        
+        # Create list of emails for duplicate checking
+        emails = [row[2].strip().lower() for row in rows if len(row) == 3]
         
         success_count = 0
         error_count = 0
         error_messages = []
         
-        for row in csv_reader:
+        for row in rows:
             try:
                 if len(row) != 3:
                     error_count += 1
@@ -234,37 +247,86 @@ def upload_students():
                 
                 first_name, last_name, email = row
                 
+                # Validate email format
+                if '@' not in email or '.' not in email.split('@')[1]:
+                    error_count += 1
+                    error_messages.append(f"Invalid email format: {email}")
+                    continue
+                    
+                # Normalize email
+                email = email.strip().lower()
+                
+                # Check for duplicate email in current CSV
+                if emails.count(email) > 1:
+                    error_count += 1
+                    error_messages.append(f"Duplicate email in CSV: {email}")
+                    continue
+                    
+                current_app.logger.info(f"Processing row: {first_name} {last_name} <{email}>")
+                
                 # Check if user already exists
                 user = User.query.filter_by(email=email).first()
+                current_app.logger.info(f"User lookup result: {'Found' if user else 'Not found'}")
                 if not user:
                     # Create new user with random password
-                    password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+                    # Generate password with complexity requirements
+                    password_chars = (
+                        string.ascii_uppercase + 
+                        string.ascii_lowercase + 
+                        string.digits + 
+                        '!@#$%^&*'
+                    )
+                    password = ''.join(random.choices(password_chars, k=12))
+                    
+                    # Generate unique username
+                    base_username = email.split('@')[0]
+                    username = base_username
+                    counter = 1
+                    while User.query.filter_by(username=username).first():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+                    
                     user = User(
                         first_name=first_name,
                         last_name=last_name,
                         email=email,
-                        username=email.split('@')[0],
-                        role='student'
+                        username=username,
+                        is_teacher=False
                     )
                     user.set_password(password)
                     db.session.add(user)
                     
-                    # TODO: Send email with login credentials
-                    # send_welcome_email(email, password)
+                    # Send welcome email with login credentials
+                    try:
+                        from services.email_service import send_welcome_email
+                        send_welcome_email(
+                            email=email,
+                            password=password,
+                            first_name=first_name,
+                            class_name=class_.name
+                        )
+                        current_app.logger.info(f"Sent welcome email to {email}")
+                    except Exception as e:
+                        error_count += 1
+                        error_messages.append(f"Failed to send welcome email to {email}: {str(e)}")
+                        current_app.logger.error(f"Email send error: {str(e)}")
                 
                 # Add user to class if not already enrolled
                 if user not in class_.students:
+                    current_app.logger.info(f"Adding user {email} to class {class_id}")
                     class_.students.append(user)
                     success_count += 1
                 else:
                     error_count += 1
                     error_messages.append(f"Student {email} already in class")
+                    current_app.logger.info(f"User {email} already in class")
             
             except Exception as e:
                 error_count += 1
                 error_messages.append(f"Error processing row: {','.join(row)} - {str(e)}")
         
         db.session.commit()
+        current_app.logger.info(f"Commit successful. Added {success_count} students, {error_count} errors")
         
         # Flash summary message
         if success_count > 0:
@@ -273,6 +335,7 @@ def upload_students():
             flash(f'Failed to add {error_count} student(s). Check the error log for details', 'warning')
             for msg in error_messages:
                 flash(msg, 'error')
+                current_app.logger.error(f"Error: {msg}")
                 
     except Exception as e:
         db.session.rollback()

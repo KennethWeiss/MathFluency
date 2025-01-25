@@ -38,6 +38,14 @@ def create_app(test_config=None):
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Email configuration
+    app.config['SMTP_HOST'] = os.environ.get('SMTP_HOST')
+    app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
+    app.config['SMTP_USER'] = os.environ.get('SMTP_USER')
+    app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD')
+    app.config['DEFAULT_FROM_EMAIL'] = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@mathfluency.com')
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+    
     # Only use secure cookies in production
     if not app.debug:
         app.config['SESSION_COOKIE_SECURE'] = True

@@ -155,14 +155,25 @@
                                     }
                                     </script>
                     
+                <script>
+                    function toggleChevron(element) {
+                        const chevron = element.querySelector('i.fa-chevron-down');
+                        if (chevron) {
+                            chevron.classList.toggle('fa-chevron-down');
+                            chevron.classList.toggle('fa-chevron-up');
+                        }
+                    }
+                </script>
+                
                 <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#bulkUploadSection" aria-expanded="false" aria-controls="bulkUploadSection" onclick="toggleChevron(this)">
                     <h5 class="mb-0">Bulk Upload Students</h5>
                     <i class="fas fa-chevron-down transition-transform"></i>
                 </div>
                 <div class="collapse" id="bulkUploadSection">
                     <div class="card-body">
-                        <form action="{{ url_for('class.upload_students') }}" method="post" enctype="multipart/form-data">
+                        <form action="{{ url_for('class.upload_students') }}" method="post" enctype="multipart/form-data" onsubmit="return validateCsv(this)">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div id="uploadErrors" class="alert alert-danger d-none"></div>
                             <div class="mb-3">
                                 <label for="classSelect" class="form-label">Select Class</label>
                                 <select class="form-select" id="classSelect" name="class_id" required>
