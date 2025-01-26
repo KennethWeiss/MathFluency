@@ -2,23 +2,27 @@ from flask_login import UserMixin
 from database import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from typing import List, Optional
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), nullable=False, unique=True)
-    email = db.Column(db.String(120), nullable=False, unique=True)
-    password_hash = db.Column(db.String(256))
-    is_teacher = db.Column(db.Boolean, default=False)
-    is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __tablename__ = 'user'
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(db.String(64), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(db.String(120), nullable=False, unique=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(db.String(256))
+    is_teacher: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    is_admin: Mapped[bool] = mapped_column(db.Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.utcnow)
 
     # Google OAuth fields
-    google_id = db.Column(db.String(256), nullable=True, unique=True)
-    avatar_url = db.Column(db.String(256), nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(db.String(256), nullable=True, unique=True)
+    avatar_url: Mapped[Optional[str]] = mapped_column(db.String(256), nullable=True)
     
     # User name fields
-    first_name = db.Column(db.String(64), nullable=True)
-    last_name = db.Column(db.String(64), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(db.String(64), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(db.String(64), nullable=True)
     
     # Note: relationships are defined via backref in the Class model
     # teacher_classes - classes where user is a teacher
