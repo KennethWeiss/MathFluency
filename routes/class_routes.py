@@ -206,91 +206,10 @@ def upload_students():
     try:
         from flask import current_app
         current_app.logger.info(f"Starting student upload for class {class_id}")
-        # Read from test_students.csv
-        with open('test_students.csv', 'r', encoding='utf-8') as f:
-            file_content = f.read()
-            current_app.logger.info(f"File content:\n{file_content}")
-        # Handle BOM character if present
-        if file_content.startswith('\ufeff'):
-            file_content = file_content[1:]
-            current_app.logger.info("Removed BOM character from file content")
-
-        # Get first line and normalize headers
-        first_line = file_content.split('\n')[0].strip()
-        actual_headers = [h.strip().lower() for h in first_line.split(',')]
-        # Create mapping from actual headers to required names
-        header_map = {}
-        for idx, header in enumerate(actual_headers):
-            header_lower = header.strip().lower()
-            if 'first' in header_lower and 'name' in header_lower:
-                header_map['first_name'] = idx
-            elif 'last' in header_lower and 'name' in header_lower:
-                header_map['last_name'] = idx
-            elif 'email' in header_lower:
-                header_map['email'] = idx
-            elif 'password' in header_lower:
-                header_map['password'] = idx
         
-        # Generate email and password if not in CSV
-        if 'Email' not in header_map:
-            header_map['email'] = 'generated'
-        if 'Password' not in header_map:
-            header_map['password'] = 'generated'
-        
-        # Define minimum required columns
-        required_columns = {
-            'first_name': 'first_name',
-            'last_name': 'last_name',
-        }
-        
-        # Check for required columns
-        missing_columns = []
-        for col_name, display_name in required_columns.items():
-            if col_name not in actual_headers:
-                print(f"Missing column: {display_name}")
-                missing_columns.append(display_name)
-        
-        if missing_columns:
-            flash(
-                f'CSV is missing required columns: {", ".join(missing_columns)}. '
-                f'Found columns: {first_line}. '
-                f'Required columns: First Name, Last Name',
-                'error'
-            )
-            return redirect(url_for('class.list_classes'))
-        
-        # Create mapping from actual headers to required names
-        header_map = {}
-        for idx, header in enumerate(actual_headers):
-            if header in required_columns:
-                header_map[required_columns[header]] = idx
-            
-        # Split file content into lines and parse each row
-        rows = []
-        for line in file_content.splitlines():
-            if line.strip():  # Skip empty lines
-                rows.append([field.strip() for field in line.split(',')])
+        # Read and parse CSV
+        rows = read_and_parse_csv('test_students.csv')
         current_app.logger.info(f"Read {len(rows)} rows from CSV")
-        print("Rows:")
-        print(rows)
-        print("Rows[0]:")
-        print(rows[0])   
-        # Create list of emails for duplicate checking
-        emails = []
-        for row in rows[1:]:  # Skip header row
-            if 'email' in header_map:
-                email_index = header_map['email']
-                print("Email index:", email_index)
-                if len(row) > email_index:
-                    email = row[email_index].strip().lower()
-                    emails.append(email)
-            else:
-                # Generate email if not in CSV
-                first_name = row[header_map['first_name']].strip()
-                last_name = row[header_map['last_name']].strip()
-                email = f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
-                emails.append(email)
-        current_app.logger.info(f"Extracted {len(emails)} emails from CSV")
         
         success_count = 0
         error_count = 0
@@ -302,68 +221,30 @@ def upload_students():
                 if not any(row):
                     continue
                     
-                # Get values using header mapping
-                first_name = row[header_map['first_name']].strip()
-                last_name = row[header_map['last_name']].strip()
+                # Get student data
+                first_name = row['first_name'].strip()
+                last_name = row['last_name'].strip()
+                email = row.get('email', '').strip().lower() or f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
+                password = row.get('password', '').strip() or ''.join(random.choices(string.ascii_letters + string.digits, k=8))
                 
-                # Generate email if not in CSV
-                if header_map['email'] == 'generated':
-                    email = f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
-                else:
-                    email = row[header_map['email']].strip().lower()
-                
-                # Generate password if not in CSV
-                if header_map['password'] == 'generated':
-                    password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-                else:
-                    password = row[header_map['password']].strip()
-                
-                # Validate email format
+                # Validate data
+                if not first_name or not last_name:
+                    error_count += 1
+                    error_messages.append(f"Missing name fields in row: {row}")
+                    continue
+                    
                 if '@' not in email or '.' not in email.split('@')[1]:
                     error_count += 1
                     error_messages.append(f"Invalid email format: {email}")
                     continue
                 
-                # Check for duplicate email in current CSV
-                if emails.count(email) > 1:
-                    error_count += 1
-                    error_messages.append(f"Duplicate email in CSV: {email}")
-                    continue
-                    
-                current_app.logger.info(f"Processing row {rows.index(row)+1}: {first_name} {last_name} <{email}>")
-                current_app.logger.debug(f"Full row data: {row}")
-                
-                # Check if user already exists
+                # Check if user exists or create new
                 user = User.query.filter_by(email=email).first()
-                current_app.logger.info(f"User lookup result: {'Found' if user else 'Not found'}")
-                if user:
-                    current_app.logger.debug(f"Existing user details: {user.id} {user.email}")
                 if not user:
-                    # Validate password
-                    if len(password) < 4:
-                        error_count += 1
-                        error_messages.append(f"Password must be at least 4 characters for {email}")
-                        continue
-                        
-                    # Generate unique username
-                    base_username = email.split('@')[0]
-                    username = base_username
-                    counter = 1
-                    while User.query.filter_by(username=username).first():
-                        username = f"{base_username}{counter}"
-                        counter += 1
-                    
-                    user = User(
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=email,
-                        username=username,
-                        is_teacher=False
-                    )
-                    user.set_password(password)
+                    user = create_new_user(first_name, last_name, email, password)
                     db.session.add(user)
                     
-                    # Send welcome email with login credentials
+                    # Send welcome email
                     try:
                         from services.email_service import send_welcome_email
                         send_welcome_email(
@@ -380,9 +261,9 @@ def upload_students():
                 
                 # Add user to class if not already enrolled
                 if user not in class_.students:
-                    current_app.logger.info(f"Adding user {email} to class {class_id}")
                     class_.students.append(user)
                     success_count += 1
+                    current_app.logger.info(f"Added user {email} to class {class_id}")
                 else:
                     error_count += 1
                     error_messages.append(f"Student {email} already in class")
@@ -390,7 +271,8 @@ def upload_students():
             
             except Exception as e:
                 error_count += 1
-                error_messages.append(f"Error processing row: {','.join(row)} - {str(e)}")
+                error_messages.append(f"Error processing row: {row} - {str(e)}")
+                current_app.logger.error(f"Error processing row: {str(e)}")
         
         db.session.commit()
         current_app.logger.info(f"Commit successful. Added {success_count} students, {error_count} errors")
@@ -401,15 +283,57 @@ def upload_students():
         if error_count > 0:
             flash(f'Failed to add {error_count} student(s). Check the error log for details', 'warning')
             for msg in error_messages:
-                if isinstance(msg, list):
-                    flash(', '.join(msg), 'error')
-                    current_app.logger.error(f"Error: {', '.join(msg)}")
-                else:
-                    flash(str(msg), 'error')
-                    current_app.logger.error(f"Error: {str(msg)}")
+                flash(str(msg), 'error')
+                current_app.logger.error(f"Error: {str(msg)}")
                 
     except Exception as e:
         db.session.rollback()
         flash(f'Error processing CSV file: {str(e)}', 'error')
+        current_app.logger.error(f"Error processing CSV: {str(e)}")
     
     return redirect(url_for('class.list_classes'))
+
+def read_and_parse_csv(file_path):
+    """Read and parse CSV file into list of dictionaries"""
+    from flask import current_app
+    
+    with open(file_path, 'r', encoding='utf-8') as f:
+        file_content = f.read()
+        current_app.logger.info(f"File content:\n{file_content}")
+        
+    # Handle BOM character if present
+    if file_content.startswith('\ufeff'):
+        file_content = file_content[1:]
+        current_app.logger.info("Removed BOM character from file content")
+
+    # Get headers and normalize
+    lines = file_content.splitlines()
+    headers = [h.strip().lower() for h in lines[0].split(',')]
+    
+    # Create list of rows as dictionaries
+    rows = []
+    for line in lines[1:]:
+        if line.strip():
+            values = [v.strip() for v in line.split(',')]
+            rows.append(dict(zip(headers, values)))
+    
+    return rows
+
+def create_new_user(first_name, last_name, email, password):
+    """Create new user with generated username"""
+    base_username = email.split('@')[0]
+    username = base_username
+    counter = 1
+    while User.query.filter_by(username=username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+    
+    user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        username=username,
+        is_teacher=False
+    )
+    user.set_password(password)
+    return user

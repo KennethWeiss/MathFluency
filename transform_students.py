@@ -15,9 +15,17 @@ def transform_student_csv(input_path, output_path):
         for row in reader:
             first_name = row['First Name']
             last_name = row['Last Name']
-            email = f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
+            # Use provided email if available, otherwise generate one
+            email = row.get('Email') or f"{first_name.lower()}.{last_name.lower()}@mathfluency.com"
+            
+            # Generate password
             password = f"{first_name[0].upper()}{last_name.lower()}123!"
             
+            # Write row with validation
+            if not first_name or not last_name:
+                print(f"Skipping row - missing required fields: {row}")
+                continue
+                
             writer.writerow([first_name, last_name, email, password])
 
 if __name__ == '__main__':
