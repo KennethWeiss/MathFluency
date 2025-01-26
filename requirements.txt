@@ -1,11 +1,11 @@
 Flask==2.2.5
 Flask-SocketIO==5.3.6
 Flask-WTF==1.1.1
-Flask-SQLAlchemy==3.0.5
+Flask-SQLAlchemy==2.5.1
 Flask-Migrate==4.0.4
 Flask-Login==0.6.2
 Flask-Session==0.5.0
-Werkzeug==2.0.3
+Werkzeug==2.2.2
 Jinja2==3.1.2
 SQLAlchemy==2.0.20
 alembic==1.12.0
