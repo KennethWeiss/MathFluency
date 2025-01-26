@@ -97,6 +97,29 @@ def get_student_accuracy(user_id):
         return (correct / len(recent_attempts)) * 100
     return 0
 
+@teacher_bp.route('/edit-student/<int:student_id>', methods=['GET', 'POST'])
+@login_required
+def edit_student(student_id):
+    """Edit a student's information"""
+    if not current_user.is_teacher:
+        abort(403)
+        
+    student = User.query.get_or_404(student_id)
+    
+    # Ensure the student is in one of the teacher's classes
+    if not any(c in current_user.teaching_classes for c in student.enrolled_classes):
+        abort(403)
+        
+    if request.method == 'POST':
+        student.first_name = request.form.get('first_name', student.first_name)
+        student.last_name = request.form.get('last_name', student.last_name)
+        student.email = request.form.get('email', student.email)
+        db.session.commit()
+        flash('Student information updated successfully', 'success')
+        return redirect(url_for('teacher.active_students'))
+    
+    return render_template('teacher/edit_student.html', student=student)
+
 @teacher_bp.route('/active-students/updates')
 @login_required
 def active_students_updates():

@@ -21,7 +21,14 @@
                  style="width: 150px;" 
                  data-user-id="{{ session.user_id }}">
                 <div class="card-header py-1 px-2 text-center bg-{{ stats.accuracy_color }} bg-opacity-25">
-                    <div class="small fw-bold">{{ session.user.username }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small fw-bold">{{ session.user.username }}</div>
+                        <a href="{{ url_for('teacher.edit_student', student_id=session.user.id) }}" 
+                           class="btn btn-sm btn-outline-secondary"
+                           title="Edit student">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
                     <small class="text-muted last-active">{{ session.last_active | timeago }}</small>
                 </div>
                 <div class="card-body p-2 text-center">

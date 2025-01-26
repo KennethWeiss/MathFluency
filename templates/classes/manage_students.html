@@ -35,6 +35,11 @@
                                    class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-chart-line"></i> View Progress
                                 </a>
+                                <a href="{{ url_for('teacher.edit_student', student_id=student.id) }}" 
+                                   class="btn btn-outline-secondary btn-sm"
+                                   title="Edit student">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
                                 <form action="{{ url_for('class.remove_student', id=class_.id) }}" method="POST" class="d-inline">
                                     <input type="hidden" name="student_id" value="{{ student.id }}">
                                     <!-- CSRF Token: {{ csrf_token() }} -->

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Student: {{ student.full_name }}</h2>
+    
+    <form method="POST" action="{{ url_for('teacher.edit_student', student_id=student.id) }}">
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" 
+                   value="{{ student.first_name or '' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" 
+                   value="{{ student.last_name or '' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" 
+                   value="{{ student.email }}" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('teacher.active_students') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
