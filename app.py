@@ -36,10 +36,14 @@ def create_app(test_config=None):
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL',
-        'sqlite:///fluency.db'
-    )
+    
+    # Database configuration
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///fluency.db')
+    # Handle Render's postgres:// URLs
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Email configuration
