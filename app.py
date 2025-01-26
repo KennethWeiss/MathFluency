@@ -24,8 +24,12 @@ logger = logging.getLogger(__name__)
 def create_app(test_config=None):
     app = Flask(__name__)
     
-    # Initialize CSRF protection
+    # Initialize CSRF protection with debug logging
     csrf = CSRFProtect(app)
+    logger.debug("Initialized CSRF protection")
+    logger.debug(f"CSRF settings: {app.config.get('WTF_CSRF_ENABLED')}")
+    logger.debug(f"CSRF secret key: {app.config.get('SECRET_KEY')}")
+    logger.debug(f"CSRF token length: {app.config.get('WTF_CSRF_TOKEN_LENGTH', 32)}")
     
     # Load default configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')

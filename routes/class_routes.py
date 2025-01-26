@@ -141,23 +141,33 @@ def add_student(id):
 @class_bp.route('/classes/<int:id>/remove_student', methods=['POST'])
 @login_required
 def remove_student(id):
-    class_ = Class.query.get_or_404(id)
-    if not current_user.is_teacher or current_user not in class_.teachers:
-        flash('Access denied.', 'danger')
-        return redirect(url_for('main.home'))
+    try:
+        from flask_wtf.csrf import validate_csrf
+        validate_csrf(request.form.get('csrf_token'))
+        
+        class_ = Class.query.get_or_404(id)
+        if not current_user.is_teacher or current_user not in class_.teachers:
+            flash('Access denied.', 'danger')
+            return redirect(url_for('class.manage_students', id=id))
+        
+        student_id = request.form.get('student_id')
+        if not student_id:
+            flash('Student ID is required.', 'danger')
+            return redirect(url_for('class.manage_students', id=id))
+        
+        student = User.query.get_or_404(student_id)
+        if student not in class_.students:
+            flash('Student is not in this class.', 'warning')
+            return redirect(url_for('class.manage_students', id=id))
+        
+        class_.remove_student(student)
+        db.session.commit()
+        flash('Student removed successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while removing the student.', 'danger')
+        current_app.logger.error(f"Error removing student: {str(e)}")
     
-    student_id = request.form.get('student_id')
-    if not student_id:
-        flash('Student ID is required.', 'danger')
-        return redirect(url_for('class.manage_students', id=id))
-    
-    student = User.query.get_or_404(student_id)
-    if student not in class_.students:
-        flash('Student is not in this class.', 'warning')
-        return redirect(url_for('class.manage_students', id=id))
-    
-    class_.remove_student(student)
-    flash('Student removed successfully!', 'success')
     return redirect(url_for('class.manage_students', id=id))
 
 @class_bp.route('/join', methods=['GET', 'POST'])
