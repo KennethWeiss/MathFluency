@@ -21,3 +21,8 @@ python-socketio==5.12.1
 simple-websocket==1.1.0
 typing-extensions==4.12.2
 wsproto==1.2.0
+# PostgreSQL dependencies
+psycopg2-binary==2.9.9
+# Production server
+gunicorn==21.2.0
+eventlet==0.33.3
