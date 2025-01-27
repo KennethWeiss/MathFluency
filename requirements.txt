@@ -11,3 +11,5 @@ Flask-Migrate==4.0.5
 psycopg2-binary==2.9.9
 python-socketio==5.10.0
 Flask-SocketIO==5.3.6
+gunicorn==21.2.0
+eventlet==0.33.3  # Required for WebSocket support in gunicorn
