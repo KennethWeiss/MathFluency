@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 def create_app(test_config=None):
     app = Flask(__name__)
     
+    # Set debug mode based on environment
+    app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    
     # Initialize CSRF protection with debug logging
     csrf = CSRFProtect(app)
     logger.debug("Initialized CSRF protection")
@@ -76,7 +79,7 @@ def create_app(test_config=None):
     logger.debug(f"All environment variables: {list(os.environ.keys())}")
     
     # Allow OAuth over HTTP for local development
-    if os.environ.get('FLASK_ENV') != 'production':
+    if os.environ.get('FLASK_DEBUG') == 'True':
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     
     # Initialize extensions
