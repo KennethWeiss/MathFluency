@@ -150,7 +150,9 @@ def create_app(test_config=None):
     
     # Import blueprints
     from routes.oauth_routes import oauth_bp
+    from routes.auth_routes import auth_bp
     app.register_blueprint(oauth_bp)
+    app.register_blueprint(auth_bp)
     
     from routes.main_routes import main_bp
     from routes.layout_routes import layout_bp
