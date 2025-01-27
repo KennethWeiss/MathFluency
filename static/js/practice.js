@@ -11,6 +11,11 @@ const OPERATIONS = {
     division: { symbol: '÷', name: 'Division' }
 };
 
+// Get CSRF token from meta tag
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
 async function getNewProblem() {
     let level;
     
@@ -33,7 +38,11 @@ async function getNewProblem() {
         if (typeof assignmentId !== 'undefined') {
             requestData.assignment_id = assignmentId;
             // In assignment mode, use the operation from the server response
-            const response = await fetch(`/assignment/${assignmentId}/info`);
+            const response = await fetch(`/assignment/${assignmentId}/info`, {
+                headers: {
+                    'X-CSRFToken': getCsrfToken()
+                }
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -45,6 +54,7 @@ async function getNewProblem() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
             },
             body: JSON.stringify(requestData)
         });
@@ -191,6 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
                 },
                 body: JSON.stringify(requestData)
             });
