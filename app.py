@@ -29,6 +29,9 @@ def create_app(test_config=None):
     
     # Initialize CSRF protection with debug logging
     csrf = CSRFProtect(app)
+    app.config['WTF_CSRF_ENABLED'] = True
+    app.config['WTF_CSRF_SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-for-testing')
+    app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit for CSRF tokens
     logger.debug("Initialized CSRF protection")
     logger.debug(f"CSRF settings: {app.config.get('WTF_CSRF_ENABLED')}")
     logger.debug(f"CSRF secret key: {app.config.get('SECRET_KEY')}")
