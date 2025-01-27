@@ -20,15 +20,26 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 def get_google_provider_cfg():
-    return requests.get(GOOGLE_DISCOVERY_URL).json()
+    try:
+        return requests.get(GOOGLE_DISCOVERY_URL).json()
+    except Exception as e:
+        logger.error(f"Error fetching Google provider config: {str(e)}")
+        return None
 
 @oauth_bp.route("/google")
 def google_login():
+    # Log the attempt
+    logger.info("Starting Google OAuth login process")
+    
     if not current_user.is_anonymous:
-        return redirect(url_for("index"))
+        return redirect(url_for("main.home"))
 
     # Find out what URL to hit for Google login
     google_provider_cfg = get_google_provider_cfg()
+    if not google_provider_cfg:
+        flash("Error connecting to Google.", category="error")
+        return redirect(url_for("main.home"))
+        
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
     # Use library to construct the request for Google login
@@ -45,11 +56,15 @@ def google_callback():
     code = request.args.get("code")
     if not code:
         flash("Failed to log in with Google.", category="error")
-        return redirect(url_for("index"))
+        return redirect(url_for("main.home"))
 
     try:
         # Find out what URL to hit to get tokens
         google_provider_cfg = get_google_provider_cfg()
+        if not google_provider_cfg:
+            flash("Error connecting to Google.", category="error")
+            return redirect(url_for("main.home"))
+            
         token_endpoint = google_provider_cfg["token_endpoint"]
         
         # Prepare and send a request to get tokens
@@ -106,18 +121,18 @@ def google_callback():
             db.session.commit()
             login_user(user)
             flash("Successfully signed in with Google.", category="success")
-            return redirect(url_for("index"))
+            return redirect(url_for("main.home"))
         else:
             flash("Google account not verified.", category="error")
-            return redirect(url_for("index"))
+            return redirect(url_for("main.home"))
 
     except Exception as e:
         logger.error(f"Error during Google OAuth: {str(e)}")
         flash("Failed to log in with Google.", category="error")
-        return redirect(url_for("index"))
+        return redirect(url_for("main.home"))
 
 @oauth_bp.route("/logout")
 def logout():
     logout_user()
     flash("You have been logged out.", category="success")
-    return redirect(url_for("index"))
+    return redirect(url_for("main.home"))
