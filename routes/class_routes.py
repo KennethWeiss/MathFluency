@@ -2,11 +2,14 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from models.class_ import Class
 from models.user import User
-from app import db
+from models.practice_attempt import PracticeAttempt
+from models.assignment import Assignment, AssignmentProgress, AttemptHistory
+from app import db, logger
 import io
 import csv
 import random
 import string
+import logging
 
 class_bp = Blueprint('class', __name__)
 
@@ -118,7 +121,7 @@ def add_student(id):
     class_ = Class.query.get_or_404(id)
     if not current_user.is_teacher or current_user not in class_.teachers:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.home'))
+        return redirect(url_for('class.manage_students', id=id))
     
     student_id = request.form.get('student_id')
     if not student_id:
