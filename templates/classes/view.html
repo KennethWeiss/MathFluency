@@ -94,6 +94,15 @@
                                     </button>
                                 </form>
                                 {% endif %}
+                                <form action="{{ url_for('class.clear_student_progress', student_id=student.id) }}" 
+                                      method="POST" 
+                                      onsubmit="return confirm('Are you sure you want to clear all progress data for {{ student.username }}? This cannot be undone.');"
+                                      style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Clear Progress
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         {% endfor %}

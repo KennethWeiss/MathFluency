@@ -303,6 +303,49 @@ def upload_students():
     
     return redirect(url_for('class.list_classes'))
 
+@class_bp.route('/student/<int:student_id>/clear_progress', methods=['POST'])
+@login_required
+def clear_student_progress(student_id):
+    if not current_user.is_teacher:
+        flash('Only teachers can clear student progress.', 'danger')
+        return redirect(url_for('main.home'))
+    
+    # Get the student
+    student = User.query.get_or_404(student_id)
+    
+    # Verify the student is in one of the teacher's classes
+    student_in_class = False
+    for class_ in current_user.teaching_classes:
+        if student in class_.students:
+            student_in_class = True
+            break
+    
+    if not student_in_class:
+        flash('You can only clear progress for students in your classes.', 'danger')
+        return redirect(url_for('class.list_classes'))
+    
+    try:
+        # Delete practice attempts
+        PracticeAttempt.query.filter_by(user_id=student_id).delete()
+        
+        # Delete assignment progress
+        AssignmentProgress.query.filter_by(student_id=student_id).delete()
+        
+        # Delete attempt history
+        AttemptHistory.query.filter_by(student_id=student_id).delete()
+        
+        # Commit the changes
+        db.session.commit()
+        
+        flash(f'Successfully cleared progress data for {student.username}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('An error occurred while clearing progress data.', 'danger')
+        logger.error(f"Error clearing progress for student {student_id}: {str(e)}")
+    
+    # Redirect back to the class view
+    return redirect(request.referrer or url_for('class.list_classes'))
+
 def read_and_parse_csv(file_path):
     """Read and parse CSV file into list of dictionaries"""
     from flask import current_app
