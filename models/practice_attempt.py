@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from database import db
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, select
 
 class PracticeAttempt(db.Model):
     __tablename__ = 'practice_attempt'
@@ -31,13 +31,14 @@ class PracticeAttempt(db.Model):
         """Get the mastery status for problems at this level."""
         week_ago = datetime.utcnow() - timedelta(days=7)
         
-        # Get all attempts for this level in the past week
-        attempts = db_session.query(cls).filter(
+        # Get all attempts for this level in the past week using new select() style
+        stmt = select(cls).where(
             cls.user_id == user_id,
             cls.operation == operation,
             cls.level == level,
             cls.created_at >= week_ago
-        ).all()
+        )
+        attempts = db_session.execute(stmt).scalars().all()
         
         if not attempts or len(attempts) < cls.MIN_ATTEMPTS:
             return 'needs_practice'

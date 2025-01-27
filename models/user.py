@@ -24,6 +24,9 @@ class User(UserMixin, db.Model):
     first_name: Mapped[Optional[str]] = mapped_column(db.String(64), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(db.String(64), nullable=True)
     
+    # Relationships
+    practice_attempts: Mapped[List["PracticeAttempt"]] = relationship(back_populates="user")
+    
     # Note: relationships are defined via backref in the Class model
     # teacher_classes - classes where user is a teacher
     # enrolled_classes - classes where user is a student
