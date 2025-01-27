@@ -87,6 +87,7 @@ def create_app(test_config=None):
     migrate = Migrate(app, db)
     login_manager = LoginManager(app)
     login_manager.login_view = 'auth.login'
+    socketio.init_app(app, cors_allowed_origins="*")
     
     # Import models
     from models.user import User
@@ -98,10 +99,6 @@ def create_app(test_config=None):
     with app.app_context():
         db.create_all()  # This will create any missing tables
         
-    # Import and initialize SocketIO
-    from extensions import socketio
-    socketio.init_app(app, cors_allowed_origins="*")
-    
     # Import WebSocket handlers
     from websockets.quiz import (
         handle_join_quiz,
@@ -149,31 +146,29 @@ def create_app(test_config=None):
         return [x for x in l if not (x in seen or seen.add(x))]
     
     # Import blueprints
-    from routes.auth_routes import auth_bp
-    from routes.layout_routes import layout_bp
+    from routes.oauth_routes import oauth_bp
+    app.register_blueprint(oauth_bp)
+    
     from routes.main_routes import main_bp
+    from routes.layout_routes import layout_bp
     from routes.class_routes import class_bp
     from routes.assignment_routes import assignment_bp
     from routes.practice_routes import practice_bp
-    from routes.oauth_routes import oauth_bp
     from routes.admin_routes import admin_bp
     from routes.teacher_routes import teacher_bp
-    from routes.oauth_routes import blueprint as google_blueprint
     from routes.progress_routes import progress_bp
     from routes.quiz_routes import quiz_bp
     
     # Register blueprints
     app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(layout_bp)
     app.register_blueprint(class_bp)
     app.register_blueprint(quiz_bp)
     app.register_blueprint(teacher_bp)
     app.register_blueprint(practice_bp)
-    app.register_blueprint(oauth_bp)
-    app.register_blueprint(google_blueprint, url_prefix="/oauth")
+    app.register_blueprint(admin_bp)
     app.register_blueprint(progress_bp)
     app.register_blueprint(assignment_bp)
-    app.register_blueprint(admin_bp)
     
     @login_manager.user_loader
     def load_user(user_id):

@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from models.user import User
 
 class OAuth(db.Model):
-    __tablename__ = 'oauth'
+    __tablename__ = 'flask_dance_oauth'  # Keep the existing table name to avoid migration issues
 
     id: Mapped[int] = mapped_column(primary_key=True)
     provider: Mapped[str] = mapped_column(String(50))
