@@ -15,7 +15,7 @@ from utils.practice_tracker import PracticeTracker
 from utils.math_problems import get_problem, generate_custom_multiplication
 from sqlalchemy import func
 from database import db
-from websockets import quiz as quiz_ws
+from extensions import socketio
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -87,6 +87,8 @@ def create_app(test_config=None):
     migrate = Migrate(app, db)
     login_manager = LoginManager(app)
     login_manager.login_view = 'auth.login'
+    
+    # Initialize SocketIO with the app
     socketio.init_app(app, cors_allowed_origins="*")
     
     # Import models
@@ -96,9 +98,10 @@ def create_app(test_config=None):
     from models.assignment import Assignment, AssignmentProgress, AttemptHistory
     from models.quiz import Quiz, QuizParticipant, QuizQuestion
     
+    # Create database tables
     with app.app_context():
-        db.create_all()  # This will create any missing tables
-        
+        db.create_all()
+    
     # Import WebSocket handlers
     from websockets.quiz import (
         handle_join_quiz,
