@@ -1,10 +1,6 @@
 import os
 from dotenv import load_dotenv
 import logging
-
-# Allow OAuth over HTTP for local development
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
 from flask import Flask, render_template, url_for, redirect, flash, request, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
@@ -93,7 +89,7 @@ def create_app(test_config=None):
     login_manager.login_view = 'auth.login'
     
     # Initialize SocketIO with the app
-    socketio.init_app(app, cors_allowed_origins="*")
+    socketio.init_app(app)
     
     # Import models
     from models.user import User
@@ -269,6 +265,6 @@ def create_app(test_config=None):
 
 if __name__ == '__main__':
     app = create_app()
-    socketio.run(app, debug=True, port=5001)
+    socketio.run(app, debug=True, port=5000)  # Use same port as Flask app
 else:
     app = create_app()

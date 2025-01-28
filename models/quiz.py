@@ -10,7 +10,7 @@ class Quiz(db.Model):
     operation = db.Column(db.String(20), nullable=False)  # multiplication, addition, etc.
     adaptive = db.Column(db.Boolean, default=False)
     duration = db.Column(db.Integer, nullable=False)  # in seconds
-    status = db.Column(db.String(20), default='waiting')  # waiting, active, finished
+    status = db.Column(db.String(20), default='waiting')  # waiting, active, paused, finished
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

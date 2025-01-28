@@ -18,7 +18,7 @@
                             <strong>Duration:</strong> {{ quiz.duration }} minutes<br>
                             <strong>Adaptive:</strong> {{ 'Yes' if quiz.adaptive else 'No' }}<br>
                             <strong>Status:</strong> 
-                            <span id="quiz-status" class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' }}">
+                            <span id="quiz-status" class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' if quiz.status == 'paused' else 'warning' }}">
                                 {{ quiz.status }}
                             </span>
                         </p>
@@ -27,7 +27,7 @@
                     <div class="alert alert-info">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>Quiz Link: <strong id="quiz-link">{{ url_for('quiz.join_quiz', quiz_id=quiz.id, _external=True) }}</strong></span>
-                            <button onclick="copyQuizLink()" class="btn btn-outline-primary btn-sm">Copy Link</button>
+                            <button onclick="window.copyQuizLink()" class="btn btn-outline-primary btn-sm">Copy Link</button>
                         </div>
                     </div>
 
@@ -49,9 +49,17 @@
 
                     <div class="d-flex justify-content-between">
                         {% if quiz.status == 'waiting' %}
-                        <button onclick="startQuiz()" class="btn btn-success">Start Quiz</button>
+                        <button id="start-quiz-btn" onclick="window.startQuiz()" class="btn btn-success">Start Quiz</button>
                         {% elif quiz.status == 'active' %}
-                        <button onclick="endQuiz()" class="btn btn-danger">End Quiz</button>
+                        <div>
+                            <button id="pause-quiz-btn" onclick="window.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
+                            <button id="end-quiz-btn" onclick="window.endQuiz()" class="btn btn-danger">End Quiz</button>
+                        </div>
+                        {% elif quiz.status == 'paused' %}
+                        <div>
+                            <button id="resume-quiz-btn" onclick="window.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
+                            <button id="end-quiz-btn" onclick="window.endQuiz()" class="btn btn-danger">End Quiz</button>
+                        </div>
                         {% else %}
                         <button disabled class="btn btn-secondary">Quiz Finished</button>
                         {% endif %}
@@ -91,19 +99,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     window.addEventListener('load', function() {
-        const socket = io();
+        const socket = io({
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
         const quizId = {{ quiz.id }};
         
-        // Debug: Log socket connection status
         socket.on('connect', function() {
             console.log('Connected to WebSocket server');
-            console.log('Socket ID:', socket.id);
         });
-        
+
         socket.on('connect_error', function(error) {
             console.error('WebSocket connection error:', error);
         });
-        
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from WebSocket server');
+        });
+
         // Join the quiz room
         socket.emit('join_quiz', {
             quiz_id: quizId
@@ -132,68 +148,26 @@
             
             socket.emit('start_quiz', {
                 quiz_id: quizId
-            }, (response) => {
-                console.log('Start quiz event sent, response:', response);
+            });
+        };
+        
+        window.pauseQuiz = function() {
+            socket.emit('pause_quiz', {
+                quiz_id: quizId
+            });
+        };
+        
+        window.resumeQuiz = function() {
+            socket.emit('resume_quiz', {
+                quiz_id: quizId
             });
         };
         
         window.endQuiz = function() {
-            console.log('Attempting to end quiz...', {
-                quiz_id: quizId,
-                socket_id: socket.id,
-                connected: socket.connected
-            });
-            
-            if (!socket.connected) {
-                console.error('Socket not connected! Attempting to reconnect...');
-                socket.connect();
-                return;
-            }
-            
             socket.emit('end_quiz', {
                 quiz_id: quizId
-            }, (response) => {
-                console.log('End quiz event sent, response:', response);
             });
         };
-        
-        // Listen for new participants
-        socket.on('user_joined', function(data) {
-            console.log('User joined event received:', data);
-            if (data.quiz_id === quizId) {
-                const participantsList = document.getElementById('participants-list');
-                // Check if we have the "No participants yet" message
-                if (participantsList.children.length === 1 && 
-                    participantsList.children[0].textContent.trim() === 'No participants yet') {
-                    participantsList.innerHTML = '';
-                }
-                const participantItem = document.createElement('div');
-                participantItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                participantItem.innerHTML = `
-                    ${data.user}
-                    <span class="badge bg-primary rounded-pill">0</span>
-                `;
-                participantsList.appendChild(participantItem);
-            }
-        });
-        
-        // Listen for leaderboard updates
-        socket.on('leaderboard_update', function(data) {
-            console.log('Leaderboard update received:', data);
-            if (data.quiz_id === quizId) {
-                const leaderboard = document.getElementById('leaderboard');
-                leaderboard.innerHTML = '';
-                data.leaderboard.forEach(function(entry) {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    item.innerHTML = `
-                        ${entry.username}
-                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
-                    `;
-                    leaderboard.appendChild(item);
-                });
-            }
-        });
         
         // Listen for quiz status changes
         socket.on('quiz_status_changed', function(data) {
@@ -201,20 +175,55 @@
             if (data.quiz_id === quizId) {
                 const statusBadge = document.getElementById('quiz-status');
                 statusBadge.textContent = data.status;
-                statusBadge.className = `badge bg-${data.status === 'active' ? 'success' : 'secondary'}`;
+                statusBadge.className = `badge bg-${data.status === 'active' ? 'success' : data.status === 'paused' ? 'warning' : 'secondary'}`;
                 
-                // Reload the page to update the buttons
-                console.log('Reloading page to update UI...');
-                location.reload();
+                // Update UI elements based on quiz status
+                const startBtn = document.getElementById('start-quiz-btn');
+                const pauseBtn = document.getElementById('pause-quiz-btn');
+                const resumeBtn = document.getElementById('resume-quiz-btn');
+                const endBtn = document.getElementById('end-quiz-btn');
+                
+                if (data.status === 'active') {
+                    startBtn.style.display = 'none';
+                    pauseBtn.style.display = 'inline-block';
+                    resumeBtn.style.display = 'none';
+                    endBtn.style.display = 'inline-block';
+                } else if (data.status === 'paused') {
+                    startBtn.style.display = 'none';
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'inline-block';
+                    endBtn.style.display = 'inline-block';
+                } else {
+                    startBtn.style.display = 'inline-block';
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'none';
+                    endBtn.style.display = 'none';
+                }
             }
         });
         
-        // Debug: Log all socket events
-        const originalEmit = socket.emit;
-        socket.emit = function() {
-            console.log('Emitting event:', arguments);
-            return originalEmit.apply(this, arguments);
-        };
+        // Listen for new participants
+        socket.on('user_joined', function(data) {
+            console.log('User joined event received:', data);
+            if (data.quiz_id === quizId) {
+                // Update participant list dynamically
+                const participantsList = document.getElementById('participants-list');
+                if (participantsList && data.participant) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = data.participant.name;
+                    li.id = `participant-${data.participant.id}`;
+                    participantsList.appendChild(li);
+                }
+                
+                // Update participant count
+                const participantCount = document.getElementById('participant-count');
+                if (participantCount) {
+                    const currentCount = parseInt(participantCount.textContent) || 0;
+                    participantCount.textContent = currentCount + 1;
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

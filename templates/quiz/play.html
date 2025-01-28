@@ -16,7 +16,15 @@
                         </div>
                     </div>
 
-                    <div id="quiz-screen" class="{% if quiz.status != 'active' %}d-none{% endif %}">
+                    <div id="paused-screen" class="text-center {% if quiz.status != 'paused' %}d-none{% endif %}">
+                        <h3>Quiz is paused</h3>
+                        <p>Please wait for the teacher to resume...</p>
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div id="quiz-screen" class="{% if quiz.status not in ['active'] %}d-none{% endif %}">
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h3>Current Problem:</h3>
@@ -87,17 +95,93 @@
             quiz_id: quizId
         });
         
+        // Handle quiz started
+        socket.on('quiz_started', function(data) {
+            console.log('Quiz started event received:', data);
+            if (data.quiz_id === quizId) {
+                document.getElementById('waiting-screen').classList.add('d-none');
+                document.getElementById('quiz-screen').classList.remove('d-none');
+                document.getElementById('problem-display').textContent = data.problem;
+                currentProblem = data.problem;
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+            }
+        });
+        
+        // Handle new problems
+        socket.on('new_problem', function(data) {
+            console.log('New problem received:', data);
+            if (data.quiz_id === quizId) {
+                document.getElementById('problem-display').textContent = data.problem;
+                currentProblem = data.problem;
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+            }
+        });
+        
+        // Handle answer feedback
+        socket.on('answer_feedback', function(data) {
+            console.log('Answer feedback received:', data);
+            if (data.quiz_id === quizId) {
+                showFeedback(data.correct, data.correct ? 'Correct! 🎉' : 'Incorrect. Keep trying!');
+                if (data.correct) {
+                    currentScore++;
+                    document.getElementById('current-score').textContent = currentScore;
+                }
+            }
+        });
+        
+        // Handle quiz status changes
+        socket.on('quiz_status_changed', function(data) {
+            console.log('Quiz status changed:', data);
+            if (data.quiz_id === quizId) {
+                const waitingScreen = document.getElementById('waiting-screen');
+                const quizScreen = document.getElementById('quiz-screen');
+                const pausedScreen = document.getElementById('paused-screen');
+                const finishedScreen = document.getElementById('finished-screen');
+                
+                // Hide all screens first
+                waitingScreen.classList.add('d-none');
+                quizScreen.classList.add('d-none');
+                pausedScreen.classList.add('d-none');
+                finishedScreen.classList.add('d-none');
+                
+                // Show appropriate screen
+                if (data.status === 'waiting') {
+                    waitingScreen.classList.remove('d-none');
+                } else if (data.status === 'active') {
+                    quizScreen.classList.remove('d-none');
+                } else if (data.status === 'paused') {
+                    pausedScreen.classList.remove('d-none');
+                } else if (data.status === 'finished') {
+                    finishedScreen.classList.remove('d-none');
+                }
+            }
+        });
+        
+        // Handle leaderboard updates
+        socket.on('leaderboard_update', function(data) {
+            console.log('Leaderboard update received:', data);
+            if (data.quiz_id === quizId) {
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = '';
+                data.leaderboard.forEach(function(entry) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        ${entry.username}
+                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
+                    `;
+                    leaderboard.appendChild(item);
+                });
+            }
+        });
+        
         function showFeedback(isCorrect, message) {
             const feedback = document.getElementById('feedback');
             feedback.textContent = message;
             feedback.className = `alert ${isCorrect ? 'alert-success' : 'alert-danger'}`;
             feedback.classList.remove('d-none');
-            
-            // Update score display if correct
-            if (isCorrect) {
-                currentScore++;
-                document.getElementById('current-score').textContent = currentScore;
-            }
             
             // Hide feedback after 3 seconds
             setTimeout(() => {
@@ -105,7 +189,7 @@
             }, 3000);
         }
         
-        // Make functions globally available
+        // Handle answer submission
         window.submitAnswer = function() {
             const answer = parseInt(document.getElementById('answer').value);
             if (isNaN(answer)) {
@@ -124,73 +208,10 @@
             document.getElementById('answer').value = '';
         };
         
-        // Listen for quiz start
-        socket.on('quiz_started', function(data) {
-            console.log('Quiz started event received:', data);
-            if (data.quiz_id === quizId) {
-                document.getElementById('waiting-screen').classList.add('d-none');
-                document.getElementById('quiz-screen').classList.remove('d-none');
-                document.getElementById('finished-screen').classList.add('d-none');
-                
-                // Display the first problem
-                currentProblem = data.problem;
-                document.getElementById('problem-display').textContent = data.problem;
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
-            }
-        });
-        
-        // Listen for answer feedback
-        socket.on('answer_feedback', function(data) {
-            console.log('Answer feedback received:', data);
-            if (data.quiz_id === quizId) {
-                showFeedback(data.correct, data.correct ? 'Correct! 🎉' : 'Incorrect. Keep trying!');
-            }
-        });
-        
-        // Listen for new problems
-        socket.on('new_problem', function(data) {
-            console.log('New problem received:', data);
-            if (data.quiz_id === quizId) {
-                currentProblem = data.problem;
-                document.getElementById('problem-display').textContent = data.problem;
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
-            }
-        });
-        
-        // Listen for quiz end
-        socket.on('quiz_ended', function(data) {
-            console.log('Quiz ended event received:', data);
-            if (data.quiz_id === quizId) {
-                document.getElementById('waiting-screen').classList.add('d-none');
-                document.getElementById('quiz-screen').classList.add('d-none');
-                document.getElementById('finished-screen').classList.remove('d-none');
-                document.getElementById('final-score').textContent = data.score;
-            }
-        });
-        
-        // Listen for leaderboard updates
-        socket.on('leaderboard_update', function(data) {
-            console.log('Leaderboard update received:', data);
-            if (data.quiz_id === quizId) {
-                const leaderboard = document.getElementById('leaderboard');
-                leaderboard.innerHTML = '';
-                data.leaderboard.forEach(function(entry) {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    item.innerHTML = `
-                        ${entry.username}
-                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
-                    `;
-                    leaderboard.appendChild(item);
-                });
-            }
-        });
-        
         // Allow Enter key to submit answer
         document.getElementById('answer').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
+                event.preventDefault();
                 submitAnswer();
             }
         });
