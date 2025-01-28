@@ -5,6 +5,7 @@
     <h2>Edit Student: {{ student.full_name }}</h2>
     
     <form method="POST" action="{{ url_for('teacher.edit_student', student_id=student.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="first_name">First Name</label>
             <input type="text" class="form-control" id="first_name" name="first_name" 

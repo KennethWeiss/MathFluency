@@ -26,6 +26,15 @@
                             Due: {{ assignment.due_date.strftime('%Y-%m-%d') }}
                         </small>
                     </div>
+
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            Classes: 
+                            {% for class in assignment.classes %}
+                                <span class="badge bg-secondary">{{ class.name }}</span>
+                            {% endfor %}
+                        </small>
+                    </div>
                     
                     <div class="progress mb-3">
                         {% set progress_query = assignment.student_progress %}

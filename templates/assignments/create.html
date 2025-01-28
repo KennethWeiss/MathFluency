@@ -5,6 +5,7 @@
     <h1>{{ 'Edit' if assignment else 'Create New' }} Assignment</h1>
     <!-- Begin form -->
     <form method="POST" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input type="text" class="form-control" id="title" name="title" 
@@ -23,17 +24,24 @@
         </div>
         <!-- Class selection -->
         <div class="mb-3">
-            <label for="class_id" class="form-label">Assign to Class</label>
-            <select class="form-select" id="class_id" name="class_id" required>
-                <option value="">Choose class...</option>
+            <label class="form-label">Assign to Classes</label>
+            <div class="border rounded p-3">
                 {% for class in classes %}
-                <option value="{{ class.id }}" {% if assignment and assignment.class_id == class.id %}selected{% endif %}>
-                    {{ class.name }}
-                </option>
+                <div class="form-check">
+                    <input type="checkbox" 
+                           class="form-check-input" 
+                           id="class_{{ class.id }}" 
+                           name="class_ids" 
+                           value="{{ class.id }}"
+                           {% if assignment and class in assignment.classes %}checked{% endif %}>
+                    <label class="form-check-label" for="class_{{ class.id }}">
+                        {{ class.name }}
+                    </label>
+                </div>
                 {% endfor %}
-            </select>
+            </div>
             <div class="invalid-feedback">
-                Please select a class.
+                Please select at least one class.
             </div>
         </div>
         <!--operation and level-->
@@ -123,9 +131,32 @@
                 event.preventDefault()
                 event.stopPropagation()
             }
+
+            // Check if at least one class is selected
+            var classCheckboxes = form.querySelectorAll('input[name="class_ids"]');
+            var atLeastOneChecked = Array.from(classCheckboxes).some(cb => cb.checked);
+            if (!atLeastOneChecked) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.classList.add('was-validated');
+                // Show the invalid feedback
+                var invalidFeedback = form.querySelector('.invalid-feedback');
+                if (invalidFeedback) {
+                    invalidFeedback.style.display = 'block';
+                }
+            }
+
             form.classList.add('was-validated')
         }, false)
     })
 })()
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // No select2 initialization needed
+});
 </script>
 {% endblock %}

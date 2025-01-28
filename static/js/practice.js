@@ -1,15 +1,9 @@
-let currentOperation = 'addition';
+let currentOperation = 'multiplication';
 let problemStartTime = null;
 let currentProblem = null;
 let wrongAttempts = 0;
 
-// Operation configuration
-const OPERATIONS = {
-    addition: { symbol: '+', name: 'Addition' },
-    subtraction: { symbol: '-', name: 'Subtraction' },
-    multiplication: { symbol: '×', name: 'Multiplication' },
-    division: { symbol: '÷', name: 'Division' }
-};
+
 
 // Get CSRF token from meta tag
 function getCsrfToken() {

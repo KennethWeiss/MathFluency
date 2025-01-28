@@ -38,7 +38,7 @@ def create_assignment():
         min_correct_percentage = int(request.form.get('min_correct_percentage', 80))
         due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d')
         active = 'active' in request.form
-        class_id = request.form.get('class_id')
+        class_ids = request.form.getlist('class_ids')  # Get list of selected class IDs
         
         # Optional settings
         max_attempts = request.form.get('max_attempts_per_problem')
@@ -62,18 +62,21 @@ def create_assignment():
         )
         
         db.session.add(assignment)
-        db.session.commit()
         
-        # Create progress entries for all students in the class
-        if class_id:
+        # Add selected classes to assignment
+        for class_id in class_ids:
             class_ = Class.query.get(class_id)
-            for student in class_.students:
-                progress = AssignmentProgress(
-                    student_id=student.id,
-                    assignment_id=assignment.id
-                )
-                db.session.add(progress)
-            db.session.commit()
+            if class_:
+                assignment.classes.append(class_)
+                # Create progress entries for all students in the class
+                for student in class_.students:
+                    progress = AssignmentProgress(
+                        student_id=student.id,
+                        assignment_id=assignment.id
+                    )
+                    db.session.add(progress)
+        
+        db.session.commit()
         
         flash('Assignment created successfully!', 'success')
         return redirect(url_for('assignment.list_assignments'))
