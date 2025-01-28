@@ -13,6 +13,7 @@ import logging
 
 class_bp = Blueprint('class', __name__)
 
+# Teacher routes list.html
 @class_bp.route('/classes')
 @login_required
 def list_classes():
@@ -22,6 +23,7 @@ def list_classes():
         classes = current_user.enrolled_classes.all()
     return render_template('classes/list.html', classes=classes)
 
+# Teacher route create.html
 @class_bp.route('/classes/create', methods=['GET', 'POST'])
 @login_required
 def create_class():
@@ -52,6 +54,7 @@ def create_class():
     
     return render_template('classes/create.html')
 
+# Teacher route view.html individual class
 @class_bp.route('/classes/<int:id>')
 @login_required
 def view_class(id):
@@ -73,6 +76,7 @@ def view_class(id):
                         student_count=student_count,
                         primary_teacher=primary_teacher)
 
+# Teacher route edit.html individual class
 @class_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_class(id):
@@ -98,6 +102,7 @@ def edit_class(id):
     
     return render_template('classes/edit.html', class_=class_)
 
+# Teacher route manage_students.html individual class
 @class_bp.route('/classes/<int:id>/students')
 @login_required
 def manage_students(id):
@@ -115,6 +120,7 @@ def manage_students(id):
                         class_=class_,
                         available_students=available_students)
 
+# Teacher route add_student.html to individual class
 @class_bp.route('/classes/<int:id>/add_student', methods=['POST'])
 @login_required
 def add_student(id):
@@ -141,6 +147,7 @@ def add_student(id):
     flash('Student added successfully!', 'success')
     return redirect(url_for('class.manage_students', id=id))
 
+# Teacher route remove_student.html from individual class
 @class_bp.route('/classes/<int:id>/remove_student', methods=['POST'])
 @login_required
 def remove_student(id):
@@ -173,6 +180,7 @@ def remove_student(id):
     
     return redirect(url_for('class.manage_students', id=id))
 
+# Teacher route join.html to individual class
 @class_bp.route('/join', methods=['GET', 'POST'])
 @login_required
 def join_class():
@@ -201,6 +209,7 @@ def join_class():
     
     return render_template('classes/join.html')
 
+# Teacher route upload_students.html to individual class
 @class_bp.route('/upload_students', methods=['POST'])
 @login_required
 def upload_students():
@@ -306,6 +315,7 @@ def upload_students():
     
     return redirect(url_for('class.list_classes'))
 
+# Teacher route clear_student_progress.html from individual class
 @class_bp.route('/student/<int:student_id>/clear_progress', methods=['POST'])
 @login_required
 def clear_student_progress(student_id):
@@ -344,11 +354,12 @@ def clear_student_progress(student_id):
     except Exception as e:
         db.session.rollback()
         flash('An error occurred while clearing progress data.', 'danger')
-        logger.error(f"Error clearing progress for student {student_id}: {str(e)}")
+        current_app.logger.error(f"Error clearing progress for student {student_id}: {str(e)}")
     
     # Redirect back to the class view
     return redirect(request.referrer or url_for('class.list_classes'))
 
+# used for uploading students
 def read_and_parse_csv(file_path):
     """Read and parse CSV file into list of dictionaries"""
     from flask import current_app

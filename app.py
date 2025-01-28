@@ -21,6 +21,7 @@ from extensions import socketio
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 def create_app(test_config=None):
     app = Flask(__name__)
     
