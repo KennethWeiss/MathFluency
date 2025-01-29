@@ -67,7 +67,7 @@
                             <div class="progress" style="height: 25px;">
                                 <div class="progress-bar" 
                                     role="progressbar" 
-                                    style="width: {{ percentage }}%"
+                                     style="width: {{ percentage }}%"
                                     aria-valuenow="{{ percentage }}" 
                                     aria-valuemin="0" 
                                     aria-valuemax="100">
@@ -114,7 +114,7 @@
                             <tbody>
                                 {% for progress in assignment.student_progress %}
                                 <tr>
-                                    <td>{{ progress.student.name }}</td>
+                                    <td>{{ progress.student.name }} name</td>
                                     <td>
                                         {% if progress.completed_at %}
                                             <span class="badge bg-success">Completed</span>
@@ -125,8 +125,8 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if progress.calculate_score() is not none %}
-                                            {{ progress.calculate_score() }}%
+                                        {% if progress.accuracy is not none %}
+                                            {{ progress.accuracy }}%
                                         {% else %}
                                             -
                                         {% endif %}
@@ -172,8 +172,8 @@
                                     <span class="badge bg-secondary">Not Started</span>
                                 {% endif %}
                             </p>
-                            {% if progress.calculate_score() is not none %}
-                            <p><strong>Current Score:</strong> {{ progress.calculate_score() }}%</p>
+                            {% if progress.accuracy is not none %}
+                            <p><strong>Current Score:</strong> {{ progress.accuracy }}%</p>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
