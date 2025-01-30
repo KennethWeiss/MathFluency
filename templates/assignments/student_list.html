@@ -16,7 +16,7 @@
                     </h6>
                     <p class="card-text">{{ assignment.description }}</p>
                     
-                    {% set progress = assignment.get_progress(current_user) %}
+                    {% set progress = assignment.get_progress(current_user.id) %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <small class="text-muted">Due: {{ assignment.due_date.strftime('%Y-%m-%d') }}</small>
@@ -45,8 +45,8 @@
                         
                         {% if progress %}
                         <p class="mb-2">
-                            <strong>Current Score:</strong> {{ progress.calculate_score() }}%
-                            {% if progress.calculate_score() >= assignment.min_correct_percentage %}
+                            <strong>Current Score:</strong> {{ progress.accuracy }}%
+                            {% if progress.accuracy >= assignment.min_correct_percentage %}
                                 <i class="fas fa-check-circle text-success"></i>
                             {% endif %}
                         </p>

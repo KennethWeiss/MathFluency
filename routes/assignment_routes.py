@@ -236,6 +236,11 @@ def student_assignments():
         .filter(Class.students.any(id=current_user.id))\
         .all()
     
+    print("====================================")
+    print(assignments)
+    print(current_user.id)
+    print("====================================")
+    
     return render_template('assignments/student_list.html', assignments=assignments)
 
 
