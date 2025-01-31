@@ -18,8 +18,8 @@ class Assignment(db.Model):
     
     # Teacher who created the assignment
     teacher_id = db.Column(db.Integer, 
-                          db.ForeignKey('user.id', name='fk_assignment_teacher_id'),
-                          nullable=False)
+                        db.ForeignKey('user.id', name='fk_assignment_teacher_id'),
+                        nullable=False)
     teacher = db.relationship('User', backref='created_assignments')
     
     # Optional settings
@@ -35,13 +35,13 @@ class Assignment(db.Model):
     
     # One-to-many relationship with progress entries
     student_progress = db.relationship('AssignmentProgress',
-                                     back_populates='assignment',
-                                     lazy='dynamic')
+                                    back_populates='assignment',
+                                    lazy='dynamic')
     
     def __init__(self, title, description, operation, level, required_problems=10,
-                 min_correct_percentage=80, due_date=None, active=True, teacher_id=None,
-                 class_id=None, max_attempts_per_problem=None,
-                 show_solution_after_attempts=3, requires_work_shown=False):
+                min_correct_percentage=80, due_date=None, active=True, teacher_id=None,
+                class_id=None, max_attempts_per_problem=None,
+                show_solution_after_attempts=3, requires_work_shown=False):
         self.title = title
         self.description = description
         self.operation = operation
@@ -78,11 +78,11 @@ class Assignment(db.Model):
 # Association table for assignments and classes
 assignment_class = db.Table('assignment_class',
     db.Column('assignment_id', db.Integer, 
-              db.ForeignKey('assignment.id', name='fk_assignment_class_assignment_id'),
-              primary_key=True),
+            db.ForeignKey('assignment.id', name='fk_assignment_class_assignment_id'),
+            primary_key=True),
     db.Column('class_id', db.Integer, 
-              db.ForeignKey('class.id', name='fk_assignment_class_class_id'),
-              primary_key=True),
+            db.ForeignKey('class.id', name='fk_assignment_class_class_id'),
+            primary_key=True),
     db.Column('created_at', db.DateTime, default=datetime.utcnow)
 )
 
@@ -92,8 +92,8 @@ class AssignmentProgress(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, 
-                          db.ForeignKey('user.id', name='fk_assignment_progress_student_id'),
-                          nullable=False)
+                        db.ForeignKey('user.id', name='fk_assignment_progress_student_id'),
+                        nullable=False)
     assignment_id = db.Column(db.Integer, 
                             db.ForeignKey('assignment.id', name='fk_assignment_progress_assignment_id'),
                             nullable=False)
@@ -137,8 +137,8 @@ class AttemptHistory(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     progress_id = db.Column(db.Integer, 
-                           db.ForeignKey('assignment_progress.id', name='fk_attempt_history_progress_id'),
-                           nullable=False)
+                            db.ForeignKey('assignment_progress.id', name='fk_attempt_history_progress_id'),
+                            nullable=False)
     problem_number = db.Column(db.Integer, nullable=False)
     student_answer = db.Column(db.String(50), nullable=False)
     correct_answer = db.Column(db.String(50), nullable=False)

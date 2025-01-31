@@ -297,9 +297,8 @@ def start_assignment(id):
         )
         db.session.add(progress)
         db.session.commit()
-    
     # Mark as started if not already
-    if not progress.started:
+    if progress.status == "Not Started":
         progress.started = True
         progress.start_time = datetime.utcnow()
         db.session.commit()
