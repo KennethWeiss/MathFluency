@@ -196,12 +196,18 @@ function updateProgressUI(progress) {
         if (problemDisplay) {
             problemDisplay.innerHTML = `
                 <div class="alert alert-success">
-                    <h4>Congratulations!</h4>
-                    <p>You have completed this assignment with ${progress.correct_answers} correct answers 
-                    in ${progress.total_attempts} attempts.</p>
-                    <a href="/student/assignments" class="btn btn-primary">Back to Assignments</a>
+                    <h4>Assignment Complete! 🎉</h4>
+                    <p>You completed ${progress.correct_answers}/${progress.required_problems} problems correctly!</p>
+                    <a href="/assignment/${progress.assignment_id}/review" class="btn btn-success">
+                        Review Results
+                    </a>
+                    <a href="/student/assignments" class="btn btn-outline-success">
+                        Return to Assignments
+                    </a>
                 </div>
             `;
+            document.getElementById('answer-form').style.display = 'none';
+            document.getElementById('new-problem').style.display = 'none';
         }
     }
 }

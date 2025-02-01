@@ -217,6 +217,26 @@ def get_assignment_info(id):
         'required_problems': assignment.required_problems
     })
 
+@assignment_bp.route('/assignment/<int:id>/complete', methods=['POST'])
+@login_required
+def complete_assignment(id):
+    progress = AssignmentProgress.query.filter_by(
+        assignment_id=id,
+        student_id=current_user.id
+    ).first()
+
+    if not progress:
+        abort(404)
+
+    if progress.status == 'complete':
+        return jsonify({
+            'status': 'complete',
+            'message': 'Assignment already completed',
+            'redirect': url_for('assignment.review_assignment', id=id)
+        })
+
+    return jsonify({'status': 'error', 'message': 'Assignment not yet completed'})
+
 # Student routes
 @assignment_bp.route('/student/assignments')
 @login_required

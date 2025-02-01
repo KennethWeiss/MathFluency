@@ -236,7 +236,7 @@ def check_answer():
                     correct_answer=str(attempt.correct_answer),
                     is_correct=attempt.is_correct,
                     attempt_number=progress.total_attempts,
-                    time_taken=time_taken,
+                    time_taken=data.get('time_taken'),  # Get time_taken from request data
                     created_at=datetime.utcnow()
                 )
                 db.session.add(history)
@@ -244,8 +244,7 @@ def check_answer():
                 # Check if assignment is complete
                 assignment = Assignment.query.get(assignment_id)
                 if progress.correct_answers >= assignment.required_problems:
-                    progress.status = 'complete'
-                    progress.completed_at = datetime.utcnow()
+                    progress.mark_complete()
         
         db.session.commit()
         

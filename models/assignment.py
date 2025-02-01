@@ -122,12 +122,32 @@ class AssignmentProgress(db.Model):
     @property
     def status(self):
         """Get the current status of the assignment progress"""
-        if not self.started_at:
-            return 'Not Started'
-        if self.completed_at:
-            return 'Completed'
-        return 'In Progress'
-    
+        if self.correct_answers >= self.assignment.required_problems:
+            if not self.completed_at:
+                self.completed_at = datetime.utcnow()
+            return 'complete'
+        elif self.started_at and not self.completed_at:
+            return 'in_progress'
+        return 'not_started'
+
+    @status.setter
+    def status(self, value):
+        """Set the status of the assignment progress"""
+        if value == 'complete':
+            self.completed_at = datetime.utcnow()
+        elif value == 'in_progress':
+            self.started_at = datetime.utcnow()
+        elif value == 'not_started':
+            self.started_at = None
+            self.completed_at = None
+
+    def mark_complete(self):
+        """Mark the assignment as complete if requirements are met"""
+        if self.correct_answers >= self.assignment.required_problems and not self.completed_at:
+            self.completed_at = datetime.utcnow()
+            return True
+        return False
+
     @property
     def total_time_spent(self):
         """Calculate total time spent on this assignment in seconds"""
