@@ -32,7 +32,7 @@ async function getNewProblem() {
         if (typeof assignmentId !== 'undefined') {
             requestData.assignment_id = assignmentId;
             // In assignment mode, use the operation from the server response
-            const response = await fetch(`/assignment/${assignmentId}/info`, {
+            const response = await fetch(`/get_assignment_info/${assignmentId}`, {
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 }

@@ -275,7 +275,7 @@ def view_student_work(assignment_id, student_id):
 @login_required
 def start_assignment(id):
     if current_user.is_teacher:
-        return redirect(url_for('assignment.view_assignment', id=id))
+        return redirect(url_for('assignment.list_assignments', id=id))
     
     assignment = Assignment.query.get_or_404(id)
     if not assignment.is_assigned_to_student(current_user):

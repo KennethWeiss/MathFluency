@@ -95,15 +95,26 @@ def get_problem_route():
         level = assignment.level
 
     # Get problem using PracticeTracker
-    problem = PracticeTracker.get_problem(
-        operation=operation,
-        level=level,
-        user_id=current_user.id,
-        db=db
-    )
+    try:
+        problem = PracticeTracker.get_problem(
+            operation=operation,
+            level=level,
+            user_id=current_user.id,
+            db=db
+        )
+        
+        if not problem:
+            return jsonify({
+                'error': 'No problems available',
+                'message': 'No problems found for this operation and level'
+            }), 404
 
-    if not problem:
-        return jsonify({'error': 'Invalid operation or level'})
+    except Exception as e:
+        print(f"Error getting problem: {str(e)}")
+        return jsonify({
+            'error': 'Problem generation failed',
+            'message': str(e)
+        }), 500
     
     # Check if this is a level up response
     if problem.get('level_up'):
