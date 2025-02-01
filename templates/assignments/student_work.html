@@ -31,7 +31,7 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Current Score:</strong> {{ progress.calculate_score() }}%</p>
+                            <p><strong>Current Score:</strong> {{ progress.accuracy }}%</p>
                             <p><strong>Time Spent:</strong> {{ progress.total_time_spent // 60 }} minutes</p>
                             <p><strong>Last Attempt:</strong> 
                                 {% if progress.last_attempt_at %}

@@ -236,6 +236,7 @@ def check_answer():
                     correct_answer=str(attempt.correct_answer),
                     is_correct=attempt.is_correct,
                     attempt_number=progress.total_attempts,
+                    time_taken=time_taken,
                     created_at=datetime.utcnow()
                 )
                 db.session.add(history)

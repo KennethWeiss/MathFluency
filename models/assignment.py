@@ -128,6 +128,19 @@ class AssignmentProgress(db.Model):
             return 'Completed'
         return 'In Progress'
     
+    @property
+    def total_time_spent(self):
+        """Calculate total time spent on this assignment in seconds"""
+        # Get all attempts with time_taken
+        total_time = sum(attempt.time_taken for attempt in self.attempts if attempt.time_taken)
+        return total_time
+
+    @property
+    def last_attempt_at(self):
+        """Get the timestamp of the last attempt"""
+        last_attempt = self.attempts.order_by(AttemptHistory.created_at.desc()).first()
+        return last_attempt.created_at if last_attempt else None
+
     def __repr__(self):
         return f'<AssignmentProgress student={self.student_id} assignment={self.assignment_id}>'
 
@@ -145,6 +158,7 @@ class AttemptHistory(db.Model):
     is_correct = db.Column(db.Boolean, nullable=False)
     work_shown = db.Column(db.Text)  # Student's work/explanation if required
     attempt_number = db.Column(db.Integer, nullable=False)
+    time_taken = db.Column(db.Float)  # Time taken in seconds
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):

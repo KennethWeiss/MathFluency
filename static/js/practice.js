@@ -171,6 +171,41 @@ function displayProblem(data) {
     }
 }
 
+// Function to update the progress UI
+function updateProgressUI(progress) {
+    if (!progress) return;
+
+    // Update progress bar
+    const progressBar = document.getElementById('assignment-progress');
+    if (progressBar) {
+        const percentage = (progress.correct_answers / progress.required_problems * 100).toFixed(1);
+        progressBar.style.width = `${percentage}%`;
+        progressBar.textContent = `${progress.correct_answers}/${progress.required_problems} correct`;
+    }
+
+    // Update problems remaining
+    const problemsRemaining = document.querySelector('.alert-info h5');
+    if (problemsRemaining) {
+        const remaining = progress.required_problems - progress.correct_answers;
+        problemsRemaining.textContent = `Problems remaining: ${remaining}`;
+    }
+
+    // If assignment is complete, show a success message
+    if (progress.status === 'complete') {
+        const problemDisplay = document.getElementById('problem-display');
+        if (problemDisplay) {
+            problemDisplay.innerHTML = `
+                <div class="alert alert-success">
+                    <h4>Congratulations!</h4>
+                    <p>You have completed this assignment with ${progress.correct_answers} correct answers 
+                    in ${progress.total_attempts} attempts.</p>
+                    <a href="/student/assignments" class="btn btn-primary">Back to Assignments</a>
+                </div>
+            `;
+        }
+    }
+}
+
 // Operation selection
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize with addition in free practice mode
@@ -259,16 +294,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.is_correct) {
-                feedback.innerHTML = '<div class="alert alert-success">Correct! Great job!</div>';
-                
-                // Update progress bar in assignment mode
-                if (typeof assignmentId !== 'undefined' && result.progress) {
-                    const progressBar = document.getElementById('assignment-progress');
-                    const percentage = (result.progress.problems_correct / result.progress.required_problems * 100).toFixed(0);
-                    progressBar.style.width = `${percentage}%`;
-                    progressBar.textContent = `${result.progress.problems_correct}/${result.progress.required_problems} correct`;
+                feedback.innerHTML = '<div class="alert alert-success">Correct! Well done!</div>';
+                // Update progress UI if in assignment mode
+                if (result.progress) {
+                    updateProgressUI(result.progress);
                 }
-                
                 getNewProblem();
                 setTimeout(() => feedback.innerHTML = '', 1000);
             } else {
@@ -277,7 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentProblem.show_answer = true;
                     displayProblem(currentProblem);
                 }
-                feedback.innerHTML = '<div class="alert alert-danger">Not quite. Try again!</div>';
+                feedback.innerHTML = `<div class="alert alert-danger">
+                    Not quite. The correct answer is ${result.correct_answer}. Try another problem!
+                </div>`;
                 document.getElementById('answer-input').value = '';
                 document.getElementById('answer-input').focus();
             }
