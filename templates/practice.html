@@ -19,11 +19,17 @@
             <div class="col">
                 <h2>{{ assignment.title }}</h2>
                 <p class="text-muted">{{ assignment.description }}</p>
-                <div class="progress">
-                    <div id="assignment-progress" class="progress-bar" role="progressbar" 
-                         style="width: {{ (progress.correct_answers / assignment.required_problems * 100)|round }}%">
+                <div class="progress mb-3" style="height: 30px;">
+                    <div id="assignment-progress" class="progress-bar progress-bar-striped" role="progressbar" 
+                         style="width: {{ (progress.correct_answers / assignment.required_problems * 100)|round }}%;
+                                transition: width 0.5s ease;">
                         {{ progress.correct_answers }}/{{ assignment.required_problems }} correct
                     </div>
+                </div>
+                <div class="alert alert-info">
+                    <h5 class="mb-0">
+                        Problems remaining: {{ assignment.required_problems - progress.correct_answers }}
+                    </h5>
                 </div>
             </div>
         </div>

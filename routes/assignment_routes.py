@@ -21,7 +21,7 @@ def list_assignments():
     # Check if user has teacher privileges
     if not current_user.is_teacher:
         flash('Access denied. Teachers only.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments')) 
     
     # Get assignments created by this teacher
     assignments = Assignment.query.filter_by(teacher_id=current_user.id).all()
@@ -282,7 +282,7 @@ def start_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not assignment.is_assigned_to_student(current_user):
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.view_assignment'))
     
     # Get or create progress entry
     progress = AssignmentProgress.query.filter_by(
