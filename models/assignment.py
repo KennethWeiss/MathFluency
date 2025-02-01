@@ -65,8 +65,12 @@ class Assignment(db.Model):
         """Check if this assignment is assigned to the given student"""
         return any(student in class_.students.all() for class_ in self.classes.all())
     
-    def get_progress(self, student_id):
-        """Get the progress for a specific student"""
+    def get_progress(self, student):
+        """Get the progress for a specific student
+        Args:
+            student: Can be either a User object or a student_id
+        """
+        student_id = student.id if hasattr(student, 'id') else student
         return AssignmentProgress.query.filter_by(
             assignment_id=self.id,
             student_id=student_id
