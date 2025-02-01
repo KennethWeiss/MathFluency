@@ -13,13 +13,19 @@ function getCsrfToken() {
 async function getNewProblem() {
     let level;
     
+    console.log("Starting getNewProblem");
+    console.log("Assignment ID:", typeof assignmentId !== 'undefined' ? assignmentId : 'undefined');
+    console.log("Assignment Level:", typeof assignmentLevel !== 'undefined' ? assignmentLevel : 'undefined');
+    
     // If in assignment mode, use assignment level
     if (typeof assignmentId !== 'undefined' && typeof assignmentLevel !== 'undefined') {
         level = assignmentLevel;  // This is already set from practice.html
+        console.log("Using assignment level:", level);
     } else {
         // Free practice mode - get level from select or use default
         const select = document.querySelector('.level-select:not([style*="display: none"])');
         level = select ? select.value : 1;  // Default to level 1 if select not found
+        console.log("Using practice level:", level);
     }
     
     try {
@@ -27,23 +33,27 @@ async function getNewProblem() {
             operation: currentOperation,
             level: parseInt(level)
         };
+        console.log("Initial request data:", requestData);
 
         // Add assignment_id if in assignment mode
         if (typeof assignmentId !== 'undefined') {
             requestData.assignment_id = assignmentId;
+            console.log("Getting assignment info for ID:", assignmentId);
             // In assignment mode, use the operation from the server response
-            const response = await fetch(`/get_assignment_info/${assignmentId}`, {
+            const response = await fetch(`/assignment/${assignmentId}/info`, {
                 headers: {
                     'X-CSRFToken': getCsrfToken()
                 }
             });
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Assignment info request failed! Status: ${response.status}`);
             }
             const assignmentData = await response.json();
+            console.log("Got assignment data:", assignmentData);
             requestData.operation = assignmentData.operation;
         }
 
+        console.log("Sending problem request with data:", requestData);
         const response = await fetch('/get_problem', {
             method: 'POST',
             headers: {
@@ -54,10 +64,11 @@ async function getNewProblem() {
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Problem request failed! Status: ${response.status}`);
         }
         
         const problemData = await response.json();
+        console.log("Got problem data:", problemData);
         
         if (problemData.error) {
             throw new Error(problemData.error);
@@ -89,27 +100,68 @@ async function getNewProblem() {
             }, 3000);
             return;
         }
+
+        console.log("We got a new problem");
+        console.log("problemData:", problemData);
         
         displayProblem(problemData);
-        document.getElementById('correct-answer-hidden').value = problemData.answer;
-        document.getElementById('answer-input').value = '';
-        document.getElementById('feedback').innerHTML = '';
         document.getElementById('answer-input').focus();
         wrongAttempts = 0;
-        problemStartTime = Date.now();
         
     } catch (error) {
-        console.error('Error getting new problem:', error);
-        document.getElementById('feedback').innerHTML = 
-            `<div class="alert alert-danger">Error getting new problem: ${error.message}</div>`;
+        console.error("Error in getNewProblem:", error);
+        // Display error to user
+        const problemContainer = document.getElementById('problem-display');
+        if (problemContainer) {
+            problemContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> ${error.message}
+                </div>`;
+        }
     }
 }
 
 function displayProblem(data) {
-    // Show answer input and check button
-    document.getElementById('answer-section').style.display = 'block';
-    document.getElementById('current-problem').textContent = data.problem;
+    console.log("Displaying problem:", data);
+    
+    // Update the problem display
+    const problemContainer = document.getElementById('current-problem');
+    if (problemContainer) {
+        problemContainer.textContent = data.problem;
+    } else {
+        console.error("Problem container not found!");
+    }
+    
+    // Store the current problem
     currentProblem = data;
+    
+    // Reset the answer input
+    const answerInput = document.getElementById('answer-input');
+    if (answerInput) {
+        answerInput.value = '';
+        answerInput.focus();
+    }
+    
+    // Store the correct answer in the hidden field
+    const hiddenAnswer = document.getElementById('correct-answer-hidden');
+    if (hiddenAnswer) {
+        hiddenAnswer.value = data.answer;
+    }
+    
+    // Hide the answer hint by default
+    const answerHint = document.getElementById('answer-hint');
+    if (answerHint) {
+        answerHint.style.display = 'none';
+    }
+    
+    // Clear any previous feedback
+    const feedback = document.getElementById('feedback');
+    if (feedback) {
+        feedback.innerHTML = '';
+    }
+    
+    // Reset the problem start time
+    problemStartTime = Date.now();
     
     if (data.show_answer) {
         document.getElementById('correct-answer').textContent = data.answer;

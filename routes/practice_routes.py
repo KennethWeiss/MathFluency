@@ -84,7 +84,7 @@ def get_problem_route():
         if not progress:
             return jsonify({'error': 'No progress record found'})
 
-        if progress.is_complete:
+        if progress.status == 'complete':
             return jsonify({
                 'complete': True,
                 'message': 'Assignment complete!'
@@ -97,10 +97,10 @@ def get_problem_route():
     # Get problem using PracticeTracker
     try:
         problem = PracticeTracker.get_problem(
+            db=db,
             operation=operation,
             level=level,
-            user_id=current_user.id,
-            db=db
+            user_id=current_user.id
         )
         
         if not problem:
@@ -223,19 +223,28 @@ def check_answer():
             ).first()
             
             if progress:
-                progress.attempts += 1
+                progress.total_attempts += 1
                 if attempt.is_correct:
-                    progress.correct += 1
+                    progress.correct_answers += 1
+                    progress.problems_completed += 1
                 
                 # Add to attempt history
                 history = AttemptHistory(
-                    assignment_progress=progress,
-                    problem=problem,
-                    user_answer=user_answer,
+                    progress_id=progress.id,
+                    problem_number=progress.problems_completed,
+                    student_answer=str(attempt.user_answer),
+                    correct_answer=str(attempt.correct_answer),
                     is_correct=attempt.is_correct,
-                    time_taken=time_taken
+                    attempt_number=progress.total_attempts,
+                    created_at=datetime.utcnow()
                 )
                 db.session.add(history)
+                
+                # Check if assignment is complete
+                assignment = Assignment.query.get(assignment_id)
+                if progress.correct_answers >= assignment.required_problems:
+                    progress.status = 'complete'
+                    progress.completed_at = datetime.utcnow()
         
         db.session.commit()
         
@@ -254,8 +263,11 @@ def check_answer():
         # Add progress info if in assignment mode
         if assignment_id and progress:
             response_data['progress'] = {
-                'problems_correct': progress.correct,
-                'required_problems': progress.assignment.required_problems
+                'correct_answers': progress.correct_answers,
+                'total_attempts': progress.total_attempts,
+                'problems_completed': progress.problems_completed,
+                'required_problems': progress.assignment.required_problems,
+                'status': progress.status
             }
         
         return jsonify(response_data)

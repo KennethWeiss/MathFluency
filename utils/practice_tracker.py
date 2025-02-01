@@ -170,7 +170,11 @@ class PracticeTracker:
 
         # If no user tracking needed, return a random problem
         if not user_id or not db:
-            return get_math_problem(operation, level)
+            problem_data = get_math_problem(operation, level)
+            return {
+                'problem': problem_data['problem'],
+                'answer': problem_data['answer']
+            }
 
         # First check if student should level up
         should_level_up, accuracy, avg_time = PracticeTracker.check_level_mastery(
@@ -187,38 +191,13 @@ class PracticeTracker:
                     'level_up': True,
                     'new_level': new_level,
                     'accuracy': accuracy * 100,
-                    'avg_time': avg_time
+                    'avg_time': avg_time,
+                    'message': f'Great job! You have mastered level {level}!'
                 }
 
-        # Get stats for all problems attempted at this level
-        problem_stats = PracticeTracker.get_problem_stats(db, user_id, operation, level)
-        
-        # Log current problem statistics
-        logging.info(f"\nProblem statistics for {operation} level {level}:")
-        for prob, stats in problem_stats.items():
-            logging.info(f"{prob}: {stats['attempts']} attempts, {stats['accuracy']:.1%} accuracy" + 
-                      f" {'(MASTERED)' if PracticeTracker.is_problem_mastered(stats) else ''}")
-
-        # Try up to 10 times to get an unmastered problem
-        for _ in range(10):
-            problem = get_math_problem(operation, level)
-            prob_str = problem['problem']
-            
-            # Check if this problem has been mastered
-            if prob_str in problem_stats:
-                stats = problem_stats[prob_str]
-                if PracticeTracker.is_problem_mastered(stats):
-                    logging.info(f"Skipping mastered problem: {prob_str}")
-                    continue
-            
-            logging.info(f"Selected problem: {problem['problem']}")
-            return problem
-
-        # If we couldn't find an unmastered problem after 10 tries,
-        # get a completely new problem that hasn't been attempted
-        while True:
-            problem = get_math_problem(operation, level)
-            prob_str = problem['problem']
-            if prob_str not in problem_stats:
-                logging.info(f"Selected new unattempted problem: {problem['problem']}")
-                return problem
+        # Get a new problem
+        problem_data = get_math_problem(operation, level)
+        return {
+            'problem': problem_data['problem'],
+            'answer': problem_data['answer']
+        }

@@ -147,4 +147,16 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/practice.js') }}"></script>
+{% if mode == 'assignment' %}
+<script>
+    // Initialize assignment variables
+    const assignmentId = {{ assignment.id }};
+    const assignmentLevel = {{ assignment.level }};
+    
+    // Get first problem when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        getNewProblem();
+    });
+</script>
+{% endif %}
 {% endblock %}
