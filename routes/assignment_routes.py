@@ -39,7 +39,7 @@ def view_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not current_user.is_teacher and not assignment.is_assigned_to_student(current_user):
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     return render_template('assignments/view.html', 
                         assignment=assignment,
@@ -51,7 +51,7 @@ def view_assignment(id):
 def create_assignment():
     if not current_user.is_teacher:
         flash('Access denied. Teachers only.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     if request.method == 'POST':
         # Get form data
@@ -117,7 +117,7 @@ def edit_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not current_user.is_teacher or assignment.teacher_id != current_user.id:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     if request.method == 'POST':
         # Update assignment fields
@@ -148,7 +148,7 @@ def delete_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not current_user.is_teacher or assignment.teacher_id != current_user.id:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     db.session.delete(assignment)
     db.session.commit()
@@ -166,7 +166,7 @@ def grade_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not current_user.is_teacher or assignment.teacher_id != current_user.id:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     progress_entries = assignment.student_progress.all()
     return render_template('assignments/grade.html', assignment=assignment, progress_entries=progress_entries)
@@ -231,9 +231,7 @@ def student_assignments():
     
     # Get all assignments from classes the student is in
     assignments = Assignment.query\
-        .join(Class, Assignment.classes.any(Class.id))\
-        .join(Class.students)\
-        .filter(Class.students.any(id=current_user.id))\
+        .filter(Assignment.classes.any(Class.students.any(id=current_user.id)))\
         .all()
     
     print("====================================")
@@ -256,7 +254,7 @@ def view_student_work(assignment_id, student_id):
     assignment = Assignment.query.get_or_404(assignment_id)
     if not current_user.is_teacher or assignment.teacher_id != current_user.id:
         flash('Access denied.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('assignment.student_assignments'))
     
     # Get student's progress record
     progress = AssignmentProgress.query.filter_by(
@@ -282,7 +280,7 @@ def start_assignment(id):
     assignment = Assignment.query.get_or_404(id)
     if not assignment.is_assigned_to_student(current_user):
         flash('Access denied.', 'danger')
-        return redirect(url_for('assignment.view_assignment'))
+        return redirect(url_for('assignment.student_assignments'))
     
     # Get or create progress entry
     progress = AssignmentProgress.query.filter_by(
@@ -298,9 +296,8 @@ def start_assignment(id):
         db.session.add(progress)
         db.session.commit()
     # Mark as started if not already
-    if progress.status == "Not Started":
-        progress.started = True
-        progress.start_time = datetime.utcnow()
+    if not progress.started_at:
+        progress.started_at = datetime.utcnow()
         db.session.commit()
     
     return redirect(url_for('practice.practice', assignment_id=id))

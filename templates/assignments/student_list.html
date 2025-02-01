@@ -20,25 +20,25 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <small class="text-muted">Due: {{ assignment.due_date.strftime('%Y-%m-%d') }}</small>
-                            {% if progress and progress.completed %}
+                            {% if progress and progress.completed_at %}
                                 <span class="badge bg-success">Completed</span>
-                            {% elif progress and progress.started %}
+                            {% elif progress and progress.started_at %}
                                 <span class="badge bg-warning">In Progress</span>
                             {% else %}
                                 <span class="badge bg-secondary">Not Started</span>
                             {% endif %}
                         </div>
                         
-                        {% if progress and progress.started %}
+                        {% if progress and progress.started_at %}
                         <div class="progress mb-2">
-                            {% set percentage = (progress.problems_correct / assignment.required_problems * 100)|round %}
+                            {% set percentage = (progress.correct_answers / assignment.required_problems * 100)|round %}
                             <div class="progress-bar" 
                                 role="progressbar" 
                                 style="width: {{ percentage }}%"
                                 aria-valuenow="{{ percentage }}" 
                                 aria-valuemin="0" 
                                 aria-valuemax="100">
-                                {{ progress.problems_correct}}/{{ assignment.required_problems }} Problems
+                                {{ progress.correct_answers }}/{{ assignment.required_problems }} Problems
                             </div>
                         </div>
                         {% endif %}
@@ -54,10 +54,10 @@
                     </div>
 
                     <div class="btn-group">
-                        {% if not progress or not progress.completed %}
+                        {% if not progress or not progress.completed_at %}
                         <a href="{{ url_for('assignment.start_assignment', id=assignment.id) }}" 
                             class="btn btn-primary">
-                            {% if progress and progress.started %}Continue{% else %}Start{% endif %}
+                            {% if progress and progress.started_at %}Continue{% else %}Start{% endif %}
                         </a>
                         {% endif %}
                         <a href="{{ url_for('assignment.view_assignment', id=assignment.id) }}" 
