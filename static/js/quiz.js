@@ -13,28 +13,33 @@ class QuizGame {
 
     setupSocketListeners() {
         // Join quiz room
+        console.log('Attempting to join quiz...')
         this.socket.emit('join_quiz', { 
             quiz_id: this.quizId,
             is_teacher: this.isTeacher 
         });
 
         // Listen for new problems
+        console.log('Setting up new_problem listener...')
         this.socket.on('new_problem', (data) => {
             this.displayProblem(data.problem);
             this.startTimer(data.timeLimit);
         });
 
         // Listen for answer results
+        console.log('Setting up answer_result listener...')
         this.socket.on('answer_result', (data) => {
             this.handleAnswerResult(data);
         });
 
         // Listen for quiz status updates
+        console.log('Setting up quiz_status listener...')
         this.socket.on('quiz_status', (data) => {
             this.updateQuizStatus(data);
         });
 
         // Listen for leaderboard updates
+        console.log('Setting up leaderboard_update listener...')
         this.socket.on('leaderboard_update', (data) => {
             this.updateLeaderboard(data);
         });
@@ -52,6 +57,7 @@ class QuizGame {
     }
 
     displayProblem(problem) {
+        console.log('Displaying problem:', problem);
         const problemElement = document.getElementById('problem');
         problemElement.textContent = problem;
         
@@ -78,6 +84,7 @@ class QuizGame {
     }
 
     handleAnswerResult(data) {
+        console.log('Handling answer result:', data);
         const { correct, points, streak } = data;
         this.score += points;
         this.streak = streak;
@@ -103,6 +110,8 @@ class QuizGame {
 
     updateQuizStatus(data) {
         const statusElement = document.getElementById('quiz-status');
+        console.log(data.status);
+        console.log("Status Element: ", statusElement);
         statusElement.textContent = data.status;
 
         if (data.status === 'completed') {
