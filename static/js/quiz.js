@@ -8,41 +8,63 @@ class QuizGame {
         this.streak = 0;
         this.timer = null;
         this.timeLeft = 0;
+        this.elements = this.cacheElements();
         this.setupSocketListeners();
     }
 
+    cacheElements() {
+        return {
+            problem: document.getElementById('problem'),
+            answer: document.getElementById('answer'),
+            timer: document.getElementById('timer'),
+            score: document.getElementById('score'),
+            streak: document.getElementById('streak'),
+            feedback: document.getElementById('feedback'),
+            status: document.getElementById('quiz-status'),
+            leaderboard: document.getElementById('leaderboard'),
+            container: document.getElementById('quiz-container')
+        };
+    }
+
     setupSocketListeners() {
-        // Join quiz room
-        console.log('Attempting to join quiz...')
-        this.socket.emit('join_quiz', { 
-            quiz_id: this.quizId,
-            is_teacher: this.isTeacher 
+        const socketEvents = {
+            'join_quiz': () => {
+                console.log('Attempting to join quiz...');
+                this.socket.emit('join_quiz', { 
+                    quiz_id: this.quizId,
+                    is_teacher: this.isTeacher 
+                });
+            },
+            'new_problem': (data) => {
+                console.log('New problem received');
+                this.displayProblem(data.problem);
+                this.startTimer(data.timeLimit);
+            },
+            'answer_result': (data) => {
+                console.log('Answer result received');
+                this.handleAnswerResult(data);
+            },
+            'quiz_status_changed': (data) => {
+                console.log('Quiz status changed:', data.status);
+                this.updateQuizStatus(data);
+            },
+            'leaderboard_update': (data) => {
+                console.log('Leaderboard update received');
+                this.updateLeaderboard(data.leaderboard); // Ensure data is an array
+            },
+            'connect_error': (error) => {
+                console.error('Socket connection error:', error);
+                this.showError('Connection error. Please refresh the page.');
+            }
+        };
+
+        // Set up all socket event listeners
+        Object.entries(socketEvents).forEach(([event, handler]) => {
+            this.socket.on(event, handler);
         });
 
-        // Listen for new problems
-        console.log('Setting up new_problem listener...')
-        this.socket.on('new_problem', (data) => {
-            this.displayProblem(data.problem);
-            this.startTimer(data.timeLimit);
-        });
-
-        // Listen for answer results
-        console.log('Setting up answer_result listener...')
-        this.socket.on('answer_result', (data) => {
-            this.handleAnswerResult(data);
-        });
-
-        // Listen for quiz status updates
-        console.log('Setting up quiz_status listener...')
-        this.socket.on('quiz_status_changed', (data) => {
-        this.updateQuizStatus(data);
-});
-
-        // Listen for leaderboard updates
-        console.log('Setting up leaderboard_update listener...')
-        this.socket.on('leaderboard_update', (data) => {
-            this.updateLeaderboard(data);
-        });
+        // Initial join
+        socketEvents['join_quiz']();
     }
 
     submitAnswer(answer) {
@@ -58,58 +80,57 @@ class QuizGame {
 
     displayProblem(problem) {
         console.log('Displaying problem:', problem);
-        const problemElement = document.getElementById('problem');
-        problemElement.textContent = problem;
-        
-        // Clear previous answer
-        const answerInput = document.getElementById('answer');
-        answerInput.value = '';
-        answerInput.focus();
+        this.elements.problem.textContent = problem;
+        this.elements.answer.value = '';
+        this.elements.answer.focus();
     }
 
     startTimer(duration) {
         this.timeLeft = duration;
-        const timerElement = document.getElementById('timer');
-
         if (this.timer) clearInterval(this.timer);
 
         this.timer = setInterval(() => {
-            timerElement.textContent = this.timeLeft;
+            this.elements.timer.textContent = this.timeLeft;
             if (this.timeLeft <= 0) {
                 clearInterval(this.timer);
-                this.submitAnswer(null); // Submit null for timeout
+                this.submitAnswer(null);
             }
             this.timeLeft--;
         }, 1000);
     }
 
     handleAnswerResult(data) {
-        console.log('Handling answer result:', data);
         const { correct, points, streak } = data;
         this.score += points;
         this.streak = streak;
 
-        // Update UI
-        document.getElementById('score').textContent = this.score;
-        document.getElementById('streak').textContent = this.streak;
-
-        // Show feedback
+        this.elements.score.textContent = this.score;
+        this.elements.streak.textContent = this.streak;
         this.showFeedback(correct);
     }
 
     showFeedback(correct) {
-        const feedback = document.getElementById('feedback');
+        const feedback = this.elements.feedback;
         feedback.textContent = correct ? '✓ Correct!' : '✗ Wrong!';
-        feedback.className = correct ? 'feedback correct' : 'feedback wrong';
+        feedback.className = `feedback ${correct ? 'correct' : 'wrong'}`;
         
-        // Animate feedback
+        // Reset and trigger animation
         feedback.style.animation = 'none';
-        feedback.offsetHeight; // Trigger reflow
+        feedback.offsetHeight;
         feedback.style.animation = 'feedbackPop 0.5s';
     }
 
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'quiz-error';
+        errorDiv.textContent = message;
+        this.elements.container.prepend(errorDiv);
+        
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
+
     updateQuizStatus(data) {
-        const statusElement = document.getElementById('quiz-status');
+        const statusElement = this.elements.status;
         console.log(data.status);
         console.log("Status Element: ", statusElement);
         statusElement.textContent = data.status;
@@ -120,8 +141,7 @@ class QuizGame {
     }
 
     updateLeaderboard(data) {
-        const leaderboard = document.getElementById('leaderboard');
-        leaderboard.innerHTML = data.map((player, index) => `
+        this.elements.leaderboard.innerHTML = data.map((player, index) => `
             <div class="leaderboard-item ${player.id === this.socket.id ? 'current-player' : ''}">
                 <span class="rank">${index + 1}</span>
                 <span class="name">${player.name}</span>
@@ -131,7 +151,7 @@ class QuizGame {
     }
 
     showFinalResults(results) {
-        const container = document.getElementById('quiz-container');
+        const container = this.elements.container;
         container.innerHTML = `
             <div class="final-results">
                 <h2>Quiz Complete!</h2>
@@ -147,43 +167,46 @@ class QuizGame {
     getTimeTaken() {
         return this.timeLeft;
     }
+
+    startQuiz() {
+        console.log('Starting quiz...');
+        this.socket.emit('start_quiz', {
+            quiz_id: this.quizId
+        });
+    }
+
+    pauseQuiz() {
+        console.log('Pausing quiz...');
+        this.socket.emit('pause_quiz', {
+            quiz_id: this.quizId
+        });
+    }
+
+    resumeQuiz() {
+        console.log('Resuming quiz...');
+        this.socket.emit('resume_quiz', {
+            quiz_id: this.quizId
+        });
+    }
+
+    endQuiz() {
+        console.log('Ending quiz...');
+        this.socket.emit('end_quiz', {
+            quiz_id: this.quizId
+        });
+    }
+
+    copyQuizLink() {
+        const linkElement = document.getElementById('quiz-link');
+        if (linkElement) {
+            navigator.clipboard.writeText(linkElement.textContent)
+                .then(() => {
+                    // Optional: Show feedback that link was copied
+                    alert('Quiz link copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Failed to copy link:', err);
+                });
+        }
+    }
 }
-
-// CSS Animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes feedbackPop {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
-    }
-
-    .feedback {
-        font-size: 1.5em;
-        font-weight: bold;
-        text-align: center;
-        margin: 10px 0;
-    }
-
-    .feedback.correct {
-        color: #28a745;
-    }
-
-    .feedback.wrong {
-        color: #dc3545;
-    }
-
-    .leaderboard-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 10px;
-        margin: 2px 0;
-        border-radius: 4px;
-    }
-
-    .current-player {
-        background-color: #e9ecef;
-        font-weight: bold;
-    }
-`;
-document.head.appendChild(style);

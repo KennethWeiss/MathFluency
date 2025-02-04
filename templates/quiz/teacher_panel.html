@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="container mt-4">
+    <input type="hidden" id="quiz-id" value="{{ quiz.id }}">
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -27,7 +28,7 @@
                     <div class="alert alert-info">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>Quiz Link: <strong id="quiz-link">{{ url_for('quiz.join_quiz', quiz_id=quiz.id, _external=True) }}</strong></span>
-                            <button onclick="window.copyQuizLink()" class="btn btn-outline-primary btn-sm">Copy Link</button>
+                            <button onclick="quizGame.copyQuizLink()" class="btn btn-outline-primary btn-sm">Copy Link</button>
                         </div>
                     </div>
 
@@ -49,16 +50,16 @@
 
                     <div class="d-flex justify-content-between">
                         {% if quiz.status == 'waiting' %}
-                        <button id="start-quiz-btn" onclick="window.startQuiz()" class="btn btn-success">Start Quiz</button>
+                        <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success">Start Quiz</button>
                         {% elif quiz.status == 'active' %}
                         <div>
-                            <button id="pause-quiz-btn" onclick="window.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
-                            <button id="end-quiz-btn" onclick="window.endQuiz()" class="btn btn-danger">End Quiz</button>
+                            <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
+                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
                         </div>
                         {% elif quiz.status == 'paused' %}
                         <div>
-                            <button id="resume-quiz-btn" onclick="window.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
-                            <button id="end-quiz-btn" onclick="window.endQuiz()" class="btn btn-danger">End Quiz</button>
+                            <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
+                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
                         </div>
                         {% else %}
                         <button disabled class="btn btn-secondary">Quiz Finished</button>
@@ -97,133 +98,12 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
 <script>
     window.addEventListener('load', function() {
-        const socket = io({
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            reconnectionAttempts: 5
-        });
-        const quizId = {{ quiz.id }};
-        
-        socket.on('connect', function() {
-            console.log('Connected to WebSocket server');
-        });
-
-        socket.on('connect_error', function(error) {
-            console.error('WebSocket connection error:', error);
-        });
-
-        socket.on('disconnect', function() {
-            console.log('Disconnected from WebSocket server');
-        });
-
-        // Join the quiz room
-        socket.emit('join_quiz', {
-            quiz_id: quizId
-        });
-        
-        // Make functions globally available
-        window.copyQuizLink = function() {
-            const link = document.getElementById('quiz-link').textContent;
-            navigator.clipboard.writeText(link).then(() => {
-                alert('Quiz link copied to clipboard!');
-            });
-        };
-        
-        window.startQuiz = function() {
-            console.log('Attempting to start quiz...', {
-                quiz_id: quizId,
-                socket_id: socket.id,
-                connected: socket.connected
-            });
-            
-            if (!socket.connected) {
-                console.error('Socket not connected! Attempting to reconnect...');
-                socket.connect();
-                return;
-            }
-            
-            socket.emit('start_quiz', {
-                quiz_id: quizId
-            });
-        };
-        
-        window.pauseQuiz = function() {
-            socket.emit('pause_quiz', {
-                quiz_id: quizId
-            });
-        };
-        
-        window.resumeQuiz = function() {
-            socket.emit('resume_quiz', {
-                quiz_id: quizId
-            });
-        };
-        
-        window.endQuiz = function() {
-            socket.emit('end_quiz', {
-                quiz_id: quizId
-            });
-        };
-        
-        // Listen for quiz status changes
-        socket.on('quiz_status_changed', function(data) {
-            console.log('Quiz status change received:', data);
-            if (data.quiz_id === quizId) {
-                const statusBadge = document.getElementById('quiz-status');
-                statusBadge.textContent = data.status;
-                statusBadge.className = `badge bg-${data.status === 'active' ? 'success' : data.status === 'paused' ? 'warning' : 'secondary'}`;
-                
-                // Update UI elements based on quiz status
-                const startBtn = document.getElementById('start-quiz-btn');
-                const pauseBtn = document.getElementById('pause-quiz-btn');
-                const resumeBtn = document.getElementById('resume-quiz-btn');
-                const endBtn = document.getElementById('end-quiz-btn');
-                
-                if (data.status === 'active') {
-                    startBtn.style.display = 'none';
-                    pauseBtn.style.display = 'inline-block';
-                    resumeBtn.style.display = 'none';
-                    endBtn.style.display = 'inline-block';
-                } else if (data.status === 'paused') {
-                    startBtn.style.display = 'none';
-                    pauseBtn.style.display = 'none';
-                    resumeBtn.style.display = 'inline-block';
-                    endBtn.style.display = 'inline-block';
-                } else {
-                    startBtn.style.display = 'inline-block';
-                    pauseBtn.style.display = 'none';
-                    resumeBtn.style.display = 'none';
-                    endBtn.style.display = 'none';
-                }
-            }
-        });
-        
-        // Listen for new participants
-        socket.on('user_joined', function(data) {
-            console.log('User joined event received:', data);
-            if (data.quiz_id === quizId) {
-                // Update participant list dynamically
-                const participantsList = document.getElementById('participants-list');
-                if (participantsList && data.participant) {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.textContent = data.participant.name;
-                    li.id = `participant-${data.participant.id}`;
-                    participantsList.appendChild(li);
-                }
-                
-                // Update participant count
-                const participantCount = document.getElementById('participant-count');
-                if (participantCount) {
-                    const currentCount = parseInt(participantCount.textContent) || 0;
-                    participantCount.textContent = currentCount + 1;
-                }
-            }
-        });
+        const quizId = document.getElementById('quiz-id').value; // Ensure you have a hidden input with quiz-id
+        const isTeacher = document.body.classList.contains('teacher'); // Add a class to <body> if user is a teacher
+        window.quizGame = new QuizGame(quizId, isTeacher);
     });
 </script>
 {% endblock %}
