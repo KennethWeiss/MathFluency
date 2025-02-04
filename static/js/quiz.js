@@ -133,9 +133,52 @@ class QuizGame {
         const statusElement = this.elements.status;
         console.log(data.status);
         console.log("Status Element: ", statusElement);
+        
+        // Update status text and badge color
         statusElement.textContent = data.status;
+        statusElement.className = `badge bg-${
+            data.status === 'active' ? 'success' : 
+            data.status === 'paused' ? 'secondary' : 
+            data.status === 'waiting' ? 'warning' : 
+            'secondary'
+        }`;
 
-        if (data.status === 'completed') {
+        // Get or create the button container
+        let buttonContainer = document.querySelector('.quiz-control-buttons');
+        if (!buttonContainer) {
+            buttonContainer = document.createElement('div');
+            buttonContainer.className = 'quiz-control-buttons';
+            // Insert after the status element
+            statusElement.parentElement.after(buttonContainer);
+        }
+
+        // Update buttons based on quiz status
+        switch(data.status) {
+            case 'waiting':
+                buttonContainer.innerHTML = `
+                    <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success">Start Quiz</button>
+                `;
+                break;
+            case 'active':
+                buttonContainer.innerHTML = `
+                    <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
+                    <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
+                `;
+                break;
+            case 'paused':
+                buttonContainer.innerHTML = `
+                    <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
+                    <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
+                `;
+                break;
+            case 'completed':
+                buttonContainer.innerHTML = `
+                    <button disabled class="btn btn-secondary">Quiz Finished</button>
+                `;
+                break;
+        }
+
+        if (data.status === 'completed' && data.results) {
             this.showFinalResults(data.results);
         }
     }
