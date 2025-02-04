@@ -34,9 +34,9 @@ class QuizGame {
 
         // Listen for quiz status updates
         console.log('Setting up quiz_status listener...')
-        this.socket.on('quiz_status', (data) => {
-            this.updateQuizStatus(data);
-        });
+        this.socket.on('quiz_status_changed', (data) => {
+        this.updateQuizStatus(data);
+});
 
         // Listen for leaderboard updates
         console.log('Setting up leaderboard_update listener...')

@@ -233,6 +233,7 @@ def handle_pause_quiz(data):
         'quiz_id': quiz_id
     }, room=room)
     logger.debug(f"Sent quiz_status_changed event to room {room}")
+    logger.info(f"Quiz {quiz_id} has been paused by user {current_user.username}")
 
 @socketio.on('resume_quiz')
 def handle_resume_quiz(data):

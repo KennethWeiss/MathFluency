@@ -132,7 +132,7 @@ def update_quiz_status(quiz_id):
         return jsonify({'error': 'Not your quiz'}), 403
     
     status = request.json.get('status')
-    if status in ['waiting', 'active', 'completed']:
+    if status in ['waiting', 'active', 'paused', 'completed']:
         quiz.status = status
         db.session.commit()
         return jsonify({'status': status})
