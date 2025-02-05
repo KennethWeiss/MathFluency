@@ -134,19 +134,26 @@
         // Handle quiz status changes
         socket.on('quiz_status_changed', function(data) {
             console.log('Quiz status changed:', data);
-            if (data.quiz_id === quizId) {
+            console.log('Current quiz ID:', quizId);
+            console.log('Type:', quizId, typeof quizId);
+            console.log('Data quiz ID:', data.quiz_id);
+            console.log('Type:', data.quiz_id, typeof data.quiz_id);
+            if (data.quiz_id == (quizId)) {
+                console.log('Updating screen to:', data.status);
                 const waitingScreen = document.getElementById('waiting-screen');
                 const quizScreen = document.getElementById('quiz-screen');
                 const pausedScreen = document.getElementById('paused-screen');
                 const finishedScreen = document.getElementById('finished-screen');
                 
                 // Hide all screens first
+                console.log('Hiding all screens');
                 waitingScreen.classList.add('d-none');
                 quizScreen.classList.add('d-none');
                 pausedScreen.classList.add('d-none');
                 finishedScreen.classList.add('d-none');
                 
                 // Show appropriate screen
+                console.log('Showing screen:', data.status);
                 if (data.status === 'waiting') {
                     waitingScreen.classList.remove('d-none');
                 } else if (data.status === 'active') {
@@ -155,8 +162,13 @@
                     pausedScreen.classList.remove('d-none');
                 } else if (data.status === 'finished') {
                     finishedScreen.classList.remove('d-none');
+                } else {
+                    console.error('Unknown quiz status:', data.status);
                 }
+            } else {
+                console.log('Quiz status change event for different quiz:', data.quiz_id);
             }
+            console.log('Quiz status change complete');
         });
         
         // Handle leaderboard updates
