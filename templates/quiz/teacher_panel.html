@@ -98,12 +98,16 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
 <script>
-    window.addEventListener('load', function() {
-        const quizId = document.getElementById('quiz-id').value; // Ensure you have a hidden input with quiz-id
-        const isTeacher = document.body.classList.contains('teacher'); // Add a class to <body> if user is a teacher
-        window.quizGame = new QuizGame(quizId, isTeacher);
+    document.addEventListener('DOMContentLoaded', function() {
+        const script = document.createElement('script');
+        script.src = "{{ url_for('static', filename='js/quiz.js') }}";
+        script.onload = function() {
+            const quizId = document.getElementById('quiz-id').value;
+            const isTeacher = document.body.classList.contains('teacher');
+            window.quizGame = new QuizGame(quizId, isTeacher);
+        };
+        document.head.appendChild(script);
     });
 </script>
 {% endblock %}
