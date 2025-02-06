@@ -3,13 +3,22 @@ class QuizGame {
     constructor(quizId, isTeacher = false) {
         this.quizId = quizId;
         this.isTeacher = isTeacher;
-        this.socket = io();
+        this.socket = io({
+    transports: ['websocket'], // Use WebSocket transport
+    reconnectionAttempts: 5, // Retry connection attempts
+    reconnectionDelay: 1000 // Delay between reconnection attempts
+});
+this.socket.on('connect_error', (error) => {
+    console.error('WebSocket connection error:', error);
+});
         this.score = 0;
         this.streak = 0;
         this.timer = null;
         this.timeLeft = 0;
         this.elements = this.cacheElements();
-        this.setupSocketListeners();
+        document.addEventListener('DOMContentLoaded', () => {
+            this.setupSocketListeners();
+        });
     }
 
     cacheElements() {
@@ -45,8 +54,47 @@ class QuizGame {
                 this.handleAnswerResult(data);
             },
             'quiz_status_changed': (data) => {
-                console.log('Quiz status changed:', data.status);
-                this.updateQuizStatus(data);
+                console.log('Quiz status changed:', data);
+                console.log('Current quiz ID:', this.quizId);
+                console.log('Data quiz ID:', data.quiz_id);
+                
+                // Convert quizId to a number for comparison
+                if (data.quiz_id == (this.quizId)) {
+                    console.log('Updating screen to:', data.status);
+                    
+                    // Get screen elements
+                    const waitingScreen = document.getElementById('waiting-screen');
+                    const quizScreen = document.getElementById('quiz-screen');
+                    const pausedScreen = document.getElementById('paused-screen');
+                    const finishedScreen = document.getElementById('finished-screen');
+                    
+                    console.log('Waiting Screen:', waitingScreen);
+                    console.log('Quiz Screen:', quizScreen);
+                    console.log('Paused Screen:', pausedScreen);
+                    console.log('Finished Screen:', finishedScreen);
+                    
+                    // Hide all screens first
+                    console.log('Hiding all screens');
+                    if (waitingScreen) waitingScreen.classList.add('d-none');
+                    if (quizScreen) quizScreen.classList.add('d-none');
+                    if (pausedScreen) pausedScreen.classList.add('d-none');
+                    if (finishedScreen) finishedScreen.classList.add('d-none');
+                    
+                    // Show appropriate screen
+                    console.log('Showing screen:', data.status);
+                    if (data.status == 'waiting') {
+                        waitingScreen.classList.remove('d-none');
+                    } else if (data.status === 'active') {
+                        quizScreen.classList.remove('d-none');
+                    } else if (data.status === 'paused') {
+                        pausedScreen.classList.remove('d-none');
+                    } else if (data.status === 'finished') {
+                        finishedScreen.classList.remove('d-none');
+                    }
+                } else {
+                    console.log('Quiz status change event for different quiz:', data.quiz_id);
+                }
+                console.log('Quiz status change complete');
             },
             'leaderboard_update': (data) => {
                 console.log('Leaderboard update received');
@@ -131,7 +179,8 @@ class QuizGame {
 
     updateQuizStatus(data) {
         const statusElement = this.elements.status;
-        console.log(data.status);
+        console.log('updateQuizStatus called with data:', data);
+        console.log('Current status:', data.status);
         console.log("Status Element: ", statusElement);
         
         // Update status text and badge color
@@ -153,31 +202,37 @@ class QuizGame {
         }
 
         // Update buttons based on quiz status
+        console.log("Updating buttons based on quiz status");
+        console.log("Waiting, active, paused, completed");
+        console.log("Data Status: ", data.status);
         switch(data.status) {
             case 'waiting':
+                console.log("Waiting button container");
                 buttonContainer.innerHTML = `
                     <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success">Start Quiz</button>
                 `;
                 break;
             case 'active':
+                console.log("Active button container");
                 buttonContainer.innerHTML = `
                     <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
                     <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
                 `;
                 break;
             case 'paused':
+                console.log("Paused button container");
                 buttonContainer.innerHTML = `
                     <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
                     <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
                 `;
                 break;
             case 'completed':
+                console.log("Completed button container");
                 buttonContainer.innerHTML = `
                     <button disabled class="btn btn-secondary">Quiz Finished</button>
                 `;
                 break;
         }
-
         if (data.status === 'completed' && data.results) {
             this.showFinalResults(data.results);
         }
@@ -223,6 +278,7 @@ class QuizGame {
         this.socket.emit('pause_quiz', {
             quiz_id: this.quizId
         });
+        console.log('Emitting pause_quiz event for quiz ID:', this.quizId);
     }
 
     resumeQuiz() {
@@ -230,6 +286,7 @@ class QuizGame {
         this.socket.emit('resume_quiz', {
             quiz_id: this.quizId
         });
+        console.log('Emitting resume_quiz event for quiz ID:', this.quizId);
     }
 
     endQuiz() {
