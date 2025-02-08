@@ -31,6 +31,24 @@ def generate_quiz_problem(operation: str, level: int = None) -> dict:
         }
     return None
 
+def get_correct_answer(quiz_id, question_id):
+    """Retrieve the correct answer for a given question in a quiz"""
+    question = Quiz.query.filter_by(id=question_id, quiz_id=quiz_id).first()
+    if question:
+        return question.answer  # Assuming the question model has an 'answer' field
+    return None
+
+def send_leaderboard(quiz_id):
+    """Send the current leaderboard to participants"""
+    participants = QuizParticipant.query.filter_by(quiz_id=quiz_id).all()
+    leaderboard = [{'username': User.query.get(p.user_id).username, 'score': p.score} for p in participants]
+    
+    # Sort leaderboard by score
+    leaderboard.sort(key=lambda x: x['score'], reverse=True)
+    
+    emit('update_leaderboard', {'leaderboard': leaderboard}, room=f"quiz_{quiz_id}")
+    logger.debug(f"Sent leaderboard for quiz {quiz_id}: {leaderboard}")
+
 @socketio.on('join_quiz')
 def handle_join_quiz(data):
     """Handle when a user joins a quiz"""
@@ -78,5 +96,76 @@ def handle_start_quiz(data):
     logger.debug(f"Received start_quiz event with data: {data}")
     quiz_id = data.get('quiz_id')
     if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
-    if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
-    if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
+        logger.warning("User is not authenticated or not a teacher")
+        return
+    # Notify participants and start the quiz
+    emit('quiz_started', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
+    logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
+
+@socketio.on('submit_answer')
+def handle_submit_answer(data):
+    """Handle when a user submits an answer"""
+    logger.debug(f"Received submit_answer event with data: {data}")
+    quiz_id = data.get('quiz_id')
+    submitted_answer = data.get('answer')
+    question_id = data.get('question_id')
+
+    # Fetch the correct answer from the database or quiz data
+    correct_answer = get_correct_answer(quiz_id, question_id)
+
+    if submitted_answer == correct_answer:
+        # Update the user's score or quiz state
+        participant = QuizParticipant.query.filter_by(
+            quiz_id=quiz_id,
+            user_id=current_user.id
+        ).first()
+        if participant:
+            participant.score += 1  # Increment score for correct answer
+            db.session.commit()
+            logger.debug(f"Updated score for user {current_user.username} in quiz {quiz_id}")
+        
+        emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
+    else:
+        emit('answer_feedback', {'correct': False}, room=f"quiz_{quiz_id}")
+
+@socketio.on('end_quiz')
+def handle_end_quiz(data):
+    """Handle when a teacher ends a quiz"""
+    logger.debug(f"Received end_quiz event with data: {data}")
+    quiz_id = data.get('quiz_id')
+    
+    # Logic to finalize the quiz, e.g., calculate final scores, notify participants
+    emit('quiz_ended', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
+    logger.debug(f"Quiz {quiz_id} ended by {current_user.username}")
+
+@socketio.on('pause_quiz')
+def handle_pause_quiz(data):
+    """Handle when a teacher pauses a quiz"""
+    logger.debug(f"Received pause_quiz event with data: {data}")
+    quiz_id = data.get('quiz_id')
+    
+    # Update the quiz status in the database
+    quiz = Quiz.query.get(quiz_id)
+    if quiz:
+        quiz.status = 'paused'
+        db.session.commit()
+        logger.debug(f"Quiz {quiz_id} paused by {current_user.username}")
+    
+    # Emit the status change
+    emit('quiz_status_changed', {'quiz_id': quiz_id, 'status': 'paused'}, room=f"quiz_{quiz_id}")
+
+@socketio.on('resume_quiz')
+def handle_resume_quiz(data):
+    """Handle when a teacher resumes a quiz"""
+    logger.debug(f"Received resume_quiz event with data: {data}")
+    quiz_id = data.get('quiz_id')
+    
+    # Update the quiz status in the database
+    quiz = Quiz.query.get(quiz_id)
+    if quiz:
+        quiz.status = 'active'
+        db.session.commit()
+        logger.debug(f"Quiz {quiz_id} resumed by {current_user.username}")
+    
+    # Emit the status change
+    emit('quiz_status_changed', {'quiz_id': quiz_id, 'status': 'active'}, room=f"quiz_{quiz_id}")

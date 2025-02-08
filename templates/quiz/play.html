@@ -174,7 +174,7 @@
         // Handle leaderboard updates
         socket.on('leaderboard_update', function(data) {
             console.log('Leaderboard update received:', data);
-            if (data.quiz_id === quizId) {
+            if (data.quiz_id == quizId) {
                 const leaderboard = document.getElementById('leaderboard');
                 leaderboard.innerHTML = '';
                 data.leaderboard.forEach(function(entry) {
