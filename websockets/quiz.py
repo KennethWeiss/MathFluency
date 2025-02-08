@@ -23,7 +23,8 @@ def generate_quiz_problem(operation: str, level: int = None) -> dict:
         else:
             level = 1
     
-    problem = get_problem(operation, level)
+    problem = get_problem(operation, level)  # Ensure this function returns a valid problem
+    logger.debug(f"Generated problem: {problem['problem']}")  # Log the generated problem
     if problem:
         return {
             'text': problem['problem'],
@@ -102,6 +103,10 @@ def handle_start_quiz(data):
     emit('quiz_started', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
     logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
 
+    # Generate and send the first problem
+    problem = generate_quiz_problem('addition')  # Example operation
+    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
+
 @socketio.on('submit_answer')
 def handle_submit_answer(data):
     """Handle when a user submits an answer"""
@@ -166,6 +171,10 @@ def handle_resume_quiz(data):
         quiz.status = 'active'
         db.session.commit()
         logger.debug(f"Quiz {quiz_id} resumed by {current_user.username}")
+        
+        # Generate and send a new problem
+        problem = generate_quiz_problem('addition')  # Example operation
+        emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
     
     # Emit the status change
     emit('quiz_status_changed', {'quiz_id': quiz_id, 'status': 'active'}, room=f"quiz_{quiz_id}")

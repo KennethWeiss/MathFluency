@@ -82,6 +82,7 @@
         
         // Debug: Log socket connection status
         socket.on('connect', function() {
+            console.log("-----------------------------");
             console.log('Connected to WebSocket server');
             console.log('Socket ID:', socket.id);
         });
@@ -110,10 +111,14 @@
         
         // Handle new problems
         socket.on('new_problem', function(data) {
+            console.log("-----------------------------");
+            console.log("New problem socket event");
             console.log('New problem received:', data);
-            if (data.quiz_id === quizId) {
+            if (data.quiz_id == quizId) {
                 document.getElementById('problem-display').textContent = data.problem;
                 currentProblem = data.problem;
+                console.log('In new problem Current problem:', currentProblem);
+                console.log('In new problem Current data:', data);
                 document.getElementById('answer').value = '';
                 document.getElementById('answer').focus();
             }
@@ -133,11 +138,14 @@
         
         // Handle quiz status changes
         socket.on('quiz_status_changed', function(data) {
-            console.log('Quiz status changed:', data);
+            console.log("-----------------------------");
+            console.log('Socket on Quiz status changed:', data);
             console.log('Current quiz ID:', quizId);
             console.log('Type:', quizId, typeof quizId);
             console.log('Data quiz ID:', data.quiz_id);
             console.log('Type:', data.quiz_id, typeof data.quiz_id);
+            console.log('Problem:', currentProblem);
+            console.log('Data.Problem: ', data.problem);
             if (data.quiz_id == (quizId)) {
                 console.log('Updating screen to:', data.status);
                 const waitingScreen = document.getElementById('waiting-screen');
