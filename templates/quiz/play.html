@@ -91,9 +91,8 @@
             console.error('WebSocket connection error:', error);
         });
         
-        // Join the quiz room
         socket.emit('join_quiz', {
-            quiz_id: quizId
+            quiz_id: quizId,
         });
         
         // Handle quiz started

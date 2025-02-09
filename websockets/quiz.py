@@ -55,6 +55,7 @@ def handle_join_quiz(data):
     """Handle when a user joins a quiz"""
     logger.debug(f"Received join_quiz event with data: {data}")
     quiz_id = data.get('quiz_id')
+    
     if not quiz_id:
         logger.warning("No quiz_id provided")
         return
@@ -80,7 +81,10 @@ def handle_join_quiz(data):
         db.session.add(participant)
         db.session.commit()
         logger.debug(f"Added user {current_user.username} as participant")
+    # Generate and send a new problem
     
+    problem = generate_quiz_problem('addition')  # Example operation
+    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
     # Notify room that user joined
     emit('user_joined', {
         'user': current_user.username,
