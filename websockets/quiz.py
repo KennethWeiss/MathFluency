@@ -81,9 +81,15 @@ def handle_join_quiz(data):
         db.session.add(participant)
         db.session.commit()
         logger.debug(f"Added user {current_user.username} as participant")
-    # Generate and send a new problem
     
-    problem = generate_quiz_problem('addition')  # Example operation
+    # Get the quiz's operation from the database
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        logger.error(f"Quiz {quiz_id} not found")
+        return
+    
+    # Generate and send a new problem using the quiz's operation
+    problem = generate_quiz_problem(quiz.operation, quiz.level)
     emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
     # Notify room that user joined
     emit('user_joined', {
@@ -107,8 +113,8 @@ def handle_start_quiz(data):
     emit('quiz_started', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
     logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
 
-    # Generate and send the first problem
-    problem = generate_quiz_problem('addition')  # Example operation
+# Generate and send a new problem using the quiz's operation
+    problem = generate_quiz_problem(quiz.operation, quiz.level)
     emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
 
 @socketio.on('submit_answer')
@@ -176,8 +182,9 @@ def handle_resume_quiz(data):
         db.session.commit()
         logger.debug(f"Quiz {quiz_id} resumed by {current_user.username}")
         
-        # Generate and send a new problem
-        problem = generate_quiz_problem('addition')  # Example operation
+
+        # Generate and send a new problem using the quiz's operation
+        problem = generate_quiz_problem(quiz.operation, quiz.level)
         emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
     
     # Emit the status change

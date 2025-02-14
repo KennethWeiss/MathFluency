@@ -52,6 +52,7 @@ def create_quiz():
         title = request.form.get('title')
         operation = request.form.get('operation')
         duration = request.form.get('duration', type=int)
+        level = request.form.get('level', type=int)  # Get level from form
         adaptive = request.form.get('adaptive') == 'on'
         
         if not all([title, operation, duration]):
@@ -62,6 +63,7 @@ def create_quiz():
             title=title,
             teacher_id=current_user.id,
             operation=operation,
+            level=level,  # Set level in quiz
             duration=duration,
             adaptive=adaptive,
             status='waiting'
@@ -118,7 +120,7 @@ def join_quiz(quiz_id):
         db.session.add(participant)
         db.session.commit()
     
-    return render_template('quiz/play.html', quiz=quiz)
+    return render_template('quiz/play.html', quiz=quiz)  # Pass the quiz object
 
 # API endpoints for WebSocket updates
 @quiz_bp.route('/<int:quiz_id>/status', methods=['POST'])
@@ -155,3 +157,4 @@ def get_leaderboard(quiz_id):
     } for p in participants]
     
     return jsonify(leaderboard)
+# Remove invalid syntax
