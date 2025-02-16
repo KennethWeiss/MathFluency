@@ -5,6 +5,9 @@
 {% block content %}
 <div class="container mt-4">
     <input type="hidden" id="quiz-id" value="{{ quiz.id }}">
+    <div id="timer" class="alert alert-info" style="display: none;">
+        <strong>Timer:</strong> <span id="timer-display">00:00</span>
+    </div>
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -109,5 +112,29 @@
         };
         document.head.appendChild(script);
     });
+
+    function startTimer(duration) {
+        let timer = duration, minutes, seconds;
+        const display = document.getElementById("timer-display");
+        const timerInterval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                clearInterval(timerInterval);
+                // Handle quiz end logic here
+            }
+        }, 1000);
+    }
+
+    function onQuizStart(duration) {
+        document.getElementById("timer").style.display = "block";
+        startTimer(duration * 60); // Convert minutes to seconds
+    }
 </script>
 {% endblock %}

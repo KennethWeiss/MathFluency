@@ -268,6 +268,7 @@ this.socket.on('connect_error', (error) => {
 
     startQuiz() {
         console.log('Starting quiz...');
+        onQuizStart(this.quiz.duration); // Start the timer with the quiz duration
         this.socket.emit('start_quiz', {
             quiz_id: this.quizId
         });
