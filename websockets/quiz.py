@@ -2,7 +2,7 @@ from flask import session
 from flask_login import current_user
 from flask_socketio import emit, join_room, leave_room
 from extensions import socketio
-from models.quiz import Quiz, QuizParticipant
+from models.quiz import Quiz, QuizParticipant, QuizQuestion
 from models.user import User
 from utils.math_problems import get_problem
 from database import db  # Import db from database module
@@ -34,9 +34,9 @@ def generate_quiz_problem(operation: str, level: int = None) -> dict:
 
 def get_correct_answer(quiz_id, question_id):
     """Retrieve the correct answer for a given question in a quiz"""
-    question = Quiz.query.filter_by(id=question_id, quiz_id=quiz_id).first()
+    question = QuizQuestion.query.filter_by(id=question_id, quiz_id=quiz_id).first()
     if question:
-        return question.answer  # Assuming the question model has an 'answer' field
+        return question.answer
     return None
 
 def send_leaderboard(quiz_id):

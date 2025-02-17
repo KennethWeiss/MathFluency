@@ -79,20 +79,24 @@
 <script type="module">
     import QuizGame from '/static/js/quiz.js';
     
-    // Initialize quiz game with current context
-    const quizGame = new QuizGame(
-        {{ quiz.id }}, 
-        {% if current_user.is_teacher %}true{% else %}false{% endif %}
-    );
+    // Initialize quiz game with current context if not already initialized
+    if (typeof window.__quizGameInstance === 'undefined') {
+        const quizGame = new QuizGame(
+            {{ quiz.id }},
+            {% if current_user.is_teacher %}true{% else %}false{% endif %}
+        );
+        // Make quizGame accessible globally
+        window.__quizGameInstance = quizGame;
+    }
     
-    // Handle answer submission from button
+    // Make submitAnswer function accessible globally
     window.submitAnswer = function() {
         const answer = parseInt(document.getElementById('answer').value);
         if (isNaN(answer)) {
             alert('Please enter a valid number');
             return;
         }
-        quizGame.submitAnswer(answer);
+        window.__quizGameInstance.submitAnswer(answer);
     };
     
     // Handle Enter key in answer input

@@ -7,14 +7,18 @@ class QuizGame {
     transports: ['websocket'], // Use WebSocket transport
     reconnectionAttempts: 5, // Retry connection attempts
     reconnectionDelay: 1000 // Delay between reconnection attempts
-});
-this.socket.on('connect_error', (error) => {
-    console.error('WebSocket connection error:', error);
-});
+        });
+        this.socket.on('connect_error', (error) => {
+            console.error('WebSocket connection error:', error);
+        });
+        this.socket.on('connect', () => {
+            console.log('WebSocket connected');
+        });
         this.score = 0;
         this.streak = 0;
         this.timer = null;
         this.timeLeft = 0;
+        this.currentProblem = null;
         this.elements = this.cacheElements();
         document.addEventListener('DOMContentLoaded', () => {
             this.setupSocketListeners();
@@ -45,9 +49,13 @@ this.socket.on('connect_error', (error) => {
                 });
             },
             'new_problem': (data) => {
-                console.log('New problem received');
+                console.log('New problem received:', data);
                 this.displayProblem(data.problem);
                 this.startTimer(data.timeLimit);
+            },
+            'answer_feedback': (data) => {
+                console.log('Answer feedback received:', data);
+                this.showFeedback(data.correct);
             },
             'answer_result': (data) => {
                 console.log('Answer result received');
@@ -111,24 +119,31 @@ this.socket.on('connect_error', (error) => {
             this.socket.on(event, handler);
         });
 
-        // Initial join
-        socketEvents['join_quiz']();
+        // Join the quiz room when socket connects
+        if (this.socket.connected) {
+            socketEvents['join_quiz']();
+        } else {
+            this.socket.once('connect', socketEvents['join_quiz']);
+        }
     }
 
     submitAnswer(answer) {
-        if (!this.timer) return; // Don't submit if timer is not running
-
-        clearInterval(this.timer);
+        console.log('Submitting answer:', answer);
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
         this.socket.emit('submit_answer', {
             quiz_id: this.quizId,
             answer: answer,
-            time_taken: this.getTimeTaken()
+            time_taken: this.getTimeTaken(),
+            question_id: this.currentProblem?.id
         });
     }
 
     displayProblem(problem) {
         console.log('Displaying problem:', problem);
-        this.elements.problem.textContent = problem;
+        this.currentProblem = problem;
+        this.elements.problem.textContent = problem.text || problem;
         this.elements.answer.value = '';
         this.elements.answer.focus();
     }
