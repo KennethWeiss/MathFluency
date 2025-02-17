@@ -31,7 +31,7 @@ class QuizGame {
             problem: document.getElementById('problem-display'),
             answer: document.getElementById('answer'),
             timer: document.getElementById('timer'),
-            score: document.getElementById('score'),
+            score: document.getElementById('current-score'),
             streak: document.getElementById('streak'),
             feedback: document.getElementById('feedback'),
             status: document.getElementById('quiz-status'),
@@ -65,6 +65,11 @@ class QuizGame {
             'answer_result': (data) => {
                 console.log('Answer result received');
                 this.handleAnswerResult(data);
+            },
+            'score_updated': (data) => {
+                console.log('Score updated:', data.score);
+                this.score = data.score; // Update the score in the class
+                this.elements.score.textContent = data.score; // Update the score display
             },
             'quiz_status_changed': (data) => {
                 console.log('Quiz status changed:', data);
@@ -159,7 +164,7 @@ class QuizGame {
 
     startTimer(duration) {
         // Convert duration to number and default to 30 seconds if invalid
-        this.timeLeft = parseInt(duration) || 30;
+        this.timeLeft = parseInt(duration) || 3;
         if (this.timer) clearInterval(this.timer);
 
         // Update timer display immediately
