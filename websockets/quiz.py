@@ -36,6 +36,7 @@ def generate_quiz_problem(operation: str, level: int = None) -> dict:
 def get_correct_answer(quiz_id, question_id):
     """Retrieve the correct answer for a given question in a quiz"""
     question = QuizQuestion.query.filter_by(id=question_id, quiz_id=quiz_id).first()
+    logger.debug(f"Querying for correct answer with quiz_id: {quiz_id}, question_id: {question_id}")
     if question:
         return question.answer
     return None
@@ -140,7 +141,7 @@ def handle_submit_answer(data):
     print(correct_answer)
     print(type(correct_answer))
     print("=====================================")
-    if submitted_answer == correct_answer:
+    if str(submitted_answer) == str(correct_answer):
         print("Correct answer")
         print("=====================================")
         # Update the user's score or quiz state

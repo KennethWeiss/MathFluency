@@ -19,6 +19,7 @@ class QuizGame {
         this.timer = null;
         this.timeLeft = 0;
         this.currentProblem = null;
+        this.currentAnswer = null;  // Add this line to store the current answer
         this.elements = this.cacheElements();
         document.addEventListener('DOMContentLoaded', () => {
             this.setupSocketListeners();
@@ -53,6 +54,7 @@ class QuizGame {
                 console.log('Problem:', data.problem);
                 console.log('This is Answer:', data.answer);
                 console.log('Answer type:', typeof data.answer);
+                this.currentAnswer = data.answer;  // Store the answer
                 this.displayProblem(data.problem);
                 this.startTimer(data.timeLimit);
             },
@@ -133,6 +135,7 @@ class QuizGame {
     submitAnswer(answer) {
         console.log('Submitting answer:', answer);
         console.log('Answer type:', typeof answer);
+        console.log('Correct answer:', this.currentAnswer);  // Use the stored answer
         if (this.timer) {
             clearInterval(this.timer);
         }
