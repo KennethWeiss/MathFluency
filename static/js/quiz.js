@@ -142,6 +142,7 @@ class QuizGame {
         this.socket.emit('submit_answer', {
             quiz_id: this.quizId,
             answer: answer,
+            correct_answer: this.currentAnswer,  // Use the stored answer
             time_taken: this.getTimeTaken(),
             question_id: this.currentProblem?.id
         });

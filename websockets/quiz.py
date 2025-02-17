@@ -132,14 +132,11 @@ def handle_submit_answer(data):
     quiz_id = data.get('quiz_id')
     submitted_answer = data.get('answer')
     question_id = data.get('question_id')
-
-    # Fetch the correct answer from the database or quiz data
-    correct_answer = get_correct_answer(quiz_id, question_id)
+    correct_answer = data.get('correct_answer')
     print("=====================================")
     print("Submitted answer from quiz.py", submitted_answer)
     print(type(submitted_answer))
-    print(correct_answer)
-    print(type(correct_answer))
+    print(data)
     print("=====================================")
     if str(submitted_answer) == str(correct_answer):
         print("Correct answer")
