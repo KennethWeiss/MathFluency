@@ -134,16 +134,21 @@ this.socket.on('connect_error', (error) => {
     }
 
     startTimer(duration) {
-        this.timeLeft = duration;
+        // Convert duration to number and default to 30 seconds if invalid
+        this.timeLeft = parseInt(duration) || 30;
         if (this.timer) clearInterval(this.timer);
 
+        // Update timer display immediately
+        this.elements.timer.textContent = this.timeLeft;
+
         this.timer = setInterval(() => {
+            this.timeLeft--;
             this.elements.timer.textContent = this.timeLeft;
+            
             if (this.timeLeft <= 0) {
                 clearInterval(this.timer);
                 this.submitAnswer(null);
             }
-            this.timeLeft--;
         }, 1000);
     }
 

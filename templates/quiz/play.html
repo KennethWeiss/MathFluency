@@ -28,7 +28,10 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h3>Current Problem:</h3>
-                                <div class="h4">Score: <span id="current-score">{{ participant.score if participant else 0 }}</span></div>
+                                <div class="d-flex align-items-center">
+                                    <div class="h4 me-4">Time: <span id="timer">0</span>s</div>
+                                    <div class="h4">Score: <span id="current-score">{{ participant.score if participant else 0 }}</span></div>
+                                </div>
                             </div>
                             <div id="problem-display" class="h4 text-center py-3"></div>
                             <div id="feedback" class="alert d-none mb-3"></div>
