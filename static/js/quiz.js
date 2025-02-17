@@ -23,7 +23,7 @@ this.socket.on('connect_error', (error) => {
 
     cacheElements() {
         return {
-            problem: document.getElementById('problem'),
+            problem: document.getElementById('problem-display'),
             answer: document.getElementById('answer'),
             timer: document.getElementById('timer'),
             score: document.getElementById('score'),
@@ -311,3 +311,5 @@ this.socket.on('connect_error', (error) => {
         }
     }
 }
+
+export default QuizGame;

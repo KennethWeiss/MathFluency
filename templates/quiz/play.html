@@ -73,166 +73,31 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script>
-    window.addEventListener('load', function() {
-        const socket = io();
-        const quizId = {{ quiz.id }};
-        let currentProblem = null;
-        let currentScore = {{ participant.score if participant else 0 }};
-        
-        // Debug: Log socket connection status
-        socket.on('connect', function() {
-            console.log("-----------------------------");
-            console.log('Connected to WebSocket server from play.html');
-            console.log('Socket ID:', socket.id);
-        });
-        
-        socket.on('connect_error', function(error) {
-            console.error('WebSocket connection error:', error);
-        });
-        
-        socket.emit('join_quiz', {
-            quiz_id: quizId,
-        });
-        
-        // Handle quiz started
-        socket.on('quiz_started', function(data) {
-            console.log('Quiz started event received:', data);
-            if (data.quiz_id === quizId) {
-                document.getElementById('waiting-screen').classList.add('d-none');
-                document.getElementById('quiz-screen').classList.remove('d-none');
-                document.getElementById('problem-display').textContent = data.problem;
-                currentProblem = data.problem;
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
-            }
-        });
-        
-        // Handle new problems
-        socket.on('new_problem', function(data) {
-            console.log("-----------------------------");
-            console.log("New problem socket event");
-            console.log('New problem received:', data);
-            if (data.quiz_id == quizId) {
-                document.getElementById('problem-display').textContent = data.problem;
-                currentProblem = data.problem;
-                console.log('In new problem Current problem:', currentProblem);
-                document.getElementById('answer').value = '';
-                document.getElementById('answer').focus();
-            }
-        });
-        
-        // Handle answer feedback
-        socket.on('answer_feedback', function(data) {
-            console.log('Answer feedback received:', data);
-            if (data.quiz_id === quizId) {
-                showFeedback(data.correct, data.correct ? 'Correct! 🎉' : 'Incorrect. Keep trying!');
-                if (data.correct) {
-                    currentScore++;
-                    document.getElementById('current-score').textContent = currentScore;
-                }
-            }
-        });
-        
-        // Handle quiz status changes
-        socket.on('quiz_status_changed', function(data) {
-            console.log("-----------------------------");
-            console.log('Socket on Quiz status changed:', data);
-            console.log('Current quiz ID:', quizId);
-            console.log('Type:', quizId, typeof quizId);
-            console.log('Data quiz ID:', data.quiz_id);
-            console.log('Type:', data.quiz_id, typeof data.quiz_id);
-            console.log('Problem:', currentProblem);
-            console.log('Data.Problem: ', data.problem);
-            if (data.quiz_id == (quizId)) {
-                console.log('Updating screen to:', data.status);
-                const waitingScreen = document.getElementById('waiting-screen');
-                const quizScreen = document.getElementById('quiz-screen');
-                const pausedScreen = document.getElementById('paused-screen');
-                const finishedScreen = document.getElementById('finished-screen');
-                
-                // Hide all screens first
-                console.log('Hiding all screens');
-                waitingScreen.classList.add('d-none');
-                quizScreen.classList.add('d-none');
-                pausedScreen.classList.add('d-none');
-                finishedScreen.classList.add('d-none');
-                
-                // Show appropriate screen
-                console.log('Showing screen:', data.status);
-                if (data.status === 'waiting') {
-                    waitingScreen.classList.remove('d-none');
-                } else if (data.status === 'active') {
-                    quizScreen.classList.remove('d-none');
-                } else if (data.status === 'paused') {
-                    pausedScreen.classList.remove('d-none');
-                } else if (data.status === 'finished') {
-                    finishedScreen.classList.remove('d-none');
-                } else {
-                    console.error('Unknown quiz status:', data.status);
-                }
-            } else {
-                console.log('Quiz status change event for different quiz:', data.quiz_id);
-            }
-            console.log('Quiz status change complete');
-        });
-        
-        // Handle leaderboard updates
-        socket.on('leaderboard_update', function(data) {
-            console.log('Leaderboard update received:', data);
-            if (data.quiz_id == quizId) {
-                const leaderboard = document.getElementById('leaderboard');
-                leaderboard.innerHTML = '';
-                data.leaderboard.forEach(function(entry) {
-                    const item = document.createElement('div');
-                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    item.innerHTML = `
-                        ${entry.username}
-                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
-                    `;
-                    leaderboard.appendChild(item);
-                });
-            }
-        });
-        
-        function showFeedback(isCorrect, message) {
-            const feedback = document.getElementById('feedback');
-            feedback.textContent = message;
-            feedback.className = `alert ${isCorrect ? 'alert-success' : 'alert-danger'}`;
-            feedback.classList.remove('d-none');
-            
-            // Hide feedback after 3 seconds
-            setTimeout(() => {
-                feedback.classList.add('d-none');
-            }, 3000);
+<script type="module">
+    import QuizGame from '/static/js/quiz.js';
+    
+    // Initialize quiz game with current context
+    const quizGame = new QuizGame(
+        {{ quiz.id }}, 
+        {% if current_user.is_teacher %}true{% else %}false{% endif %}
+    );
+    
+    // Handle answer submission from button
+    window.submitAnswer = function() {
+        const answer = parseInt(document.getElementById('answer').value);
+        if (isNaN(answer)) {
+            alert('Please enter a valid number');
+            return;
         }
-        
-        // Handle answer submission
-        window.submitAnswer = function() {
-            const answer = parseInt(document.getElementById('answer').value);
-            if (isNaN(answer)) {
-                alert('Please enter a valid number');
-                return;
-            }
-            
-            console.log('Submitting answer:', answer, 'for problem:', currentProblem);
-            socket.emit('submit_answer', {
-                quiz_id: quizId,
-                answer: answer,
-                problem: currentProblem
-            });
-            
-            // Clear the input field
-            document.getElementById('answer').value = '';
-        };
-        
-        // Allow Enter key to submit answer
-        document.getElementById('answer').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                submitAnswer();
-            }
-        });
+        quizGame.submitAnswer(answer);
+    };
+    
+    // Handle Enter key in answer input
+    document.getElementById('answer').addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            submitAnswer();
+        }
     });
 </script>
 {% endblock %}
