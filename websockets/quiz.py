@@ -134,13 +134,15 @@ def handle_submit_answer(data):
 
     # Fetch the correct answer from the database or quiz data
     correct_answer = get_correct_answer(quiz_id, question_id)
-
-    print(submitted_answer)
+    print("=====================================")
+    print("Submitted answer from quiz.py", submitted_answer)
     print(type(submitted_answer))
     print(correct_answer)
     print(type(correct_answer))
-    
+    print("=====================================")
     if submitted_answer == correct_answer:
+        print("Correct answer")
+        print("=====================================")
         # Update the user's score or quiz state
         participant = QuizParticipant.query.filter_by(
             quiz_id=quiz_id,
@@ -153,6 +155,8 @@ def handle_submit_answer(data):
         
         emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
+        print("Incorrect answer")
+        print("=====================================")
         emit('answer_feedback', {'correct': False}, room=f"quiz_{quiz_id}")
 
 @socketio.on('end_quiz')
