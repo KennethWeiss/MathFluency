@@ -50,6 +50,9 @@ class QuizGame {
             },
             'new_problem': (data) => {
                 console.log('New problem received:', data);
+                console.log('Problem:', data.problem);
+                console.log('This is Answer:', data.answer);
+                console.log('Answer type:', typeof data.answer);
                 this.displayProblem(data.problem);
                 this.startTimer(data.timeLimit);
             },
@@ -129,6 +132,7 @@ class QuizGame {
 
     submitAnswer(answer) {
         console.log('Submitting answer:', answer);
+        console.log('Answer type:', typeof answer);
         if (this.timer) {
             clearInterval(this.timer);
         }

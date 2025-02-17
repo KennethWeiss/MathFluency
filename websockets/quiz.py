@@ -25,6 +25,7 @@ def generate_quiz_problem(operation: str, level: int = None) -> dict:
     
     problem = get_problem(operation, level)  # Ensure this function returns a valid problem
     logger.debug(f"Generated problem: {problem['problem']}")  # Log the generated problem
+    print("Generated problem in quiz.py: ", problem)
     if problem:
         return {
             'text': problem['problem'],
@@ -90,7 +91,7 @@ def handle_join_quiz(data):
     
     # Generate and send a new problem using the quiz's operation
     problem = generate_quiz_problem(quiz.operation, quiz.level)
-    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
+    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
     # Notify room that user joined
     emit('user_joined', {
         'user': current_user.username,
@@ -118,6 +119,12 @@ def handle_start_quiz(data):
     emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
 
 @socketio.on('submit_answer')
+def log_all_questions():
+    """Log all questions and their answers for debugging."""
+    questions = QuizQuestion.query.all()
+    for question in questions:
+        logger.debug(f"Question ID: {question.id}, Problem: {question.problem}, Answer: {question.answer}")
+
 def handle_submit_answer(data):
     """Handle when a user submits an answer"""
     logger.debug(f"Received submit_answer event with data: {data}")
@@ -128,6 +135,11 @@ def handle_submit_answer(data):
     # Fetch the correct answer from the database or quiz data
     correct_answer = get_correct_answer(quiz_id, question_id)
 
+    print(submitted_answer)
+    print(type(submitted_answer))
+    print(correct_answer)
+    print(type(correct_answer))
+    
     if submitted_answer == correct_answer:
         # Update the user's score or quiz state
         participant = QuizParticipant.query.filter_by(
