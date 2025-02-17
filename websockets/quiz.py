@@ -133,11 +133,7 @@ def handle_submit_answer(data):
     submitted_answer = data.get('answer')
     question_id = data.get('question_id')
     correct_answer = data.get('correct_answer')
-    print("=====================================")
-    print("Submitted answer from quiz.py", submitted_answer)
-    print(type(submitted_answer))
-    print(data)
-    print("=====================================")
+   
     if str(submitted_answer) == str(correct_answer):
         print("Correct answer")
         print("=====================================")
@@ -147,16 +143,21 @@ def handle_submit_answer(data):
             user_id=current_user.id
         ).first()
         if participant:
+            print("Participant found")
+            print("Score before: ", participant.score)
+            print("=====================================")
             participant.score += 1  # Increment score for correct answer
             db.session.commit()
             logger.debug(f"Updated score for user {current_user.username} in quiz {quiz_id}")
-        
+            print("Score after: ", participant.score)
+            print("=====================================")
         # Retrieve the quiz object to access operation and level
         quiz = Quiz.query.get(quiz_id)
         if quiz:
             # Generate and send a new problem using the quiz's operation
             problem = generate_quiz_problem(quiz.operation, quiz.level)
         emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
+        emit('score_updated', {'score': participant.score}, room=f"quiz_{quiz_id}")  # Emit updated score
         emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
         print("Incorrect answer")
