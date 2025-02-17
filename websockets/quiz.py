@@ -151,6 +151,12 @@ def handle_submit_answer(data):
             db.session.commit()
             logger.debug(f"Updated score for user {current_user.username} in quiz {quiz_id}")
         
+        # Retrieve the quiz object to access operation and level
+        quiz = Quiz.query.get(quiz_id)
+        if quiz:
+            # Generate and send a new problem using the quiz's operation
+            problem = generate_quiz_problem(quiz.operation, quiz.level)
+        emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
         emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
         print("Incorrect answer")

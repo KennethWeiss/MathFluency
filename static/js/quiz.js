@@ -139,6 +139,7 @@ class QuizGame {
         if (this.timer) {
             clearInterval(this.timer);
         }
+        this.elements.answer.value = '';  // Clear the submit box
         this.socket.emit('submit_answer', {
             quiz_id: this.quizId,
             answer: answer,
