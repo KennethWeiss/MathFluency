@@ -28,10 +28,7 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h3>Current Problem:</h3>
-                                <div class="d-flex align-items-center">
-                                    <div class="h4 me-4">Time: <span id="timer">0</span>s</div>
-                                    <div class="h4">Score: <span id="current-score">{{ participant.score if participant else 0 }}</span></div>
-                                </div>
+                                <div class="h4">Score: <span id="current-score">{{ participant.score if participant else 0 }}</span></div>
                             </div>
                             <div id="problem-display" class="h4 text-center py-3"></div>
                             <div id="feedback" class="alert d-none mb-3"></div>
@@ -79,24 +76,20 @@
 <script type="module">
     import QuizGame from '/static/js/quiz.js';
     
-    // Initialize quiz game with current context if not already initialized
-    if (typeof window.__quizGameInstance === 'undefined') {
-        const quizGame = new QuizGame(
-            {{ quiz.id }},
-            {% if current_user.is_teacher %}true{% else %}false{% endif %}
-        );
-        // Make quizGame accessible globally
-        window.__quizGameInstance = quizGame;
-    }
+    // Initialize quiz game with current context
+    const quizGame = new QuizGame(
+        {{ quiz.id }}, 
+        {% if current_user.is_teacher %}true{% else %}false{% endif %}
+    );
     
-    // Make submitAnswer function accessible globally
+    // Handle answer submission from button
     window.submitAnswer = function() {
         const answer = parseInt(document.getElementById('answer').value);
         if (isNaN(answer)) {
             alert('Please enter a valid number');
             return;
         }
-        window.__quizGameInstance.submitAnswer(answer);
+        quizGame.submitAnswer(answer);
     };
     
     // Handle Enter key in answer input

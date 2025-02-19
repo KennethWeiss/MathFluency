@@ -30,7 +30,6 @@ class QuizGame {
         return {
             problem: document.getElementById('problem-display'),
             answer: document.getElementById('answer'),
-            timer: document.getElementById('timer'),
             score: document.getElementById('current-score'),
             streak: document.getElementById('streak'),
             feedback: document.getElementById('feedback'),
@@ -168,11 +167,11 @@ class QuizGame {
         if (this.timer) clearInterval(this.timer);
 
         // Update timer display immediately
-        this.elements.timer.textContent = this.timeLeft;
+        // this.elements.timer.textContent = this.timeLeft;
 
         this.timer = setInterval(() => {
             this.timeLeft--;
-            this.elements.timer.textContent = this.timeLeft;
+            // this.elements.timer.textContent = this.timeLeft;
             
             if (this.timeLeft <= 0) {
                 clearInterval(this.timer);
