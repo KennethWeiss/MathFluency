@@ -73,31 +73,31 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script type="module">
-    import QuizGame from '/static/js/quiz.js';
-    
-    // Initialize quiz game with current context
-    const quizGame = new QuizGame(
-        {{ quiz.id }}, 
-        {% if current_user.is_teacher %}true{% else %}false{% endif %}
-    );
-    
-    // Handle answer submission from button
-    window.submitAnswer = function() {
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+<script>
+    // Initialize quiz game when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        window.quizGame = new QuizGame(
+            {{ quiz.id }},
+            {% if current_user.is_teacher %}true{% else %}false{% endif %}
+        );
+        
+        // Add enter key handler for answer input
+        document.getElementById('answer').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitAnswer();
+            }
+        });
+    });
+
+    function submitAnswer() {
         const answer = parseInt(document.getElementById('answer').value);
         if (isNaN(answer)) {
             alert('Please enter a valid number');
             return;
         }
-        quizGame.submitAnswer(answer);
-    };
-    
-    // Handle Enter key in answer input
-    document.getElementById('answer').addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            submitAnswer();
-        }
-    });
+        window.quizGame.submitAnswer(answer);
+    }
 </script>
 {% endblock %}

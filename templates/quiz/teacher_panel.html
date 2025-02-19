@@ -101,16 +101,12 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
 <script>
+    // Initialize quiz game when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        const script = document.createElement('script');
-        script.src = "{{ url_for('static', filename='js/quiz.js') }}";
-        script.onload = function() {
-            const quizId = document.getElementById('quiz-id').value;
-            const isTeacher = document.body.classList.contains('teacher');
-            window.quizGame = new QuizGame(quizId, isTeacher);
-        };
-        document.head.appendChild(script);
+        const quizId = document.getElementById('quiz-id').value;
+        window.quizGame = new QuizGame(quizId, true);
     });
 
     function startTimer(duration) {
@@ -127,14 +123,13 @@
 
             if (--timer < 0) {
                 clearInterval(timerInterval);
-                // Handle quiz end logic here
             }
         }, 1000);
     }
 
     function onQuizStart(duration) {
         document.getElementById("timer").style.display = "block";
-        startTimer(duration * 60); // Convert minutes to seconds
+        startTimer(duration * 60);
     }
 </script>
 {% endblock %}
