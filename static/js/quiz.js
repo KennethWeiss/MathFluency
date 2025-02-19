@@ -10,11 +10,14 @@ class QuizGame {
         this.currentProblem = null;
         this.currentAnswer = null;
 
-        // Setup socket
+        // Setup socket with correct port
         this.socket = io({
             transports: ['websocket'],
             reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionDelay: 1000,
+            path: '/socket.io',
+            port: 5001,
+            secure: false
         });
 
         // Cache elements that exist in this view
@@ -28,7 +31,11 @@ class QuizGame {
             // Get initial quiz status from the page
             const statusElement = document.getElementById('quiz-status');
             if (statusElement) {
-                this.updateButtonVisibility(statusElement.textContent.toLowerCase());
+                const initialStatus = statusElement.textContent.trim().toLowerCase();
+                console.log('Initial quiz status:', initialStatus);
+                this.updateButtonVisibility(initialStatus);
+            } else {
+                console.warn('Quiz status element not found');
             }
         }
     }
@@ -84,6 +91,11 @@ class QuizGame {
         this.socket.emit('end_quiz', { quiz_id: this.quizId });
     }
 
+    restartQuiz() {
+        console.log('Restarting quiz...');
+        this.socket.emit('restart_quiz', { quiz_id: this.quizId });
+    }
+
     submitAnswer(answer) {
         console.log('Submitting answer:', answer);
         this.socket.emit('submit_answer', {
@@ -117,9 +129,57 @@ class QuizGame {
         this.socket.on('quiz_status_changed', (data) => {
             console.log('Quiz status changed:', data);
             if (data.quiz_id == this.quizId) {
+                if (this.elements.status) {
+                    this.elements.status.textContent = data.status;
+                }
                 this.updateScreens(data.status);
                 this.updateButtonVisibility(data.status);
             }
+        });
+
+        this.socket.on('new_problem', (data) => {
+            console.log('New problem received:', data);
+            if (data.quiz_id == this.quizId) {
+                this.displayProblem(data.problem);
+                this.currentAnswer = data.answer;
+            }
+        });
+
+        this.socket.on('answer_feedback', (data) => {
+            console.log('Answer feedback received:', data);
+            this.showFeedback(data.correct);
+        });
+
+        this.socket.on('score_updated', (data) => {
+            console.log('Score updated:', data);
+            if (this.elements.score) {
+                this.elements.score.textContent = data.score;
+            }
+        });
+
+        this.socket.on('quiz_ended', (data) => {
+            console.log('Quiz ended:', data);
+            if (data.quiz_id == this.quizId) {
+                if (this.elements.status) {
+                    this.elements.status.textContent = 'finished';
+                }
+                this.updateScreens('finished');
+                this.updateButtonVisibility('finished');
+
+                // Display final scores if provided
+                if (data.scores) {
+                    console.log('Final scores:', data.scores);
+                    // You can add UI here to show final scores
+                }
+            }
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        this.socket.on('error', (error) => {
+            console.error('Socket error:', error);
         });
     }
 
@@ -136,7 +196,8 @@ class QuizGame {
             start: document.getElementById('start-quiz-btn'),
             pause: document.getElementById('pause-quiz-btn'),
             resume: document.getElementById('resume-quiz-btn'),
-            end: document.getElementById('end-quiz-btn')
+            end: document.getElementById('end-quiz-btn'),
+            restart: document.getElementById('restart-quiz-btn')
         };
 
         // Log which buttons were found
@@ -184,10 +245,9 @@ class QuizGame {
                 break;
 
             case 'finished':
-                console.log('Showing disabled end button');
-                if (buttons.end) {
-                    buttons.end.style.display = 'inline-block';
-                    buttons.end.disabled = true;
+                console.log('Showing restart button');
+                if (buttons.restart) {
+                    buttons.restart.style.display = 'inline-block';
                 }
                 break;
 
@@ -235,44 +295,5 @@ class QuizGame {
             console.log(`Showing ${status} screen`);
             targetScreen.classList.remove('d-none');
         }
-    }
-
-    setupSocketListeners() {
-        this.socket.on('connect', () => {
-            console.log('Connected to server');
-            this.socket.emit('join_quiz', {
-                quiz_id: this.quizId,
-                is_teacher: this.isTeacher
-            });
-        });
-
-        // Handle quiz status changes
-        this.socket.on('quiz_status_changed', (data) => {
-            console.log('Quiz status changed:', data);
-            if (data.quiz_id == this.quizId) {
-                this.updateScreens(data.status);
-                this.updateButtonVisibility(data.status);
-            }
-        });
-
-        // Handle new problems
-        this.socket.on('new_problem', (data) => {
-            console.log('New problem received:', data);
-            if (data.quiz_id == this.quizId) {
-                this.currentAnswer = data.answer;
-                this.displayProblem(data.problem);
-            }
-        });
-
-        // Handle answer feedback
-        this.socket.on('answer_feedback', (data) => {
-            if (data.quiz_id == this.quizId) {
-                this.showFeedback(data.correct);
-            }
-        });
-
-        this.socket.on('connect_error', (error) => {
-            console.error('WebSocket connection error:', error);
-        });
     }
 }

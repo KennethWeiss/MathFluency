@@ -265,6 +265,13 @@ def create_app(test_config=None):
 
 if __name__ == '__main__':
     app = create_app()
-    socketio.run(app, debug=True, port=5000)  # Use same port as Flask app
+    # Run with WebSocket on port 5001
+    socketio.run(
+        app,
+        debug=True,
+        port=5001,
+        host='0.0.0.0',  # Listen on all available interfaces
+        allow_unsafe_werkzeug=True  # Required for development
+    )
 else:
     app = create_app()
