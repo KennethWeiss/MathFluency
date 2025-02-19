@@ -173,16 +173,16 @@ updateScreens(status) {
         if (pauseButton) pauseButton.style.display = 'none';
         if (resumeButton) resumeButton.style.display = 'none';
         if (endButton) endButton.style.display = 'none';
-    } else if (status === 'active') {
-        if (startButton) startButton.style.display = 'none';
-        if (pauseButton) pauseButton.style.display = 'block';
-        if (resumeButton) resumeButton.style.display = 'none';
-        if (endButton) endButton.style.display = 'block';
-    } else if (status === 'paused') {
-        if (startButton) startButton.style.display = 'none';
-        if (pauseButton) pauseButton.style.display = 'none';
-        if (resumeButton) resumeButton.style.display = 'block';
-        if (endButton) endButton.style.display = 'block';
+} else if (status === 'active') {
+    if (startButton) startButton.style.display = 'none';
+    if (pauseButton) pauseButton.style.display = 'block';
+    if (resumeButton) resumeButton.style.display = 'none';
+    if (endButton) endButton.style.display = 'block';
+} else if (status === 'paused') {
+    if (startButton) startButton.style.display = 'none';
+    if (pauseButton) pauseButton.style.display = 'none';
+    if (resumeButton) resumeButton.style.display = 'block';
+    if (endButton) endButton.style.display = 'block';
     } else if (status === 'finished') {
         if (startButton) startButton.style.display = 'none';
         if (pauseButton) pauseButton.style.display = 'none';
