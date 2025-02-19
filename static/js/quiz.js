@@ -134,32 +134,60 @@ class QuizGame {
         });
     }
 
-    updateScreens(status) {
-        // Get all screen elements
-        const screens = {
-            waiting: document.getElementById('waiting-screen'),
-            quiz: document.getElementById('quiz-screen'),
-            paused: document.getElementById('paused-screen'),
-            finished: document.getElementById('finished-screen')
-        };
-        
-        // Hide all screens
-        Object.values(screens).forEach(screen => {
-            if (screen) screen.classList.add('d-none');
-        });
-        
-        // Show the appropriate screen
-        const screenMap = {
-            'waiting': screens.waiting,
-            'active': screens.quiz,
-            'paused': screens.paused,
-            'finished': screens.finished
-        };
-        
-        const targetScreen = screenMap[status];
-        if (targetScreen) {
-            console.log(`Showing ${status} screen`);
-            targetScreen.classList.remove('d-none');
-        }
+updateScreens(status) {
+    // Get all screen elements
+    const screens = {
+        waiting: document.getElementById('waiting-screen'),
+        quiz: document.getElementById('quiz-screen'),
+        paused: document.getElementById('paused-screen'),
+        finished: document.getElementById('finished-screen')
+    };
+    
+    // Hide all screens
+    Object.values(screens).forEach(screen => {
+        if (screen) screen.classList.add('d-none');
+    });
+    
+    // Show the appropriate screen
+    const screenMap = {
+        'waiting': screens.waiting,
+        'active': screens.quiz,
+        'paused': screens.paused,
+        'finished': screens.finished
+    };
+    
+    const targetScreen = screenMap[status];
+    if (targetScreen) {
+        console.log(`Showing ${status} screen`);
+        targetScreen.classList.remove('d-none');
     }
+
+    // Update button visibility based on status
+    const startButton = document.getElementById('start-quiz-btn');
+    const pauseButton = document.getElementById('pause-quiz-btn');
+    const resumeButton = document.getElementById('resume-quiz-btn');
+    const endButton = document.getElementById('end-quiz-btn');
+
+    if (status === 'waiting') {
+        if (startButton) startButton.style.display = 'block';
+        if (pauseButton) pauseButton.style.display = 'none';
+        if (resumeButton) resumeButton.style.display = 'none';
+        if (endButton) endButton.style.display = 'none';
+    } else if (status === 'active') {
+        if (startButton) startButton.style.display = 'none';
+        if (pauseButton) pauseButton.style.display = 'block';
+        if (resumeButton) resumeButton.style.display = 'none';
+        if (endButton) endButton.style.display = 'block';
+    } else if (status === 'paused') {
+        if (startButton) startButton.style.display = 'none';
+        if (pauseButton) pauseButton.style.display = 'none';
+        if (resumeButton) resumeButton.style.display = 'block';
+        if (endButton) endButton.style.display = 'block';
+    } else if (status === 'finished') {
+        if (startButton) startButton.style.display = 'none';
+        if (pauseButton) pauseButton.style.display = 'none';
+        if (resumeButton) resumeButton.style.display = 'none';
+        if (endButton) endButton.style.display = 'none';
+    }
+}
 }
