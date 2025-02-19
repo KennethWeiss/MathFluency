@@ -22,6 +22,15 @@ class QuizGame {
         
         // Setup socket listeners
         this.setupSocketListeners();
+
+        // Set initial button state if teacher
+        if (this.isTeacher) {
+            // Get initial quiz status from the page
+            const statusElement = document.getElementById('quiz-status');
+            if (statusElement) {
+                this.updateButtonVisibility(statusElement.textContent.toLowerCase());
+            }
+        }
     }
 
     cacheElements() {
@@ -105,11 +114,144 @@ class QuizGame {
             });
         });
 
+        this.socket.on('quiz_status_changed', (data) => {
+            console.log('Quiz status changed:', data);
+            if (data.quiz_id == this.quizId) {
+                this.updateScreens(data.status);
+                this.updateButtonVisibility(data.status);
+            }
+        });
+    }
+
+    updateButtonVisibility(status) {
+        // Only handle buttons if this is the teacher view
+        if (!this.isTeacher) return;
+
+        // Clean up status text by removing whitespace and converting to lowercase
+        status = status.trim().toLowerCase();
+        console.log('Updating button visibility for cleaned status:', status);
+
+        // Get all possible buttons
+        const buttons = {
+            start: document.getElementById('start-quiz-btn'),
+            pause: document.getElementById('pause-quiz-btn'),
+            resume: document.getElementById('resume-quiz-btn'),
+            end: document.getElementById('end-quiz-btn')
+        };
+
+        // Log which buttons were found
+        Object.entries(buttons).forEach(([name, button]) => {
+            console.log(`${name} button found:`, !!button);
+        });
+
+        // Hide all buttons first
+        Object.values(buttons).forEach(button => {
+            if (button) {
+                button.style.display = 'none';
+                button.disabled = false; // Reset disabled state
+            }
+        });
+
+        console.log('Showing buttons for status:', status);
+        
+        // Show appropriate buttons based on status
+        switch (status) {
+            case 'waiting':
+                console.log('Showing start button');
+                if (buttons.start) {
+                    buttons.start.style.display = 'inline-block';
+                }
+                break;
+
+            case 'active':
+                console.log('Showing pause and end buttons');
+                if (buttons.pause) {
+                    buttons.pause.style.display = 'inline-block';
+                }
+                if (buttons.end) {
+                    buttons.end.style.display = 'inline-block';
+                }
+                break;
+
+            case 'paused':
+                console.log('Showing resume and end buttons');
+                if (buttons.resume) {
+                    buttons.resume.style.display = 'inline-block';
+                }
+                if (buttons.end) {
+                    buttons.end.style.display = 'inline-block';
+                }
+                break;
+
+            case 'finished':
+                console.log('Showing disabled end button');
+                if (buttons.end) {
+                    buttons.end.style.display = 'inline-block';
+                    buttons.end.disabled = true;
+                }
+                break;
+
+            default:
+                console.log('Unknown status:', status);
+                break;
+        }
+
+        // Log final button states
+        Object.entries(buttons).forEach(([name, button]) => {
+            if (button) {
+                console.log(`${name} button final state:`, {
+                    display: button.style.display,
+                    disabled: button.disabled,
+                    visible: button.offsetParent !== null
+                });
+            }
+        });
+    }
+
+    updateScreens(status) {
+        // Get all screen elements
+        const screens = {
+            waiting: document.getElementById('waiting-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            paused: document.getElementById('paused-screen'),
+            finished: document.getElementById('finished-screen')
+        };
+        
+        // Hide all screens
+        Object.values(screens).forEach(screen => {
+            if (screen) screen.classList.add('d-none');
+        });
+        
+        // Show the appropriate screen
+        const screenMap = {
+            'waiting': screens.waiting,
+            'active': screens.quiz,
+            'paused': screens.paused,
+            'finished': screens.finished
+        };
+        
+        const targetScreen = screenMap[status];
+        if (targetScreen) {
+            console.log(`Showing ${status} screen`);
+            targetScreen.classList.remove('d-none');
+        }
+    }
+
+    setupSocketListeners() {
+        this.socket.on('connect', () => {
+            console.log('Connected to server');
+            this.socket.emit('join_quiz', {
+                quiz_id: this.quizId,
+                is_teacher: this.isTeacher
+            });
+        });
+
         // Handle quiz status changes
         this.socket.on('quiz_status_changed', (data) => {
             console.log('Quiz status changed:', data);
             if (data.quiz_id == this.quizId) {
                 this.updateScreens(data.status);
+                this.updateButtonVisibility(data.status);
             }
         });
 
@@ -133,61 +275,4 @@ class QuizGame {
             console.error('WebSocket connection error:', error);
         });
     }
-
-updateScreens(status) {
-    // Get all screen elements
-    const screens = {
-        waiting: document.getElementById('waiting-screen'),
-        quiz: document.getElementById('quiz-screen'),
-        paused: document.getElementById('paused-screen'),
-        finished: document.getElementById('finished-screen')
-    };
-    
-    // Hide all screens
-    Object.values(screens).forEach(screen => {
-        if (screen) screen.classList.add('d-none');
-    });
-    
-    // Show the appropriate screen
-    const screenMap = {
-        'waiting': screens.waiting,
-        'active': screens.quiz,
-        'paused': screens.paused,
-        'finished': screens.finished
-    };
-    
-    const targetScreen = screenMap[status];
-    if (targetScreen) {
-        console.log(`Showing ${status} screen`);
-        targetScreen.classList.remove('d-none');
-    }
-
-    // Update button visibility based on status
-    const startButton = document.getElementById('start-quiz-btn');
-    const pauseButton = document.getElementById('pause-quiz-btn');
-    const resumeButton = document.getElementById('resume-quiz-btn');
-    const endButton = document.getElementById('end-quiz-btn');
-
-    if (status === 'waiting') {
-        if (startButton) startButton.style.display = 'block';
-        if (pauseButton) pauseButton.style.display = 'none';
-        if (resumeButton) resumeButton.style.display = 'none';
-        if (endButton) endButton.style.display = 'none';
-} else if (status === 'active') {
-    if (startButton) startButton.style.display = 'none';
-    if (pauseButton) pauseButton.style.display = 'block';
-    if (resumeButton) resumeButton.style.display = 'none';
-    if (endButton) endButton.style.display = 'block';
-} else if (status === 'paused') {
-    if (startButton) startButton.style.display = 'none';
-    if (pauseButton) pauseButton.style.display = 'none';
-    if (resumeButton) resumeButton.style.display = 'block';
-    if (endButton) endButton.style.display = 'block';
-    } else if (status === 'finished') {
-        if (startButton) startButton.style.display = 'none';
-        if (pauseButton) pauseButton.style.display = 'none';
-        if (resumeButton) resumeButton.style.display = 'none';
-        if (endButton) endButton.style.display = 'none';
-    }
-}
 }

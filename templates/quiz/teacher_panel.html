@@ -22,9 +22,7 @@
                             <strong>Duration:</strong> {{ quiz.duration }} minutes<br>
                             <strong>Adaptive:</strong> {{ 'Yes' if quiz.adaptive else 'No' }}<br>
                             <strong>Status:</strong> 
-                            <span id="quiz-status" class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' if quiz.status == 'paused' else 'warning' }}">
-                                {{ quiz.status }}
-                            </span>
+                            <span id="quiz-status" class="badge bg-{{ 'success' if quiz.status == 'active' else 'secondary' if quiz.status == 'paused' else 'warning' }}">{{ quiz.status }}</span>
                         </p>
                     </div>
 
@@ -52,21 +50,12 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        {% if quiz.status == 'waiting' %}
-                        <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success">Start Quiz</button>
-                        {% elif quiz.status == 'active' %}
-                        <div>
-                            <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning">Pause Quiz</button>
-                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
+                        <div class="quiz-controls">
+                            <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success" style="display: none;">Start Quiz</button>
+                            <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning" style="display: none;">Pause Quiz</button>
+                            <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success" style="display: none;">Resume Quiz</button>
+                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger" style="display: none;">End Quiz</button>
                         </div>
-                        {% elif quiz.status == 'paused' %}
-                        <div>
-                            <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success">Resume Quiz</button>
-                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger">End Quiz</button>
-                        </div>
-                        {% else %}
-                        <button disabled class="btn btn-secondary">Quiz Finished</button>
-                        {% endif %}
                         
                         <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-outline-primary">Back to My Quizzes</a>
                     </div>
