@@ -108,16 +108,36 @@ def handle_start_quiz(data):
     """Handle when a teacher starts a quiz"""
     logger.debug(f"Received start_quiz event with data: {data}")
     quiz_id = data.get('quiz_id')
+    
     if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
         logger.warning("User is not authenticated or not a teacher")
         return
-    # Notify participants and start the quiz
-    emit('quiz_started', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
-    logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
-
-# Generate and send a new problem using the quiz's operation
+        
+    # Get the quiz from database
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        logger.warning(f"Quiz {quiz_id} not found")
+        return
+        
+    # Update quiz status
+    quiz.status = 'active'
+    db.session.commit()
+    
+    # Notify all participants about the status change
+    emit('quiz_status_changed', {
+        'quiz_id': quiz_id,
+        'status': 'active'
+    }, room=f"quiz_{quiz_id}")
+    
+    # Generate and send a new problem
     problem = generate_quiz_problem(quiz.operation, quiz.level)
-    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text']}, room=f"quiz_{quiz_id}")
+    emit('new_problem', {
+        'quiz_id': quiz_id,
+        'problem': problem['text'],
+        'answer': problem['answer']
+    }, room=f"quiz_{quiz_id}")
+    
+    logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
 
 @socketio.on('submit_answer')
 def log_all_questions():

@@ -105,13 +105,61 @@ class QuizGame {
             });
         });
 
-        this.socket.on('new_problem', (data) => {
-            this.currentAnswer = data.answer;
-            this.displayProblem(data.problem);
+        // Handle quiz status changes
+        this.socket.on('quiz_status_changed', (data) => {
+            console.log('Quiz status changed:', data);
+            if (data.quiz_id == this.quizId) {
+                this.updateScreens(data.status);
+            }
         });
 
-        this.socket.on('answer_feedback', (data) => {
-            this.showFeedback(data.correct);
+        // Handle new problems
+        this.socket.on('new_problem', (data) => {
+            console.log('New problem received:', data);
+            if (data.quiz_id == this.quizId) {
+                this.currentAnswer = data.answer;
+                this.displayProblem(data.problem);
+            }
         });
+
+        // Handle answer feedback
+        this.socket.on('answer_feedback', (data) => {
+            if (data.quiz_id == this.quizId) {
+                this.showFeedback(data.correct);
+            }
+        });
+
+        this.socket.on('connect_error', (error) => {
+            console.error('WebSocket connection error:', error);
+        });
+    }
+
+    updateScreens(status) {
+        // Get all screen elements
+        const screens = {
+            waiting: document.getElementById('waiting-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            paused: document.getElementById('paused-screen'),
+            finished: document.getElementById('finished-screen')
+        };
+        
+        // Hide all screens
+        Object.values(screens).forEach(screen => {
+            if (screen) screen.classList.add('d-none');
+        });
+        
+        // Show the appropriate screen
+        const screenMap = {
+            'waiting': screens.waiting,
+            'active': screens.quiz,
+            'paused': screens.paused,
+            'finished': screens.finished
+        };
+        
+        const targetScreen = screenMap[status];
+        if (targetScreen) {
+            console.log(`Showing ${status} screen`);
+            targetScreen.classList.remove('d-none');
+        }
     }
 }
