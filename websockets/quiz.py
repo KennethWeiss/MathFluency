@@ -188,6 +188,7 @@ def handle_submit_answer(data):
             problem = generate_quiz_problem(quiz.operation, quiz.level)
         emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
         emit('score_updated', {'score': participant.score}, room=f"quiz_{quiz_id}")  # Emit updated score
+        send_leaderboard(quiz_id)  # Send updated leaderboard after score update
         emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
         print("Incorrect answer")
