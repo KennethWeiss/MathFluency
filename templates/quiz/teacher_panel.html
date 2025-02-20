@@ -59,6 +59,7 @@
                         </div>
                         
                         <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-outline-primary">Back to My Quizzes</a>
+                            <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-warning">Edit Quiz</a>
                     </div>
                 </div>
             </div>

@@ -41,6 +41,39 @@ def teacher_quizzes():
     quizzes = Quiz.query.filter_by(teacher_id=current_user.id).order_by(Quiz.created_at.desc()).all()
     return render_template('quiz/teacher_quizzes.html', quizzes=quizzes)
 
+@quiz_bp.route('/<int:quiz_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_quiz(quiz_id):
+    if not current_user.is_teacher and not current_user.is_admin:
+        flash('Access denied. Teachers only.', 'danger')
+        return redirect(url_for('main.home'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        operation = request.form.get('operation')
+        duration = request.form.get('duration', type=int)
+        level = request.form.get('level', type=int)  # Get level from form
+        adaptive = request.form.get('adaptive') == 'on'
+        
+        if not all([title, operation, duration]):
+            flash('Please fill in all required fields.', 'danger')
+            return redirect(url_for('quiz.edit_quiz', quiz_id=quiz.id))
+        
+        quiz.title = title
+        quiz.operation = operation
+        quiz.duration = duration
+        quiz.level = level  # Update level in quiz
+        quiz.adaptive = adaptive
+        
+        db.session.commit()
+        
+        flash('Quiz updated successfully!', 'success')
+        return redirect(url_for('quiz.teacher_panel', quiz_id=quiz.id))
+    
+    return render_template('quiz/create.html', quiz=quiz)
+
 @quiz_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_quiz():
