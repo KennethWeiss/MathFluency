@@ -7,60 +7,135 @@
     <h2>{{ 'Edit Quiz' if quiz else 'Create New Quiz' }}</h2>
     <form method="POST" class="mt-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="title" class="form-label">Quiz Title</label>
-        <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
-    
-    <div class="mb-3">
-        <label for="operation" class="form-label">Operation</label>
-        <select class="form-select" id="operation" name="operation" required>
-            <option value="multiplication" {% if quiz and quiz.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
-            <option value="addition" {% if quiz and quiz.operation == 'addition' %}selected{% endif %}>Addition</option>
-            <option value="subtraction" {% if quiz and quiz.operation == 'subtraction' %}selected{% endif %}>Subtraction</option>
-            <option value="division" {% if quiz and quiz.operation == 'division' %}selected{% endif %}>Division</option>
-        </select>
-    </div>
-    
-    <div class="mb-3">
-        <label for="level" class="form-label">Level</label>
-        <select class="form-select" id="level" name="level" required>
-            <!-- Options will be populated dynamically based on the selected operation -->
-        </select>
-    </div>
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="adaptive" name="adaptive" {% if quiz and quiz.adaptive %}checked{% endif %}>
-            <label class="form-check-label" for="adaptive">Use Adaptive Mode (adjusts to student level)</label>
-        </div>
         
-        <div class="mb-3">
-            <label for="duration" class="form-label">Duration (seconds)</label>
-            <input type="number" class="form-control" id="duration" name="duration" min="30" max="3600" value="{{ quiz.duration if quiz else 300 }}" required>
-            <div class="form-text">Quiz duration in seconds (minimum 30s, maximum 1 hour)</div>
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Quiz Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quiz Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Quiz Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="operation" class="form-label">Operation</label>
+                            <select class="form-select" id="operation" name="operation" required>
+                                <option value="multiplication" {% if quiz and quiz.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
+                                <option value="addition" {% if quiz and quiz.operation == 'addition' %}selected{% endif %}>Addition</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Level</label>
+                            <select class="form-select" id="level" name="level" required>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="1" max="60" value="{{ quiz.duration if quiz else 5 }}" required>
+                            <div class="form-text">Quiz duration in minutes (1-60)</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="adaptive" name="adaptive" {% if quiz and quiz.adaptive %}checked{% endif %}>
+                            <label class="form-check-label" for="adaptive">Use Adaptive Mode (adjusts to student level)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Sample Problems Preview -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Sample Problems</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="sampleProblems" class="list-group">
+                            <!-- Sample problems will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">{{ 'Update Quiz' if quiz else 'Create Quiz' }}</button>
+                <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Load operations.js first -->
+<script src="{{ url_for('static', filename='js/operations.js') }}"></script>
+
+<!-- Then load our initialization code -->
+<script>
+// Wait for both DOM and operations.js to be loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Make sure operations object is available
+    if (typeof window.operations === 'undefined') {
+        console.error('Operations not loaded');
+        return;
+    }
+
+    const operationSelect = document.getElementById('operation');
+    const levelSelect = document.getElementById('level');
+    const sampleProblemsContainer = document.getElementById('sampleProblems');
+
+    function updateLevelOptions(operation) {
+        // Clear existing options
+        levelSelect.innerHTML = '';
         
-        <button type="submit" class="btn btn-primary">{{ 'Update Quiz' if quiz else 'Create Quiz' }}</button>
-        <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-secondary">Cancel</a>
-    <script src="{{ url_for('static', filename='js/operations.js') }}"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('operation').addEventListener('change', function() {
-            const operation = this.value;
-            const levelSelect = document.getElementById('level');
-            
-            // Clear existing options
-            levelSelect.innerHTML = '';
-
-            const levels = operations[operation].levels;
-
-            // Populate the level select with new options
-            for (const [key, value] of Object.entries(levels)) {
-                const newOption = document.createElement('option');
-                newOption.value = key;
-                newOption.textContent = value;
-                levelSelect.appendChild(newOption);
-            }
+        const levels = window.operations[operation].levels;
+        
+        // Add new options
+        Object.entries(levels).forEach(([key, level]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `Level ${key} - ${level.description}`;
+            levelSelect.appendChild(option);
         });
+        
+        // Trigger level change to update samples
+        updateLevelInfo(operation, levelSelect.value);
+    }
+
+    function updateLevelInfo(operation, level) {
+        const levelData = window.operations[operation].levels[level];
+        
+        // Update sample problems
+        sampleProblemsContainer.innerHTML = '';
+        levelData.sampleProblems.forEach((problem, index) => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <span class="problem">${problem.problem}</span>
+                <span class="badge bg-primary rounded-pill">Answer: ${problem.answer}</span>
+            `;
+            sampleProblemsContainer.appendChild(item);
+        });
+    }
+
+    // Event listeners
+    operationSelect.addEventListener('change', function() {
+        updateLevelOptions(this.value);
     });
-    </script>
-</div>
-</div>
+
+    levelSelect.addEventListener('change', function() {
+        updateLevelInfo(operationSelect.value, this.value);
+    });
+
+    // Initialize with current values
+    updateLevelOptions(operationSelect.value);
+});
+</script>
 {% endblock %}
