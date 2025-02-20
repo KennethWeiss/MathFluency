@@ -92,7 +92,11 @@ def handle_join_quiz(data):
     
     # Generate and send a new problem using the quiz's operation
     problem = generate_quiz_problem(quiz.operation, quiz.level)
-    emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
+    emit('new_problem', {
+        'quiz_id': quiz_id,
+        'problem': problem['text'],
+        'answer': problem['answer'],  # Pass the correct answer directly
+    }, room=f"quiz_{quiz_id}")
     # Notify room that user joined
     emit('user_joined', {
         'user': current_user.username,
@@ -150,10 +154,16 @@ def handle_submit_answer(data):
     """Handle when a user submits an answer"""
     logger.debug(f"Received submit_answer event with data: {data}")
     quiz_id = data.get('quiz_id')
-    submitted_answer = data.get('answer')
+    submitted_answer = data.get('correct_answer')
     question_id = data.get('question_id')
     correct_answer = data.get('correct_answer')
    
+    logger.debug(f"Submitted answer: {submitted_answer} (type: {type(submitted_answer)})")
+    logger.debug(f"Correct answer: {correct_answer} (type: {type(correct_answer)})")
+    print("Submitted answer: ", submitted_answer)
+    print("Correct answer: ", correct_answer)
+    print("data: ", data)
+    print("=====================================")
     if str(submitted_answer) == str(correct_answer):
         print("Correct answer")
         print("=====================================")

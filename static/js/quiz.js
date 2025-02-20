@@ -101,6 +101,7 @@ class QuizGame {
         this.socket.emit('submit_answer', {
             quiz_id: this.quizId,
             answer: answer,
+            correct_answer: this.currentAnswer,
             time_taken: this.timeLeft
         });
     }
