@@ -118,7 +118,86 @@ class QuizGame {
         }, 2000);
     }
 
+    updateLeaderboard(leaderboard) {
+        const leaderboardElement = document.getElementById('leaderboard'); // Assuming there's an element with this ID
+        leaderboardElement.innerHTML = ''; // Clear existing leaderboard
+
+        leaderboard.forEach(entry => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${entry.username}: ${entry.score}`;
+            leaderboardElement.appendChild(listItem);
+        });
+    }
+
     setupSocketListeners() {
+        this.socket.on('connect', () => {
+            console.log('Connected to server');
+            this.socket.emit('join_quiz', {
+                quiz_id: this.quizId,
+                is_teacher: this.isTeacher
+            });
+        });
+
+        this.socket.on('quiz_status_changed', (data) => {
+            console.log('Quiz status changed:', data);
+            if (data.quiz_id == this.quizId) {
+                if (this.elements.status) {
+                    this.elements.status.textContent = data.status;
+                }
+                this.updateScreens(data.status);
+                this.updateButtonVisibility(data.status);
+            }
+        });
+
+        this.socket.on('new_problem', (data) => {
+            console.log('New problem received:', data);
+            if (data.quiz_id == this.quizId) {
+                this.displayProblem(data.problem);
+                this.currentAnswer = data.answer;
+            }
+        });
+
+        this.socket.on('answer_feedback', (data) => {
+            console.log('Answer feedback received:', data);
+            this.showFeedback(data.correct);
+        });
+
+        this.socket.on('score_updated', (data) => {
+            console.log('Score updated:', data);
+            if (this.elements.score) {
+                this.elements.score.textContent = data.score;
+            }
+        });
+
+        this.socket.on('quiz_ended', (data) => {
+            console.log('Quiz ended:', data);
+            if (data.quiz_id == this.quizId) {
+                if (this.elements.status) {
+                    this.elements.status.textContent = 'finished';
+                }
+                this.updateScreens('finished');
+                this.updateButtonVisibility('finished');
+
+                // Display final scores if provided
+                if (data.scores) {
+                    console.log('Final scores:', data.scores);
+                    // You can add UI here to show final scores
+                }
+            }
+        });
+
+        this.socket.on('update_leaderboard', (data) => {
+            console.log('Leaderboard updated:', data);
+            this.updateLeaderboard(data.leaderboard);
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        this.socket.on('error', (error) => {
+            console.error('Socket error:', error);
+        });
         this.socket.on('connect', () => {
             console.log('Connected to server');
             this.socket.emit('join_quiz', {
