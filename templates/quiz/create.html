@@ -7,24 +7,25 @@
     <h2>{{ 'Edit Quiz' if quiz else 'Create New Quiz' }}</h2>
     <form method="POST" class="mt-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="mb-3">
-            <label for="level" class="form-label">Level</label>
-            <input type="number" class="form-control" id="level" name="level" value="{{ quiz.level if quiz else 1 }}" required>
-        </div>
-            <label for="title" class="form-label">Quiz Title</label>
-            <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="operation" class="form-label">Operation</label>
-            <select class="form-select" id="operation" name="operation" required>
-                <option value="multiplication" {% if quiz and quiz.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
-                <option value="addition" {% if quiz and quiz.operation == 'addition' %}selected{% endif %}>Addition</option>
-                <option value="subtraction" {% if quiz and quiz.operation == 'subtraction' %}selected{% endif %}>Subtraction</option>
-                <option value="division" {% if quiz and quiz.operation == 'division' %}selected{% endif %}>Division</option>
-            </select>
-        </div>
-        
+        <label for="title" class="form-label">Quiz Title</label>
+        <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
+    
+    <div class="mb-3">
+        <label for="operation" class="form-label">Operation</label>
+        <select class="form-select" id="operation" name="operation" required>
+            <option value="multiplication" {% if quiz and quiz.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
+            <option value="addition" {% if quiz and quiz.operation == 'addition' %}selected{% endif %}>Addition</option>
+            <option value="subtraction" {% if quiz and quiz.operation == 'subtraction' %}selected{% endif %}>Subtraction</option>
+            <option value="division" {% if quiz and quiz.operation == 'division' %}selected{% endif %}>Division</option>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label for="level" class="form-label">Level</label>
+        <select class="form-select" id="level" name="level" required>
+            <!-- Options will be populated dynamically based on the selected operation -->
+        </select>
+    </div>
         <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="adaptive" name="adaptive" {% if quiz and quiz.adaptive %}checked{% endif %}>
             <label class="form-check-label" for="adaptive">Use Adaptive Mode (adjusts to student level)</label>
@@ -38,6 +39,28 @@
         
         <button type="submit" class="btn btn-primary">{{ 'Update Quiz' if quiz else 'Create Quiz' }}</button>
         <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    <script src="{{ url_for('static', filename='js/operations.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('operation').addEventListener('change', function() {
+            const operation = this.value;
+            const levelSelect = document.getElementById('level');
+            
+            // Clear existing options
+            levelSelect.innerHTML = '';
+
+            const levels = operations[operation].levels;
+
+            // Populate the level select with new options
+            for (const [key, value] of Object.entries(levels)) {
+                const newOption = document.createElement('option');
+                newOption.value = key;
+                newOption.textContent = value;
+                levelSelect.appendChild(newOption);
+            }
+        });
+    });
+    </script>
+</div>
 </div>
 {% endblock %}

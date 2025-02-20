@@ -1,5 +1,89 @@
-// Quiz Game Logic
-class QuizGame {
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('operation').addEventListener('change', function() {
+        const operation = this.value;
+        const levelSelect = document.getElementById('level');
+        
+        // Clear existing options
+        levelSelect.innerHTML = '';
+
+        let options = [];
+        if (operation === 'addition') {
+            options = [
+                { value: 1, text: "1: Single Digit - Basic addition of numbers from 0 to 9." },
+                { value: 2, text: "2: Double Digit - Addition of two-digit numbers (10-99)." },
+                { value: 3, text: "3: Make 10 - Problems that require making a total of 10." },
+                { value: 4, text: "4: Add to 100 - Addition problems that sum to 100." },
+                { value: 5, text: "5: Add to 1000 - Addition problems that sum to 1000." }
+            ];
+        } else if (operation === 'multiplication') {
+            options = [
+                { value: 1, text: "1: ×1 Table - Multiplication by 1." },
+                { value: 2, text: "2: ×2 Table - Multiplication by 2." },
+                { value: 3, text: "3: ×3 Table - Multiplication by 3." },
+                { value: 4, text: "4: ×4 Table - Multiplication by 4." },
+                { value: 5, text: "5: ×5 Table - Multiplication by 5." },
+                { value: 6, text: "6: ×6 Table - Multiplication by 6." },
+                { value: 7, text: "7: ×7 Table - Multiplication by 7." },
+                { value: 8, text: "8: ×8 Table - Multiplication by 8." },
+                { value: 9, text: "9: ×9 Table - Multiplication by 9." },
+                { value: 10, text: "10: ×10 Table - Multiplication by 10." },
+                { value: 11, text: "11: ×11 Table - Multiplication by 11." },
+                { value: 12, text: "12: ×12 Table - Multiplication by 12." }
+            ];
+        }
+
+        // Populate the level select with new options
+        options.forEach(option => {
+            const newOption = document.createElement('option');
+            newOption.value = option.value;
+            newOption.textContent = option.text;
+            levelSelect.appendChild(newOption);
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('operation').addEventListener('change', function() {
+        const operation = this.value;
+        const levelSelect = document.getElementById('level');
+        
+        // Clear existing options
+        levelSelect.innerHTML = '';
+
+        let options = [];
+        if (operation === 'addition') {
+            options = [
+                { value: 1, text: "1: Single Digit - Basic addition of numbers from 0 to 9." },
+                { value: 2, text: "2: Double Digit - Addition of two-digit numbers (10-99)." },
+                { value: 3, text: "3: Make 10 - Problems that require making a total of 10." },
+                { value: 4, text: "4: Add to 100 - Addition problems that sum to 100." },
+                { value: 5, text: "5: Add to 1000 - Addition problems that sum to 1000." }
+            ];
+        } else if (operation === 'multiplication') {
+            options = [
+                { value: 1, text: "1: ×1 Table - Multiplication by 1." },
+                { value: 2, text: "2: ×2 Table - Multiplication by 2." },
+                { value: 3, text: "3: ×3 Table - Multiplication by 3." },
+                { value: 4, text: "4: ×4 Table - Multiplication by 4." },
+                { value: 5, text: "5: ×5 Table - Multiplication by 5." },
+                { value: 6, text: "6: ×6 Table - Multiplication by 6." },
+                { value: 7, text: "7: ×7 Table - Multiplication by 7." },
+                { value: 8, text: "8: ×8 Table - Multiplication by 8." },
+                { value: 9, text: "9: ×9 Table - Multiplication by 9." },
+                { value: 10, text: "10: ×10 Table - Multiplication by 10." },
+                { value: 11, text: "11: ×11 Table - Multiplication by 11." },
+                { value: 12, text: "12: ×12 Table - Multiplication by 12." }
+            ];
+        }
+
+        // Populate the level select with new options
+        options.forEach(option => {
+            const newOption = document.createElement('option');
+            newOption.value = option.value;
+            newOption.textContent = option.text;
+            levelSelect.appendChild(newOption);
+        });
+    });
+});
     constructor(quizId, isTeacher = false) {
         this.quizId = quizId;
         this.isTeacher = isTeacher;
