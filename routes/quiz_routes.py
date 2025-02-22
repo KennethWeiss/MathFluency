@@ -85,7 +85,7 @@ def create_quiz():
         title = request.form.get('title')
         operation = request.form.get('operation')
         duration = request.form.get('duration', type=int)
-        level = request.form.get('level', type=int)  # Get level from form
+        level = request.form.get('level', type=int, default=1)  # Default to level 1 if not provided
         adaptive = request.form.get('adaptive') == 'on'
         
         if not all([title, operation, duration]):
@@ -96,7 +96,7 @@ def create_quiz():
             title=title,
             teacher_id=current_user.id,
             operation=operation,
-            level=level,  # Set level in quiz
+            level=level,  # This will now always have a value
             duration=duration,
             adaptive=adaptive,
             status='waiting'
@@ -190,4 +190,3 @@ def get_leaderboard(quiz_id):
     } for p in participants]
     
     return jsonify(leaderboard)
-# Remove invalid syntax
