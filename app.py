@@ -8,7 +8,7 @@ from flask_wtf.csrf import CSRFProtect
 from forms import LoginForm, RegistrationForm
 from datetime import datetime, timedelta
 from utils.practice_tracker import PracticeTracker
-from utils.math_problems import get_problem, generate_custom_multiplication
+from utils.math_problems import get_problem
 from sqlalchemy import func
 from database import db
 from extensions import socketio

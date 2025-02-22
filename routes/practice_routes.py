@@ -4,7 +4,7 @@ from database import db
 from models.practice_attempt import PracticeAttempt
 from models.assignment import Assignment, AssignmentProgress, AttemptHistory
 from models.active_session import ActiveSession
-from utils.math_problems import get_problem, generate_custom_multiplication
+from utils.math_problems import get_problem
 from services.progress_service import ProgressService
 from datetime import datetime
 from utils.practice_tracker import PracticeTracker

@@ -60,15 +60,90 @@ SUBTRACTION_LEVELS = {
     }
 }
 
+MULTIPLICATION_LEVELS = {
+    'standard': {  # Standard multiplication tables 0-12
+        1: {
+            'description': "×1 Table",
+            'num1': {'type': 'single', 'value': [1]},
+            'num2': {'type': 'range', 'value': (0, 12)}
+        },
+        2: {
+            'description': "×2 Table",
+            'num1': {'type': 'single', 'value': [2]},
+            'num2': {'type': 'range', 'value': (0, 12)}
+        },
+        # ... more standard levels
+    },
+    'custom': {  # For teacher-defined multiplication
+        'description': "Custom multiplication",
+        'parse_input': True,  # Flag to indicate this needs input parsing
+    }
+}
+
 def get_random_number(number_spec):
     """Get a random number based on range, set, or single number specification"""
     if number_spec['type'] == 'range':
         min_val, max_val = number_spec['value']
         return random.randint(min_val, max_val)
     elif number_spec['type'] == 'single':
-        return number_spec['value'][0]
+        return number_spec['value'][0]  # Return the single number
     else:  # type == 'set'
         return random.choice(number_spec['value'])
+
+def parse_number_input(input_str: str) -> List[int]:
+    """Parse a string containing comma-separated numbers or a range.
+    
+    Args:
+        input_str: String like "2,3,5" or "1-10"
+    Returns:
+        List of integers
+    """
+    if not input_str or not isinstance(input_str, str):
+        return []
+        
+    input_str = input_str.strip()
+    if '-' in input_str:
+        try:
+            start, end = map(int, input_str.split('-'))
+            return list(range(start, end + 1))
+        except (ValueError, TypeError):
+            return []
+    elif ',' in input_str:
+        try:
+            return [int(x.strip()) for x in input_str.split(',') if x.strip()]
+        except (ValueError, TypeError):
+            return []
+    else:
+        try:
+            return [int(input_str)]
+        except (ValueError, TypeError):
+            return []
+
+def generate_multiplication_questions(multiplicands: str, num_questions: int = 10) -> List[Problem]:
+    """Generate a set of multiplication problems using the given multiplicands.
+    
+    Args:
+        multiplicands: String containing numbers (e.g., "2,3,5" or "1-10")
+        num_questions: Number of questions to generate
+    Returns:
+        List of Problem dictionaries with 'problem' and 'answer' keys
+    """
+    numbers = parse_number_input(multiplicands)
+    if not numbers:
+        return []
+    
+    # Create a custom level configuration
+    custom_level = {
+        'num1': {'type': 'set', 'value': numbers},
+        'num2': {'type': 'range', 'value': (0, 12)}
+    }
+    
+    questions = []
+    for _ in range(num_questions):
+        problem = generate_problem('multiplication', 'custom', custom_level)
+        questions.append(problem)
+    
+    return questions
 
 def generate_problem(operation: str, level: int, level_config: dict) -> Problem:
     """Generate a problem based on operation and level configuration"""
@@ -86,67 +161,26 @@ def generate_problem(operation: str, level: int, level_config: dict) -> Problem:
         num1 = get_random_number(level_config['num1'])
         num2 = get_random_number(level_config['num2'])
 
-    # Define operation symbols and functions
-    operations = {
-        'addition': ('+', lambda x, y: x + y),
-        'subtraction': ('-', lambda x, y: x - y),
-        'multiplication': ('×', lambda x, y: x * y)
+    # Define operation symbols
+    symbols = {
+        'addition': '+',
+        'subtraction': '-',
+        'multiplication': '×'
     }
     
-    symbol, operation_func = operations[operation]
+    # Define operation functions
+    operations = {
+        'addition': lambda x, y: x + y,
+        'subtraction': lambda x, y: x - y,
+        'multiplication': lambda x, y: x * y
+    }
     
     return {
-        'problem': f"{num1} {symbol} {num2}",
-        'answer': operation_func(num1, num2),
+        'problem': f"{num1} {symbols[operation]} {num2}",
+        'answer': operations[operation](num1, num2),
         'description': level_config['description'],
         'operation': operation,
         'level': level
-    }
-
-def generate_multiplication_problem(table: int) -> Problem:
-    """Generate multiplication fact for a specific times table"""
-    factor = random.randint(0, 12)
-    return {
-        'problem': f"{factor} × {table}",
-        'answer': factor * table,
-        'description': f"× {table} Table",
-        'operation': 'multiplication',
-        'level': table
-    }
-
-def get_random_number(number_spec):
-    """Get a random number based on range, set, or single number specification"""
-    if number_spec['type'] == 'range':
-        min_val, max_val = number_spec['value']
-        return random.randint(min_val, max_val)
-    elif number_spec['type'] == 'single':
-        return number_spec['value'][0]  # Return the single number
-    else:  # type == 'set'
-        return random.choice(number_spec['value'])
-
-def generate_custom_multiplication(number1_spec, number2_spec) -> Problem:
-    """Generate a custom multiplication problem with specific ranges/sets"""
-    # Get random numbers based on specifications
-    number1 = get_random_number(number1_spec)
-    number2 = get_random_number(number2_spec)
-    
-    # Create description based on specifications
-    def format_spec(spec):
-        if spec['type'] == 'range':
-            return f"{spec['value'][0]}-{spec['value'][1]}"
-        elif spec['type'] == 'single':
-            return str(spec['value'][0])
-        else:
-            return f"{','.join(map(str, spec['value']))}"
-    
-    description = f"Custom: {format_spec(number1_spec)} × {format_spec(number2_spec)}"
-    
-    return {
-        'problem': f"{number1} × {number2}",
-        'answer': number1 * number2,
-        'description': description,
-        'operation': 'multiplication',
-        'level': 'custom'
     }
 
 def get_problem(operation: str, level: int) -> Optional[Problem]:
@@ -155,7 +189,10 @@ def get_problem(operation: str, level: int) -> Optional[Problem]:
         return generate_problem(operation, level, ADDITION_LEVELS[level])
     elif operation == 'subtraction' and level in SUBTRACTION_LEVELS:
         return generate_problem(operation, level, SUBTRACTION_LEVELS[level])
-    elif operation == 'multiplication' and 0 <= level <= 12:
-        return generate_multiplication_problem(level)
+    elif operation == 'multiplication':
+        if level == 'custom':
+            return None  # Custom levels need multiplicand input
+        elif level in MULTIPLICATION_LEVELS['standard']:
+            return generate_problem(operation, level, MULTIPLICATION_LEVELS['standard'][level])
     
     return None  # Invalid operation or level

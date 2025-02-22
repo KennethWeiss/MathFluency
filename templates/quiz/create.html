@@ -17,11 +17,6 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="title" class="form-label">Quiz Title</label>
-                            <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
-                        </div>
-
-                        <div class="mb-3">
                             <label for="operation" class="form-label">Operation</label>
                             <select class="form-select" id="operation" name="operation" required>
                                 <option value="multiplication" {% if quiz and quiz.operation == 'multiplication' %}selected{% endif %}>Multiplication</option>
@@ -34,6 +29,25 @@
                             <select class="form-select" id="level" name="level" required>
                                 <!-- Options will be populated dynamically -->
                             </select>
+                        </div>
+
+                        <!-- Custom multiplication inputs (hidden by default) -->
+                        <div id="customMultiplicationInputs" style="display: none;">
+                            <div class="mb-3">
+                                <label for="multiplicand1" class="form-label">First Number (Multiplicand)</label>
+                                <input type="text" class="form-control" id="multiplicand1" name="multiplicand1" placeholder="e.g., 2,3,5 or 1-10">
+                                <div class="form-text">Use commas for specific numbers (2,3,5) or a hyphen for range (1-10)</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="multiplicand2" class="form-label">Second Number (Multiplier)</label>
+                                <input type="text" class="form-control" id="multiplicand2" name="multiplicand2" placeholder="e.g., 2,3,5 or 1-10">
+                                <div class="form-text">Use commas for specific numbers (2,3,5) or a hyphen for range (1-10)</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Quiz Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title if quiz else '' }}" required>
                         </div>
 
                         <div class="mb-3">
@@ -90,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const operationSelect = document.getElementById('operation');
     const levelSelect = document.getElementById('level');
     const sampleProblemsContainer = document.getElementById('sampleProblems');
+    const customMultiplicationInputs = document.getElementById('customMultiplicationInputs');
+    const multiplicand1Input = document.getElementById('multiplicand1');
+    const multiplicand2Input = document.getElementById('multiplicand2');
 
     function updateLevelOptions(operation) {
         // Clear existing options
@@ -125,17 +142,78 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function toggleCustomInputs() {
+        const isMultiplication = operationSelect.value === 'multiplication';
+        const isCustomLevel = levelSelect.value === 'custom';
+        customMultiplicationInputs.style.display = (isMultiplication && isCustomLevel) ? 'block' : 'none';
+        
+        // Toggle required attribute
+        multiplicand1Input.required = (isMultiplication && isCustomLevel);
+        multiplicand2Input.required = (isMultiplication && isCustomLevel);
+
+        // Clear inputs when hiding
+        if (!isMultiplication || !isCustomLevel) {
+            multiplicand1Input.value = '';
+            multiplicand2Input.value = '';
+        }
+    }
+
+    function updateCustomSampleProblems() {
+        if (operationSelect.value !== 'multiplication' || levelSelect.value !== 'custom') return;
+
+        const multiplicand1 = multiplicand1Input.value.trim();
+        const multiplicand2 = multiplicand2Input.value.trim();
+        if (!multiplicand1 || !multiplicand2) return;
+
+        try {
+            // Parse inputs and generate sample problems
+            const numbers1 = parseMultiplicandInput(multiplicand1);
+            const numbers2 = parseMultiplicandInput(multiplicand2);
+            
+            if (!numbers1.length || !numbers2.length) {
+                sampleProblemsContainer.innerHTML = '<div class="list-group-item text-warning">Please enter valid numbers (e.g., "2,3,5" or "1-10")</div>';
+                return;
+            }
+
+            // Generate sample problems
+            const problems = generateCustomSampleProblems(multiplicand1, multiplicand2);
+            sampleProblemsContainer.innerHTML = problems.map(problem => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="problem">${problem.problem}</span>
+                    <span class="badge bg-primary rounded-pill">Answer: ${problem.answer}</span>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error generating custom problems:', error);
+            sampleProblemsContainer.innerHTML = '<div class="list-group-item text-danger">Error generating problems. Please check your input format.</div>';
+        }
+    }
+
     // Event listeners
     operationSelect.addEventListener('change', function() {
         updateLevelOptions(this.value);
+        toggleCustomInputs();
     });
 
     levelSelect.addEventListener('change', function() {
-        updateLevelInfo(operationSelect.value, this.value);
+        const operation = operationSelect.value;
+        const level = this.value;
+        
+        if (operation === 'multiplication' && level === 'custom') {
+            toggleCustomInputs();
+            updateCustomSampleProblems();
+        } else {
+            toggleCustomInputs();
+            updateLevelInfo(operation, level);
+        }
     });
+
+    multiplicand1Input.addEventListener('input', updateCustomSampleProblems);
+    multiplicand2Input.addEventListener('input', updateCustomSampleProblems);
 
     // Initialize with current values
     updateLevelOptions(operationSelect.value);
+    toggleCustomInputs();
 });
 </script>
 {% endblock %}

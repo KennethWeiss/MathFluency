@@ -260,7 +260,50 @@ window.operations = {
                     { problem: "12 × 9", answer: 108 },
                     { problem: "12 × 10", answer: 120 }
                 ]
+            },
+            'custom': {
+                description: "Custom Multiplication - Define your own numbers",
+                sampleProblems: [
+                    { problem: "Custom × Custom", answer: "Variable" }
+                ]
             }
         }
     }
 };
+
+// Helper functions for custom multiplication
+function parseMultiplicandInput(input) {
+    input = input.trim();
+    if (!input) return [];
+
+    // Check if it's a range (e.g., "1-10")
+    if (input.includes('-')) {
+        const [start, end] = input.split('-').map(num => parseInt(num.trim()));
+        if (isNaN(start) || isNaN(end) || start > end) return [];
+        return Array.from({length: end - start + 1}, (_, i) => start + i);
+    }
+
+    // Check if it's a comma-separated list (e.g., "2,3,5")
+    return input.split(',')
+        .map(num => parseInt(num.trim()))
+        .filter(num => !isNaN(num));
+}
+
+function generateCustomSampleProblems(multiplicand1, multiplicand2) {
+    const numbers1 = parseMultiplicandInput(multiplicand1);
+    const numbers2 = parseMultiplicandInput(multiplicand2);
+    
+    if (!numbers1.length || !numbers2.length) return [];
+
+    const problems = [];
+    // Generate up to 10 sample problems
+    for (let i = 0; i < Math.min(10, numbers1.length * numbers2.length); i++) {
+        const num1 = numbers1[Math.floor(Math.random() * numbers1.length)];
+        const num2 = numbers2[Math.floor(Math.random() * numbers2.length)];
+        problems.push({
+            problem: `${num1} × ${num2}`,
+            answer: num1 * num2
+        });
+    }
+    return problems;
+}

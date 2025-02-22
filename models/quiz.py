@@ -9,6 +9,8 @@ class Quiz(db.Model):
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     operation = db.Column(db.String(20), nullable=False)  # multiplication, addition, etc.
     level = db.Column(db.Integer, nullable=False)  # Add level attribute
+    multiplicand1 = db.Column(db.String(50))  # Store as comma-separated or range string
+    multiplicand2 = db.Column(db.String(50))  # Store as comma-separated or range string
     adaptive = db.Column(db.Boolean, default=False)
     duration = db.Column(db.Integer, nullable=False)  # in seconds
     status = db.Column(db.String(20), default='waiting')  # waiting, active, paused, finished
