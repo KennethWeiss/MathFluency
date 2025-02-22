@@ -51,15 +51,17 @@
 
                     <div class="d-flex justify-content-between">
                         <div class="quiz-controls">
-                            <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success" style="display: none;">Start Quiz</button>
-                            <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning" style="display: none;">Pause Quiz</button>
-                            <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success" style="display: none;">Resume Quiz</button>
-                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger" style="display: none;">End Quiz</button>
-                            <button id="restart-quiz-btn" onclick="quizGame.restartQuiz()" class="btn btn-primary" style="display: none;">Restart Quiz</button>
+                            <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success" {% if quiz.status != 'waiting' %}style="display: none;"{% endif %}>Start Quiz</button>
+                            <button id="pause-quiz-btn" onclick="quizGame.pauseQuiz()" class="btn btn-warning" {% if quiz.status != 'active' %}style="display: none;"{% endif %}>Pause Quiz</button>
+                            <button id="resume-quiz-btn" onclick="quizGame.resumeQuiz()" class="btn btn-success" {% if quiz.status != 'paused' %}style="display: none;"{% endif %}>Resume Quiz</button>
+                            <button id="end-quiz-btn" onclick="quizGame.endQuiz()" class="btn btn-danger" {% if quiz.status not in ['active', 'paused'] %}style="display: none;"{% endif %}>End Quiz</button>
+                            <button id="restart-quiz-btn" onclick="quizGame.restartQuiz()" class="btn btn-primary" {% if quiz.status != 'finished' %}style="display: none;"{% endif %}>Restart Quiz</button>
                         </div>
                         
-                        <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-outline-primary">Back to My Quizzes</a>
+                        <div>
+                            <a href="{{ url_for('quiz.teacher_quizzes') }}" class="btn btn-outline-primary">Back to My Quizzes</a>
                             <a href="{{ url_for('quiz.edit_quiz', quiz_id=quiz.id) }}" class="btn btn-warning">Edit Quiz</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,7 +99,11 @@
     // Initialize quiz game when page loads
     document.addEventListener('DOMContentLoaded', function() {
         const quizId = document.getElementById('quiz-id').value;
+        const initialStatus = document.getElementById('quiz-status').textContent.trim();
         window.quizGame = new QuizGame(quizId, true);
+        
+        // Update button visibility for initial status
+        window.quizGame.updateButtonVisibility(initialStatus);
     });
 
     function startTimer(duration) {

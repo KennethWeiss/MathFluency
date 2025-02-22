@@ -144,19 +144,13 @@ def handle_start_quiz(data):
     logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
 
 @socketio.on('submit_answer')
-def log_all_questions():
-    """Log all questions and their answers for debugging."""
-    questions = QuizQuestion.query.all()
-    for question in questions:
-        logger.debug(f"Question ID: {question.id}, Problem: {question.problem}, Answer: {question.answer}")
-
 def handle_submit_answer(data):
     """Handle when a user submits an answer"""
     logger.debug(f"Received submit_answer event with data: {data}")
     quiz_id = data.get('quiz_id')
-    submitted_answer = data.get('correct_answer')
+    submitted_answer = data.get('answer')
     question_id = data.get('question_id')
-    correct_answer = data.get('correct_answer')
+    correct_answer = get_correct_answer(quiz_id, question_id)
    
     logger.debug(f"Submitted answer: {submitted_answer} (type: {type(submitted_answer)})")
     logger.debug(f"Correct answer: {correct_answer} (type: {type(correct_answer)})")
@@ -195,16 +189,6 @@ def handle_submit_answer(data):
         print("=====================================")
         emit('answer_feedback', {'correct': False}, room=f"quiz_{quiz_id}")
 
-@socketio.on('end_quiz')
-def handle_end_quiz(data):
-    """Handle when a teacher ends a quiz"""
-    logger.debug(f"Received end_quiz event with data: {data}")
-    quiz_id = data.get('quiz_id')
-    
-    # Logic to finalize the quiz, e.g., calculate final scores, notify participants
-    emit('quiz_ended', {'quiz_id': quiz_id}, room=f"quiz_{quiz_id}")
-    logger.debug(f"Quiz {quiz_id} ended by {current_user.username}")
-
 @socketio.on('pause_quiz')
 def handle_pause_quiz(data):
     """Handle when a teacher pauses a quiz"""
@@ -214,7 +198,7 @@ def handle_pause_quiz(data):
     if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
         logger.warning("User is not authenticated or not a teacher")
         return
-    
+        
     # Get the quiz from database
     quiz = Quiz.query.get(quiz_id)
     if not quiz:
@@ -242,7 +226,7 @@ def handle_resume_quiz(data):
     if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
         logger.warning("User is not authenticated or not a teacher")
         return
-    
+        
     # Get the quiz from database
     quiz = Quiz.query.get(quiz_id)
     if not quiz:
@@ -269,6 +253,34 @@ def handle_resume_quiz(data):
     
     logger.debug(f"Quiz {quiz_id} resumed by {current_user.username}")
 
+@socketio.on('end_quiz')
+def handle_end_quiz(data):
+    """Handle when a teacher ends a quiz"""
+    logger.debug(f"Received end_quiz event with data: {data}")
+    quiz_id = data.get('quiz_id')
+    
+    if not quiz_id or not current_user.is_authenticated or not current_user.is_teacher:
+        logger.warning("User is not authenticated or not a teacher")
+        return
+        
+    # Get the quiz from database
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        logger.warning(f"Quiz {quiz_id} not found")
+        return
+        
+    # Update quiz status
+    quiz.status = 'finished'
+    db.session.commit()
+    
+    # Notify all participants about the status change
+    emit('quiz_status_changed', {
+        'quiz_id': quiz_id,
+        'status': 'finished'
+    }, room=f"quiz_{quiz_id}")
+    
+    logger.debug(f"Quiz {quiz_id} ended by {current_user.username}")
+
 @socketio.on('restart_quiz')
 def handle_restart_quiz(data):
     """Handle when a teacher restarts a quiz"""
@@ -286,28 +298,18 @@ def handle_restart_quiz(data):
         return
 
     # Reset quiz state
-    quiz.status = 'active'
+    quiz.status = 'waiting'
     
     # Reset participant scores
     participants = QuizParticipant.query.filter_by(quiz_id=quiz_id).all()
     for participant in participants:
         participant.score = 0
-        participant.streak = 0
-    
     db.session.commit()
     
     # Notify all participants about the status change
     emit('quiz_status_changed', {
         'quiz_id': quiz_id,
-        'status': 'active'
-    }, room=f"quiz_{quiz_id}")
-    
-    # Generate and send a new problem
-    problem = generate_quiz_problem(quiz.operation, quiz.level)
-    emit('new_problem', {
-        'quiz_id': quiz_id,
-        'problem': problem['text'],
-        'answer': problem['answer']
+        'status': 'waiting'
     }, room=f"quiz_{quiz_id}")
     
     logger.debug(f"Quiz {quiz_id} restarted by {current_user.username}")
