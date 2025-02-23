@@ -51,6 +51,7 @@ class QuizGame {
     constructor(quizId, isTeacher = false) {
         this.quizId = quizId;
         this.isTeacher = isTeacher;
+        this.currentQuestionId = null; // Store the current question ID
         this.elements = this.cacheElements();
         
         // Initialize socket connection
@@ -146,10 +147,34 @@ class QuizGame {
             console.log('New problem received:', data);
             if (!this.isTeacher && this.elements.problemDisplay) {
                 this.elements.problemDisplay.textContent = data.problem;
+                this.currentQuestionId = data.question_id; // Store the question ID
                 if (this.elements.answerInput) {
                     this.elements.answerInput.value = '';
                     this.elements.answerInput.focus();
                 }
+            }
+        });
+
+        this.socket.on('score_updated', (data) => {
+            console.log('Score update received:', data);
+            if (!this.isTeacher && this.elements.currentScore) {
+                this.elements.currentScore.textContent = data.score;
+            }
+        });
+
+        this.socket.on('answer_feedback', (data) => {
+            console.log('Answer feedback received:', data);
+            if (!this.isTeacher && this.elements.feedback) {
+                const feedbackClass = data.correct ? 'text-success' : 'text-danger';
+                const feedbackText = data.correct ? 'Correct!' : 'Incorrect';
+                this.elements.feedback.textContent = feedbackText;
+                this.elements.feedback.className = feedbackClass;
+                
+                // Clear feedback after a short delay
+                setTimeout(() => {
+                    this.elements.feedback.textContent = '';
+                    this.elements.feedback.className = '';
+                }, 2000);
             }
         });
 
@@ -286,6 +311,7 @@ class QuizGame {
         console.log('Submitting answer:', answer);
         this.socket.emit('submit_answer', {
             quiz_id: this.quizId,
+            question_id: this.currentQuestionId, // Include the question ID
             answer: answer
         });
         

@@ -2,10 +2,12 @@ from flask import session
 from flask_login import current_user
 from flask_socketio import emit, join_room, leave_room
 from extensions import socketio
-from models.quiz import Quiz, QuizParticipant, QuizQuestion
+from models.quiz import Quiz, QuizParticipant, QuizQuestion, QuizAnswer
 from models.user import User
+from models.practice_attempt import PracticeAttempt
 from utils.math_problems import get_problem
-from database import db  # Import db from database module
+from utils.practice_tracker import PracticeTracker
+from database import db
 import random
 import logging
 
@@ -92,9 +94,21 @@ def handle_join_quiz(data):
     
     # Generate and send a new problem using the quiz's operation
     problem = generate_quiz_problem(quiz.operation, quiz.level)
+    
+    # Save the question to the database
+    question = QuizQuestion(
+        quiz_id=quiz_id,
+        problem=problem['text'],
+        answer=problem['answer'],
+        level=quiz.level
+    )
+    db.session.add(question)
+    db.session.commit()
+    
     emit('new_problem', {
         'quiz_id': quiz_id,
         'problem': problem['text'],
+        'question_id': question.id,  # Send the question ID to the client
         'answer': problem['answer'],  # Pass the correct answer directly
     }, room=f"quiz_{quiz_id}")
     # Notify room that user joined
@@ -135,10 +149,22 @@ def handle_start_quiz(data):
     
     # Generate and send a new problem
     problem = generate_quiz_problem(quiz.operation, quiz.level)
+    
+    # Save the question to the database
+    question = QuizQuestion(
+        quiz_id=quiz_id,
+        problem=problem['text'],
+        answer=problem['answer'],
+        level=quiz.level
+    )
+    db.session.add(question)
+    db.session.commit()
+    
     emit('new_problem', {
         'quiz_id': quiz_id,
         'problem': problem['text'],
-        'answer': problem['answer']
+        'question_id': question.id,  # Send the question ID to the client
+        'answer': problem['answer'],  # Pass the correct answer directly
     }, room=f"quiz_{quiz_id}")
     
     logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
@@ -158,32 +184,97 @@ def handle_submit_answer(data):
     print("Correct answer: ", correct_answer)
     print("data: ", data)
     print("=====================================")
-    if str(submitted_answer) == str(correct_answer):
-        print("Correct answer")
-        print("=====================================")
-        # Update the user's score or quiz state
-        participant = QuizParticipant.query.filter_by(
-            quiz_id=quiz_id,
-            user_id=current_user.id
-        ).first()
-        if participant:
-            print("Participant found")
-            print("Score before: ", participant.score)
-            print("=====================================")
-            participant.score += 1  # Increment score for correct answer
-            db.session.commit()
-            logger.debug(f"Updated score for user {current_user.username} in quiz {quiz_id}")
-            print("Score after: ", participant.score)
-            print("=====================================")
-        # Retrieve the quiz object to access operation and level
-        quiz = Quiz.query.get(quiz_id)
-        if quiz:
-            # Generate and send a new problem using the quiz's operation
+    
+    # Get the quiz to know the operation and level
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        logger.error(f"Quiz {quiz_id} not found")
+        return
+        
+    # Get the question to record the problem
+    question = QuizQuestion.query.get(question_id)
+    if not question:
+        logger.error(f"Question {question_id} not found")
+        return
+    
+    is_correct = str(submitted_answer) == str(correct_answer)
+    
+    # Create a QuizAnswer record
+    participant = QuizParticipant.query.filter_by(
+        quiz_id=quiz_id,
+        user_id=current_user.id
+    ).first()
+    
+    if participant:
+        # Record the answer in quiz history
+        answer = QuizAnswer(
+            participant_id=participant.id,
+            question_id=question_id,
+            answer=submitted_answer,
+            correct=is_correct,
+            time_taken=data.get('time_taken', 0)
+        )
+        db.session.add(answer)
+        
+        # Update quiz score if correct
+        if is_correct:
+            participant.score += 1
+        
+        # Record in practice history for overall stats
+        practice_attempt = PracticeAttempt(
+            user_id=current_user.id,
+            operation=quiz.operation,
+            level=quiz.level,
+            problem=question.problem,
+            user_answer=submitted_answer,
+            correct_answer=correct_answer,
+            is_correct=is_correct,
+            time_taken=data.get('time_taken', 0)
+        )
+        db.session.add(practice_attempt)
+        
+        # For multiplication, add commutative case
+        if quiz.operation == 'multiplication':
+            num1, num2 = map(int, question.problem.split('×'))
+            if num1 != num2:  # Only if numbers are different
+                commutative_problem = f"{num2} × {num1}"
+                commutative_attempt = PracticeAttempt(
+                    user_id=current_user.id,
+                    operation=quiz.operation,
+                    level=max(num1, num2),
+                    problem=commutative_problem,
+                    user_answer=submitted_answer,
+                    correct_answer=correct_answer,
+                    is_correct=is_correct,
+                    time_taken=data.get('time_taken', 0)
+                )
+                db.session.add(commutative_attempt)
+        
+        db.session.commit()
+        
+        if is_correct:
+            # Generate and send a new problem
             problem = generate_quiz_problem(quiz.operation, quiz.level)
-        emit('new_problem', {'quiz_id': quiz_id, 'problem': problem['text'], 'answer': problem['answer']}, room=f"quiz_{quiz_id}")
-        emit('score_updated', {'score': participant.score}, room=f"quiz_{quiz_id}")  # Emit updated score
-        send_leaderboard(quiz_id)  # Send updated leaderboard after score update
-        emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
+            
+            # Save the question to the database
+            new_question = QuizQuestion(
+                quiz_id=quiz_id,
+                problem=problem['text'],
+                answer=problem['answer'],
+                level=quiz.level
+            )
+            db.session.add(new_question)
+            db.session.commit()
+            
+            emit('new_problem', {
+                'quiz_id': quiz_id,
+                'problem': problem['text'],
+                'question_id': new_question.id,
+                'answer': problem['answer']
+            }, room=f"quiz_{quiz_id}")
+            emit('score_updated', {'score': participant.score}, room=f"quiz_{quiz_id}")
+            send_leaderboard(quiz_id)
+            emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
         print("Incorrect answer")
         print("=====================================")
@@ -239,10 +330,22 @@ def handle_resume_quiz(data):
     
     # Generate and send a new problem
     problem = generate_quiz_problem(quiz.operation, quiz.level)
+    
+    # Save the question to the database
+    question = QuizQuestion(
+        quiz_id=quiz_id,
+        problem=problem['text'],
+        answer=problem['answer'],
+        level=quiz.level
+    )
+    db.session.add(question)
+    db.session.commit()
+    
     emit('new_problem', {
         'quiz_id': quiz_id,
         'problem': problem['text'],
-        'answer': problem['answer']
+        'question_id': question.id,  # Send the question ID to the client
+        'answer': problem['answer'],  # Pass the correct answer directly
     }, room=f"quiz_{quiz_id}")
     
     # Notify all participants about the status change
