@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from models.active_session import ActiveSession
 from models.practice_attempt import PracticeAttempt
 from models.user import User
+from models.class_ import Class
 import json
 import time
 
@@ -122,6 +123,68 @@ def edit_student(student_id):
         return redirect(url_for('teacher.active_students'))
     
     return render_template('teacher/edit_student.html', student=student)
+
+@teacher_bp.route('/create-student/<int:class_id>', methods=['GET', 'POST'])
+@login_required
+def create_student(class_id):
+    """Create a new student and optionally add them to a class"""
+    if not current_user.is_teacher:
+        abort(403)  # Forbidden
+    
+    # Get the class if class_id is provided
+    class_ = Class.query.get_or_404(class_id)
+    
+    # Check if teacher has access to this class
+    if current_user not in class_.teachers:
+        abort(403)  # Forbidden
+    
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validate inputs
+        if not first_name or not last_name or not password:
+            flash('Please fill in all required fields.', 'danger')
+            return render_template('teacher/create_student.html', class_=class_)
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('teacher/create_student.html', class_=class_)
+        
+        # Create username from first and last name
+        base_username = f"{first_name.lower()}.{last_name.lower()}"
+        username = base_username
+        counter = 1
+        
+        # Keep trying usernames until we find an unused one
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+        
+        # Create the new student
+        student = User(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email if email else None,
+            is_teacher=False
+        )
+        student.set_password(password)
+        
+        db.session.add(student)
+        
+        # Add student to the class
+        class_.add_student(student)
+        
+        db.session.commit()
+        
+        flash(f'Student {username} created and added to class successfully!', 'success')
+        return redirect(url_for('class.manage_students', id=class_id))
+    
+    return render_template('teacher/create_student.html', class_=class_)
 
 @teacher_bp.route('/active-students/updates')
 @login_required
