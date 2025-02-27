@@ -41,10 +41,13 @@ def create_app(test_config=None):
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
     
     # Database configuration
-    database_url = os.environ.get('DATABASE_URL', 'sqlite:///fluency.db')
-    # Handle Render's postgres:// URLs
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    if os.environ.get('FLASK_ENV') == 'production':
+        database_url = os.environ.get('DATABASE_URL', 'sqlite:///fluency.db')
+        # Handle Render's postgres:// URLs
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    else:
+        database_url = 'sqlite:///fluency.db'
     
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
