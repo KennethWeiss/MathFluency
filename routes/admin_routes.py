@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from functools import wraps
+from flask_wtf import FlaskForm
 from app import db, logger
 from models.user import User
 from models.class_ import Class
@@ -21,6 +22,9 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+class AdminForm(FlaskForm):
+    pass  # Only needed for CSRF protection
+
 @admin_bp.route('/admin')
 @login_required
 @admin_required
@@ -30,10 +34,12 @@ def admin_dashboard():
     users = User.query.all()
     classes = Class.query.all()
     assignments = Assignment.query.all()
+    form = AdminForm()
     return render_template('admin/dashboard.html', 
                         users=users,
                         classes=classes,
-                        assignments=assignments)
+                        assignments=assignments,
+                        form=form)
 
 @admin_bp.route('/admin/make_admin/<int:user_id>', methods=['POST'])
 @login_required

@@ -32,6 +32,7 @@
                             <div class="btn-group" role="group">
                                 {% if current_user.id != user.id %}
                                 <form action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" method="post" class="d-inline">
+                                    {{ form.hidden_tag() }}
                                     <button type="submit" class="btn btn-primary btn-sm">
                                         {% if user.is_admin %}Remove Admin{% else %}Make Admin{% endif %}
                                     </button>
@@ -39,14 +40,15 @@
                                 {% endif %}
                                 
                                 <form action="{{ url_for('admin.toggle_teacher', user_id=user.id) }}" method="post" class="d-inline ms-2">
+                                    {{ form.hidden_tag() }}
                                     <button type="submit" class="btn btn-info btn-sm">
                                         {% if user.is_teacher %}Remove Teacher{% else %}Make Teacher{% endif %}
                                     </button>
                                 </form>
 
                                 {% if not user.is_admin and current_user.id != user.id %}
-                                <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline ms-2"
-                                      onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                                <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="post" class="d-inline ms-2" onsubmit="return confirm('Are you sure you want to delete {{ user.username }}?');">
+                                    {{ form.hidden_tag() }}
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
                                 {% endif %}
