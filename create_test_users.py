@@ -172,4 +172,16 @@ def create_test_users():
             print(f"Username: {student['username']}, Password: {student['password']}")
 
 if __name__ == '__main__':
-    create_test_users()
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--production', action='store_true', 
+                       help='Run in production mode (requires DATABASE_URL to be set)')
+    args = parser.parse_args()
+    
+    if args.production:
+        print("Running in production mode - creating test users")
+        create_test_users()
+    else:
+        print("Running in development mode - creating test users")
+        create_test_users()
