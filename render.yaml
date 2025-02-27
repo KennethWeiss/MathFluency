@@ -8,6 +8,8 @@ services:
       if [ "$RENDER" = "true" ]; then
         echo "Running database migrations..."
         flask db upgrade
+        echo "Creating admin user..."
+        python create_admin.py
         echo "Creating test users..."
         python create_test_users.py --production
       fi
