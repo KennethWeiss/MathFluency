@@ -4,6 +4,13 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --worker-class eventlet -w 1 app:app
+    postDeployCommand: |
+      if [ "$RENDER" = "true" ]; then
+        echo "Running database migrations..."
+        flask db upgrade
+        echo "Creating test users..."
+        python create_test_users.py --production
+      fi
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
