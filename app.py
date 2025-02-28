@@ -277,4 +277,5 @@ if __name__ == '__main__':
         allow_unsafe_werkzeug=True  # Required for development
     )
 else:
+    # This line is important for Gunicorn to pick up the application
     app = create_app()
