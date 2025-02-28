@@ -56,7 +56,7 @@ class QuizGame {
         
         // Initialize socket connection
         this.socket = io({
-            transports: ['websocket'],
+            transports: ['websocket', 'polling'],  // Allow polling as fallback
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
             path: '/socket.io'
