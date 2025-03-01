@@ -3,7 +3,7 @@ services:
     name: mathfluency
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 app:create_app()
+    startCommand: gunicorn --worker-class eventlet -w 1 --timeout 120 app:create_app()
     postDeployCommand: |
       if [ "$RENDER" = "true" ]; then
         echo "Running database migrations..."
@@ -16,6 +16,8 @@ services:
         value: 3.11.0
       - key: FLASK_DEBUG
         value: false
+      - key: FLASK_ENV
+        value: production
       - key: FLASK_APP
         value: app.py
       - key: SECRET_KEY

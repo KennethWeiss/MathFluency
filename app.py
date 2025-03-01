@@ -52,6 +52,16 @@ def create_app(test_config=None):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Configure SQLAlchemy pool settings for production
+    if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('FLASK_DEBUG', '').lower() in ('0', 'false'):
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,  # Recycle connections every 5 minutes
+            'pool_size': 10,      # Maximum number of connections to keep
+            'pool_timeout': 30,   # Wait up to 30 seconds for a connection
+            'max_overflow': 5     # Allow up to 5 connections beyond pool_size
+        }
+    
     # Email configuration
     app.config['SMTP_HOST'] = os.environ.get('SMTP_HOST')
     app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
