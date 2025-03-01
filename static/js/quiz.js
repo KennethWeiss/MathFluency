@@ -160,6 +160,27 @@ class QuizGame {
             if (!this.isTeacher && this.elements.currentScore) {
                 this.elements.currentScore.textContent = data.score;
             }
+            // Update participants list and leaderboard for teacher view
+            if (this.isTeacher) {
+                console.log('Updating teacher view with score data:', data);
+                
+                // Get current participants from websocket data
+                const participants = this.getParticipantsFromDOM();
+                console.log('Current participants:', participants);
+                // Find and update the participant's score
+                const participant = participants.find(p => p.username === data.username);
+                if (participant) {
+                    console.log('Updating participant score:', participant.username, 'from', participant.score, 'to', data.score);
+                    participant.score = data.score;
+                } else {
+                    console.log('Participant not found:', data.username);
+                }
+                
+                // Update both views
+                console.log('Updating views with participants:', participants);
+                this.updateParticipantsList(participants);
+                this.updateLeaderboard(participants);
+            }
         });
 
         this.socket.on('answer_feedback', (data) => {
@@ -339,6 +360,15 @@ class QuizGame {
                 <span class="badge bg-primary rounded-pill">${participant.score}</span>
             `;
             this.elements.participantsList.appendChild(item);
+        });
+    }
+
+    getParticipantsFromDOM() {
+        return Array.from(this.elements.participantsList.children).map(item => {
+            return {
+                username: item.textContent.trim().split('\n')[0],
+                score: parseInt(item.querySelector('.badge').textContent)
+            };
         });
     }
 

@@ -272,7 +272,10 @@ def handle_submit_answer(data):
                 'question_id': new_question.id,
                 'answer': problem['answer']
             }, room=f"quiz_{quiz_id}")
-            emit('score_updated', {'score': participant.score}, room=f"quiz_{quiz_id}")
+            emit('score_updated', {
+                'score': participant.score,
+                'username': current_user.username
+            }, room=f"quiz_{quiz_id}")
             send_leaderboard(quiz_id)
             emit('answer_feedback', {'correct': True}, room=f"quiz_{quiz_id}")
     else:
