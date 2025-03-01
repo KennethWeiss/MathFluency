@@ -274,6 +274,10 @@ def create_app(test_config=None):
         db.session.commit()
         return jsonify({'success': True})
     
+    @app.teardown_appcontext
+    def remove_session(exception=None):
+        Session.remove()
+    
     return app
 
 if __name__ == '__main__':
