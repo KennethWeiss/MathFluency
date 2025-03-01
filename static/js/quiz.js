@@ -199,6 +199,13 @@ class QuizGame {
             }
         });
 
+        this.socket.on('update_leaderboard', (data) => {
+            console.log('Leaderboard update received:', data);
+            if (!this.isTeacher && this.elements.leaderboard) {
+                this.updateLeaderboard(data.leaderboard);
+            }
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             alert('An error occurred. Please refresh the page and try again.');

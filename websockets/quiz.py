@@ -167,6 +167,7 @@ def handle_start_quiz(data):
         'answer': problem['answer'],  # Pass the correct answer directly
     }, room=f"quiz_{quiz_id}")
     
+    send_leaderboard(quiz_id)
     logger.debug(f"Quiz {quiz_id} started by {current_user.username}")
 
 @socketio.on('submit_answer')
