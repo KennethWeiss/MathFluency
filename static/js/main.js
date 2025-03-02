@@ -20,3 +20,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Function to toggle card visibility when card header is clicked
+function toggleCard(element) {
+    const cardBody = element.nextElementSibling;
+    if (cardBody && cardBody.classList.contains('card-body')) {
+        // Toggle card body visibility
+        if (cardBody.style.display === 'none') {
+            cardBody.style.display = 'block';
+        } else {
+            cardBody.style.display = 'none';
+        }
+    }
+}

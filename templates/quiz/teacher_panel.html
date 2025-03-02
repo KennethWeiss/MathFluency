@@ -9,10 +9,10 @@
         <strong>Timer:</strong> <span id="timer-display">00:00</span>
     </div>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h2>{{ quiz.title }}</h2>
+                <div class="card-header" onclick="toggleCard(this)">
+                    <h2 style="cursor: pointer;">{{ quiz.title }}</h2>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
@@ -33,22 +33,6 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <h4>Participants</h4>
-                        <div id="participants-list" class="list-group">
-                            {% for participant in participants %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ participant.user.username }}
-                                <span class="badge bg-primary rounded-pill">{{ participant.score }}</span>
-                            </div>
-                            {% else %}
-                            <div class="list-group-item">
-                                No participants yet
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
                     <div class="d-flex justify-content-between">
                         <div class="quiz-controls">
                             <button id="start-quiz-btn" onclick="quizGame.startQuiz()" class="btn btn-success" {% if quiz.status != 'waiting' %}style="display: none;"{% endif %}>Start Quiz</button>
@@ -66,8 +50,9 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4">
+    </div>
+    <div class="row">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     <h4>Leaderboard</h4>
@@ -127,6 +112,19 @@
     function onQuizStart(duration) {
         document.getElementById("timer").style.display = "block";
         startTimer(duration * 60);
+    }
+    
+    // Function to toggle card visibility when card header is clicked
+    function toggleCard(element) {
+        const cardBody = element.nextElementSibling;
+        if (cardBody && cardBody.classList.contains('card-body')) {
+            // Toggle card body visibility
+            if (cardBody.style.display === 'none') {
+                cardBody.style.display = 'block';
+            } else {
+                cardBody.style.display = 'none';
+            }
+        }
     }
 </script>
 {% endblock %}
